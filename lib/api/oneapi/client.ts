@@ -1,101 +1,95 @@
-import axios, { type AxiosInstance, type AxiosError } from 'axios';
+import { apiFetch } from '@/lib/api/fetch';
 import { OneAPIError, type OneAPIConfig, type OneAPIResponse } from './types';
 
 /**
- * OneAPI 客户端 - 简化版
+ * OneAPI 客户端 - 使用 background fetch 绕过 CORS
  */
 export class OneAPIClient {
-  private readonly axios: AxiosInstance;
+  private readonly baseURL: string;
+  private readonly token: string;
+  private readonly userId: string;
+  private readonly timeout: number;
+  private readonly enableLogging: boolean;
 
   constructor(config: OneAPIConfig) {
-    const { baseURL, token, userId, timeout = 30000, enableLogging = false } = config;
-
-    // 创建 axios 实例
-    this.axios = axios.create({
-      baseURL,
-      timeout,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // 请求拦截器：添加认证 header
-    this.axios.interceptors.request.use((config) => {
-      config.headers.Authorization = `Bearer ${token}`;
-      config.headers['New-Api-User'] = userId;
-
-      if (enableLogging) {
-        console.log('[OneAPI Request]', config.method?.toUpperCase(), config.url);
-      }
-
-      return config;
-    });
-
-    // 响应拦截器：统一处理响应和错误
-    this.axios.interceptors.response.use(
-      (response) => {
-        if (enableLogging) {
-          console.log('[OneAPI Response]', response.status, response.config.url);
-        }
-        return response;
-      },
-      (error: AxiosError) => {
-        // 统一错误处理
-        const status = error.response?.status;
-        const data = error.response?.data;
-        const message =
-          (data as OneAPIResponse)?.message || error.message || 'Request failed';
-
-        throw new OneAPIError(message, status, data);
-      },
-    );
+    this.baseURL = config.baseURL;
+    this.token = config.token;
+    this.userId = config.userId;
+    this.timeout = config.timeout || 30000;
+    this.enableLogging = config.enableLogging || false;
   }
 
   /**
    * GET 请求
    */
   async get<T = unknown>(url: string): Promise<T> {
-    const response = await this.axios.get<OneAPIResponse<T>>(url);
-    return this.unwrap(response.data);
+    return this.request<T>('GET', url);
   }
 
   /**
    * POST 请求
    */
   async post<T = unknown, D = unknown>(url: string, data?: D): Promise<T> {
-    const response = await this.axios.post<OneAPIResponse<T>>(url, data);
-    return this.unwrap(response.data);
+    return this.request<T>('POST', url, data);
   }
 
   /**
    * PUT 请求
    */
   async put<T = unknown, D = unknown>(url: string, data?: D): Promise<T> {
-    const response = await this.axios.put<OneAPIResponse<T>>(url, data);
-    return this.unwrap(response.data);
+    return this.request<T>('PUT', url, data);
   }
 
   /**
    * PATCH 请求
    */
   async patch<T = unknown, D = unknown>(url: string, data?: D): Promise<T> {
-    const response = await this.axios.patch<OneAPIResponse<T>>(url, data);
-    return this.unwrap(response.data);
+    return this.request<T>('PATCH', url, data);
   }
 
   /**
    * DELETE 请求
    */
   async delete<T = unknown>(url: string): Promise<T> {
-    const response = await this.axios.delete<OneAPIResponse<T>>(url);
-    return this.unwrap(response.data);
+    return this.request<T>('DELETE', url);
   }
 
   /**
-   * 获取原始 axios 实例（用于高级场景）
+   * 统一请求方法
    */
-  getAxios(): AxiosInstance {
-    return this.axios;
+  private async request<T>(
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+    url: string,
+    data?: any,
+  ): Promise<T> {
+    const fullURL = `${this.baseURL}${url}`;
+
+    if (this.enableLogging) {
+      console.log('[OneAPI Request]', method, fullURL);
+    }
+
+    try {
+      const response = await apiFetch<OneAPIResponse<T>>(fullURL, {
+        method,
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          'New-Api-User': this.userId,
+        },
+        body: data,
+        timeout: this.timeout,
+      });
+
+      if (this.enableLogging) {
+        console.log('[OneAPI Response]', fullURL, response);
+      }
+
+      return this.unwrap(response);
+    } catch (error: any) {
+      if (this.enableLogging) {
+        console.error('[OneAPI Error]', fullURL, error);
+      }
+      throw error;
+    }
   }
 
   /**

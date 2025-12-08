@@ -6,6 +6,7 @@ import path from 'path';
 export default defineConfig({
   manifest: {
     permissions: ['storage'],
+    host_permissions: ['<all_urls>'],
   },
   modules: ['@wxt-dev/module-react'],
   react: {

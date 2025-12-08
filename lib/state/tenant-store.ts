@@ -1,29 +1,37 @@
 import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
-import { createStore } from 'zustand/vanilla';
-import { subscribeWithSelector } from 'zustand/middleware';
+import { produce } from 'immer';
+import { createPersistentStore } from './create-persistent-store';
+import { createOneAPIClient } from '@/lib/api/oneapi/client';
 
-import type { Tenant } from '@/types/tenant';
+import type { Tenant, TenantInfo } from '@/types/tenant';
 
-const tenantStorageItem = storage.defineItem<{
+// Define persisted data structure
+type TenantPersistedState = {
   selectedTenantId: string;
   tenantList: Tenant[];
-}>('local:tenant', {
-  fallback: {
-    selectedTenantId: '',
-    tenantList: [],
-  },
-});
+};
 
+// Define complete store state
 export type TenantStoreState = {
-  ready: boolean;
+  // Persisted fields
   selectedTenantId: string;
   tenantList: Tenant[];
+
+  // Runtime fields
+  ready: boolean;
+
+  // Basic setters (with persistence)
   setSelectedTenantId: (tenantId: string) => Promise<void>;
   setTenantList: (tenants: Tenant[]) => Promise<void>;
   addTenant: (tenant: Tenant) => Promise<void>;
   updateTenant: (id: string, updates: Partial<Tenant>) => Promise<void>;
   removeTenant: (id: string) => Promise<void>;
+
+  // Async business actions (selective persistence)
+  fetchTenantInfo: (tenantId: string) => Promise<void>;
+
+  // Internal methods
   hydrate: () => Promise<void>;
 };
 
@@ -35,120 +43,126 @@ export const getSelectedTenant = (state: TenantStoreState): Tenant | null => {
   return state.tenantList.find((t) => t.id === state.selectedTenantId) ?? null;
 };
 
-const createTenantStore = () =>
-  createStore<TenantStoreState>()(
-    subscribeWithSelector((set, get) => {
-      const applySnapshot = (
-        value: {
-          selectedTenantId: string;
-          tenantList: Tenant[];
-        } | null,
-      ) => {
-        const selectedTenantId = value?.selectedTenantId ?? '';
-        const tenantList = value?.tenantList ?? [];
-        set((state) => ({
-          ...state,
-          selectedTenantId,
-          tenantList,
+// Define storage item
+const tenantStorageItem = storage.defineItem<TenantPersistedState>('local:tenant', {
+  fallback: {
+    selectedTenantId: '',
+    tenantList: [],
+  },
+});
+
+// Create store using factory function
+export const tenantStore = createPersistentStore<
+  TenantStoreState,
+  TenantPersistedState,
+  'selectedTenantId' | 'tenantList'
+>({
+  storageItem: tenantStorageItem,
+
+  // Configure which fields to persist
+  persistConfig: {
+    keys: ['selectedTenantId', 'tenantList'],
+  },
+
+  // Create store state and actions
+  createState: (set, get, persist) => ({
+    // Initial state
+    ready: false,
+    selectedTenantId: '',
+    tenantList: [],
+
+    // Basic setters - using persist() helper
+    setSelectedTenantId: async (tenantId) => {
+      set((state) => ({ ...state, selectedTenantId: tenantId }));
+      await persist((state) => ({
+        selectedTenantId: tenantId,
+        tenantList: state.tenantList,
+      }));
+    },
+
+    setTenantList: async (tenants) => {
+      set((state) => ({ ...state, tenantList: tenants }));
+      await persist((state) => ({
+        selectedTenantId: state.selectedTenantId,
+        tenantList: tenants,
+      }));
+    },
+
+    addTenant: async (tenant) => {
+      const newList = [...get().tenantList, tenant];
+      set((state) => ({ ...state, tenantList: newList }));
+      await persist((state) => ({
+        selectedTenantId: state.selectedTenantId,
+        tenantList: newList,
+      }));
+    },
+
+    updateTenant: async (id, updates) => {
+      const newList = produce(get().tenantList, (draft) => {
+        const tenant = draft.find((t) => t.id === id);
+        if (tenant) {
+          Object.assign(tenant, updates);
+        }
+      });
+      set((state) => ({ ...state, tenantList: newList }));
+      await persist((state) => ({
+        selectedTenantId: state.selectedTenantId,
+        tenantList: newList,
+      }));
+    },
+
+    removeTenant: async (id) => {
+      const newList = get().tenantList.filter((t) => t.id !== id);
+      set((state) => ({ ...state, tenantList: newList }));
+      await persist((state) => ({
+        selectedTenantId: state.selectedTenantId,
+        tenantList: newList,
+      }));
+    },
+
+    // Async business actions
+    fetchTenantInfo: async (tenantId) => {
+      try {
+        const tenant = get().tenantList.find((t) => t.id === tenantId);
+        if (!tenant) return;
+
+        const client = createOneAPIClient({
+          baseURL: tenant.url,
+          token: tenant.token,
+          userId: tenant.userId,
+        });
+
+        const info = await client.get<TenantInfo>('/api/status');
+
+        // Update memory state with immer - 支持深层字段更新
+        const newList = produce(get().tenantList, (draft) => {
+          const target = draft.find((t) => t.id === tenantId);
+          if (target) {
+            if (!target.info) target.info = {} as TenantInfo;
+            target.info.quota_per_unit = info.quota_per_unit;
+            target.info.usd_exchange_rate = info.usd_exchange_rate;
+            target.info.api_info = info.api_info;
+          }
+        });
+
+        set((state) => ({ ...state, tenantList: newList }));
+
+        // Selective persistence - persist the tenant info
+        await persist((state) => ({
+          selectedTenantId: state.selectedTenantId,
+          tenantList: newList,
         }));
-      };
+      } catch (error) {
+        console.error('[fetchTenantInfo] Failed:', error);
+      }
+    },
 
-      const hydrate = async () => {
-        if (get().ready) {
-          return;
-        }
-
-        try {
-          const persistedValue = await tenantStorageItem.getValue();
-          applySnapshot(persistedValue);
-          set({ ready: true });
-        } catch (error) {
-          // 即使失败也设置 ready，让用户能使用默认值
-          set({ ready: true });
-        }
-      };
-
-      // Keep every context in sync by watching the shared storage key.
-      tenantStorageItem.watch((value) => {
-        applySnapshot(value);
-      });
-
-      // Delay hydration until after store initialization
-      queueMicrotask(() => {
-        void hydrate();
-      });
-
-      return {
-        ready: false,
-        selectedTenantId: '',
-        tenantList: [],
-        setSelectedTenantId: async (tenantId) => {
-          const currentList = get().tenantList;
-          set((state) => ({
-            ...state,
-            selectedTenantId: tenantId,
-          }));
-          await tenantStorageItem.setValue({
-            selectedTenantId: tenantId,
-            tenantList: currentList,
-          });
-        },
-        setTenantList: async (tenants) => {
-          const currentTenantId = get().selectedTenantId;
-          set((state) => ({
-            ...state,
-            tenantList: tenants,
-          }));
-          await tenantStorageItem.setValue({
-            selectedTenantId: currentTenantId,
-            tenantList: tenants,
-          });
-        },
-        addTenant: async (tenant) => {
-          const currentList = get().tenantList;
-          const currentTenantId = get().selectedTenantId;
-          const newList = [...currentList, tenant];
-          set((state) => ({
-            ...state,
-            tenantList: newList,
-          }));
-          await tenantStorageItem.setValue({
-            selectedTenantId: currentTenantId,
-            tenantList: newList,
-          });
-        },
-        updateTenant: async (id, updates) => {
-          const currentList = get().tenantList;
-          const currentTenantId = get().selectedTenantId;
-          const newList = currentList.map((t) => (t.id === id ? { ...t, ...updates } : t));
-          set((state) => ({
-            ...state,
-            tenantList: newList,
-          }));
-          await tenantStorageItem.setValue({
-            selectedTenantId: currentTenantId,
-            tenantList: newList,
-          });
-        },
-        removeTenant: async (id) => {
-          const currentList = get().tenantList;
-          const currentTenantId = get().selectedTenantId;
-          const newList = currentList.filter((t) => t.id !== id);
-          set((state) => ({
-            ...state,
-            tenantList: newList,
-          }));
-          await tenantStorageItem.setValue({
-            selectedTenantId: currentTenantId,
-            tenantList: newList,
-          });
-        },
-        hydrate,
-      };
-    }),
-  );
-
-export const tenantStore = createTenantStore();
+    // hydrate is injected by createPersistentStore
+    hydrate: async () => {
+      // Implemented by factory function
+    },
+  }),
+});
 
 export const useTenantStore = <T>(
   selector: (state: TenantStoreState) => T,
