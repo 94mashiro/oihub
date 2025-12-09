@@ -1,6 +1,8 @@
 import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createPersistentStore } from './create-persistent-store';
+import type { TenantId } from '@/types/tenant';
+import { CostPeriod } from '@/types/api';
 
 export interface CostData {
   count: number;
@@ -14,16 +16,16 @@ export interface CostData {
 }
 
 type CostPersistedState = {
-  costList: Record<string, CostData[]>;
+  costList: Record<TenantId, Partial<Record<CostPeriod, CostData[]>>>;
 };
 
 export type CostStoreState = {
-  costList: Record<string, CostData[]>;
+  costList: Record<TenantId, Partial<Record<CostPeriod, CostData[]>>>;
   ready: boolean;
 
-  setCost: (tenantId: string, costs: CostData[]) => Promise<void>;
-  getCost: (tenantId: string) => CostData[] | undefined;
-  removeCost: (tenantId: string) => Promise<void>;
+  setCost: (tenantId: TenantId, period: CostPeriod, costs: CostData[]) => Promise<void>;
+  getCost: (tenantId: TenantId, period: CostPeriod) => CostData[] | undefined;
+  removeCost: (tenantId: TenantId) => Promise<void>;
   hydrate: () => Promise<void>;
 };
 
@@ -42,14 +44,17 @@ export const costStore = createPersistentStore<CostStoreState, CostPersistedStat
     ready: false,
     costList: {},
 
-    setCost: async (tenantId, costs) => {
+    setCost: async (tenantId, period, costs) => {
       set((state) => {
-        state.costList[tenantId] = costs;
+        if (!state.costList[tenantId]) {
+          state.costList[tenantId] = {};
+        }
+        state.costList[tenantId][period] = costs;
       });
       await persist((state) => ({ costList: state.costList }));
     },
 
-    getCost: (tenantId) => get().costList[tenantId],
+    getCost: (tenantId, period) => get().costList[tenantId]?.[period],
 
     removeCost: async (tenantId) => {
       set((state) => {

@@ -4,14 +4,21 @@ import { useBalanceStore } from '@/lib/state/balance-store';
 import { quotaToPrice } from '@/utils/quota-to-price';
 import { useCostStore } from '@/lib/state/cost-store';
 import { formatThousands } from '@/utils/format-number';
+import { CostPeriod } from '@/types/api';
 import { Button } from '@/components/ui/button';
-import { EditIcon, Trash, Copy, Check } from 'lucide-react';
+import { EditIcon, Trash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GroupSeparator, Group } from '@/components/ui/group';
 import { Collapsible, CollapsiblePanel } from '@/components/ui/collapsible';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionPanel } from '@/components/ui/accordion';
-import { Progress, ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
-import { useMemo, useState } from 'react';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionPanel,
+} from '@/components/ui/accordion';
+import { ModelUsagePanel } from './model-usage-panel';
+import { ApiEndpointsPanel } from './api-endpoints-panel';
+import { TokenListPanel } from './token-list-panel';
 
 interface Props {
   tenantId: string;
@@ -24,32 +31,7 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
     state.tenantList.find((tenant) => tenant.id === tenantId),
   );
   const balanceInfo = useBalanceStore((state) => state.balanceList[tenantId]);
-  const todayCostInfo = useCostStore((state) => state.costList[tenantId]);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-
-  // 聚合模型使用数据
-  const modelUsage = useMemo(() => {
-    if (!todayCostInfo || todayCostInfo.length === 0) return [];
-    const totalQuota = todayCostInfo.reduce((t, c) => t + c.quota, 0);
-    if (totalQuota === 0) return [];
-    const grouped = todayCostInfo.reduce(
-      (acc, c) => {
-        if (!acc[c.model_name]) acc[c.model_name] = { quota: 0, tokens: 0 };
-        acc[c.model_name].quota += c.quota;
-        acc[c.model_name].tokens += c.token_used;
-        return acc;
-      },
-      {} as Record<string, { quota: number; tokens: number }>,
-    );
-    return Object.entries(grouped)
-      .map(([model, data]) => ({
-        model,
-        ...data,
-        percent: Math.round((data.quota / totalQuota) * 100),
-      }))
-      .sort((a, b) => b.quota - a.quota)
-      .slice(0, 5);
-  }, [todayCostInfo]);
+  const todayCostInfo = useCostStore((state) => state.costList[tenantId]?.[CostPeriod.DAY_1]);
 
   if (!tenantInfo) {
     return (
@@ -80,15 +62,6 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
     : null;
   const todayTokensRaw = todayCostInfo?.reduce((t, c) => t + c.token_used, 0) ?? null;
   const todayTokens = todayTokensRaw !== null ? formatThousands(todayTokensRaw) : null;
-
-  const apiEndpoints = tenantInfo.info?.api_info;
-
-  const handleCopy = (e: React.MouseEvent, endpoint: { id: number; url: string }) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(endpoint.url);
-    setCopiedId(endpoint.id);
-    setTimeout(() => setCopiedId(null), 1500);
-  };
 
   return (
     <div className="group relative">
@@ -128,75 +101,34 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
           <div className="flex justify-between">
             <span>今日用量</span>
             <span className="text-foreground">
-              {todayTokens ? `${todayTokens} ${todayTokensRaw <= 1 ? 'token' : 'tokens'}` : '–'}
+              {todayTokens
+                ? `${todayTokens} ${(todayTokensRaw || 0) <= 1 ? 'token' : 'tokens'}`
+                : '–'}
             </span>
           </div>
         </div>
 
-        {/* 选中态详情展开 */}
         <Collapsible open={isSelected}>
           <CollapsiblePanel>
             <Accordion className="border-border mt-3 border-t">
               <AccordionItem value="model-usage">
-                <AccordionTrigger className="py-2 text-xs">今日模型消耗</AccordionTrigger>
+                <AccordionTrigger className="py-2 text-xs">模型消耗</AccordionTrigger>
                 <AccordionPanel className="pb-2">
-                  {modelUsage.length > 0 ? (
-                    <div className="space-y-2">
-                      {modelUsage.map((item) => (
-                        <div key={item.model} className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-foreground truncate">{item.model}</span>
-                            <span className="text-muted-foreground tabular-nums">
-                              {quotaToPrice(item.quota, quotaUnit, displayType)} ·{' '}
-                              {formatThousands(item.tokens)} tokens
-                            </span>
-                          </div>
-                          <Progress value={item.percent} className="h-1">
-                            <ProgressTrack className="h-1">
-                              <ProgressIndicator className="bg-foreground/72" />
-                            </ProgressTrack>
-                          </Progress>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-xs">暂无数据</p>
-                  )}
+                  <ModelUsagePanel tenantId={tenantId} />
+                </AccordionPanel>
+              </AccordionItem>
+
+              <AccordionItem value="tokens">
+                <AccordionTrigger className="py-2 text-xs">令牌列表</AccordionTrigger>
+                <AccordionPanel className="pb-2">
+                  <TokenListPanel tenantId={tenantId} />
                 </AccordionPanel>
               </AccordionItem>
 
               <AccordionItem value="api-endpoints">
                 <AccordionTrigger className="py-2 text-xs">API 端点</AccordionTrigger>
                 <AccordionPanel className="pb-2">
-                  {apiEndpoints && apiEndpoints.length > 0 ? (
-                    <div className="space-y-2">
-                      {apiEndpoints.map((endpoint) => (
-                        <div key={endpoint.id} className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-foreground">{endpoint.route}</span>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="size-5"
-                              onClick={(e) => handleCopy(e, endpoint)}
-                              aria-label={`复制 ${endpoint.route} 端点`}
-                            >
-                              {copiedId === endpoint.id ? (
-                                <Check className="text-success size-3" />
-                              ) : (
-                                <Copy className="size-3" />
-                              )}
-                            </Button>
-                          </div>
-                          <p className="text-muted-foreground truncate font-mono text-[11px]">
-                            {endpoint.url}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-xs">暂无数据</p>
-                  )}
+                  <ApiEndpointsPanel tenantId={tenantId} />
                 </AccordionPanel>
               </AccordionItem>
             </Accordion>

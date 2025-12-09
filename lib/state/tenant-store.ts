@@ -2,32 +2,32 @@ import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createPersistentStore } from './create-persistent-store';
 
-import type { Tenant, TenantInfo } from '@/types/tenant';
+import type { Tenant, TenantId, TenantInfo } from '@/types/tenant';
 
 // Define persisted data structure
 type TenantPersistedState = {
-  selectedTenantId: string;
+  selectedTenantId: TenantId;
   tenantList: Tenant[];
 };
 
 // Define complete store state
 export type TenantStoreState = {
   // Persisted fields
-  selectedTenantId: string;
+  selectedTenantId: TenantId;
   tenantList: Tenant[];
 
   // Runtime fields
   ready: boolean;
 
   // Basic setters (with persistence)
-  setSelectedTenantId: (tenantId: string) => Promise<void>;
+  setSelectedTenantId: (tenantId: TenantId) => Promise<void>;
   setTenantList: (tenants: Tenant[]) => Promise<void>;
   addTenant: (tenant: Tenant) => Promise<void>;
-  updateTenant: (id: string, updates: Partial<Tenant>) => Promise<void>;
-  removeTenant: (id: string) => Promise<void>;
+  updateTenant: (id: TenantId, updates: Partial<Tenant>) => Promise<void>;
+  removeTenant: (id: TenantId) => Promise<void>;
 
   // Async business actions (selective persistence)
-  updateTenantInfo: (tenantId: string, info: TenantInfo) => Promise<void>;
+  updateTenantInfo: (tenantId: TenantId, info: TenantInfo) => Promise<void>;
 
   // Internal methods
   hydrate: () => Promise<void>;

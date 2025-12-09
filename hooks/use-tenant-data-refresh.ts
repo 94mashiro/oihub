@@ -5,12 +5,20 @@ import { balanceStore, type TenantBalance } from '@/lib/state/balance-store';
 import { costStore, type CostData } from '@/lib/state/cost-store';
 import { createNewAPIClient, defaultErrorHandler } from '@/lib/api/newapi';
 import type { TenantInfo } from '@/types/tenant';
+import { Token, TokenGroup } from '@/types/token';
+import { PaginationResult, CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
+import { tokenStore } from '@/lib/state/token-store';
 
-function getTodayTimestampRange(): [number, number] {
-  return [
-    Math.floor(new Date().setHours(0, 0, 0, 0) / 1000),
-    Math.floor(new Date().setHours(23, 59, 59, 999) / 1000),
-  ];
+const ALL_PERIODS = [CostPeriod.DAY_1, CostPeriod.DAY_7, CostPeriod.DAY_14, CostPeriod.DAY_30];
+
+function getTimestampRange(period: CostPeriod): [number, number] {
+  const now = new Date();
+  const end = Math.floor(now.setHours(23, 59, 59, 999) / 1000);
+  const days = COST_PERIOD_DAYS[period];
+  const start = Math.floor(
+    new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0) / 1000,
+  );
+  return [start, end];
 }
 
 export function useTenantDataRefresh() {
@@ -21,15 +29,23 @@ export function useTenantDataRefresh() {
   const refresh = useCallback(async () => {
     if (!client || !selectedTenantId) return;
 
-    const [start, end] = getTodayTimestampRange();
+    const costRequests = ALL_PERIODS.map((period) => {
+      const [start, end] = getTimestampRange(period);
+      return client
+        .get<
+          CostData[]
+        >(`/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`)
+        .then((data) => ({ period, data }));
+    });
 
-    const [infoResult, balanceResult, costResult] = await Promise.allSettled([
-      client.get<TenantInfo>('/api/status'),
-      client.get<TenantBalance>('/api/user/self'),
-      client.get<CostData[]>(
-        `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
-      ),
-    ]);
+    const [infoResult, balanceResult, tokenResult, tokenGroupsResult, ...costResults] =
+      await Promise.allSettled([
+        client.get<TenantInfo>('/api/status'),
+        client.get<TenantBalance>('/api/user/self'),
+        client.get<PaginationResult<Token>>(`/api/token/?p=1&size=100`),
+        client.get<Record<string, TokenGroup>>(`/api/user/self/groups`),
+        ...costRequests,
+      ]);
 
     if (infoResult.status === 'fulfilled') {
       await tenantStore.getState().updateTenantInfo(selectedTenantId, infoResult.value);
@@ -37,14 +53,21 @@ export function useTenantDataRefresh() {
     if (balanceResult.status === 'fulfilled') {
       await balanceStore.getState().setBalance(selectedTenantId, balanceResult.value);
     }
-    if (costResult.status === 'fulfilled') {
-      await costStore.getState().setCost(selectedTenantId, costResult.value);
+    if (tokenResult.status === 'fulfilled') {
+      await tokenStore.getState().setTokens(selectedTenantId, tokenResult.value.items);
+    }
+    if (tokenGroupsResult.status === 'fulfilled') {
+      await tokenStore.getState().setTokenGroups(selectedTenantId, tokenGroupsResult.value);
+    }
+    for (const result of costResults) {
+      if (result.status === 'fulfilled') {
+        const { period, data } = result.value;
+        await costStore.getState().setCost(selectedTenantId, period, data);
+      }
     }
   }, [client, selectedTenantId]);
 
   const refreshAll = useCallback(async () => {
-    const [start, end] = getTodayTimestampRange();
-
     await Promise.allSettled(
       tenantList.map(async (tenant) => {
         const tenantClient = createNewAPIClient({
@@ -54,12 +77,19 @@ export function useTenantDataRefresh() {
           onError: defaultErrorHandler,
         });
 
-        const [infoResult, balanceResult, costResult] = await Promise.allSettled([
+        const costRequests = ALL_PERIODS.map((period) => {
+          const [start, end] = getTimestampRange(period);
+          return tenantClient
+            .get<
+              CostData[]
+            >(`/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`)
+            .then((data) => ({ period, data }));
+        });
+
+        const [infoResult, balanceResult, ...costResults] = await Promise.allSettled([
           tenantClient.get<TenantInfo>('/api/status'),
           tenantClient.get<TenantBalance>('/api/user/self'),
-          tenantClient.get<CostData[]>(
-            `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
-          ),
+          ...costRequests,
         ]);
 
         if (infoResult.status === 'fulfilled') {
@@ -68,8 +98,11 @@ export function useTenantDataRefresh() {
         if (balanceResult.status === 'fulfilled') {
           await balanceStore.getState().setBalance(tenant.id, balanceResult.value);
         }
-        if (costResult.status === 'fulfilled') {
-          await costStore.getState().setCost(tenant.id, costResult.value);
+        for (const result of costResults) {
+          if (result.status === 'fulfilled') {
+            const { period, data } = result.value;
+            await costStore.getState().setCost(tenant.id, period, data);
+          }
         }
       }),
     );

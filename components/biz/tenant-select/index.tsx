@@ -77,12 +77,9 @@ const TenantSelector = () => {
           {tenantList.map((tenant) => (
             <FramePanel
               key={tenant.id}
-              className={cn(
-                'w-full cursor-pointer rounded-md p-2 transition-all hover:bg-zinc-50',
-                {
-                  'bg-zinc-100!': selectedTenant?.id === tenant.id,
-                },
-              )}
+              className={cn('w-full rounded-md p-2 transition-all hover:bg-zinc-50', {
+                'bg-zinc-100!': selectedTenant?.id === tenant.id,
+              })}
               onClick={() => setSelectedTenantId(tenant.id)}
             >
               <TenantSelectCard

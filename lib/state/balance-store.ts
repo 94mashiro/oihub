@@ -1,6 +1,7 @@
 import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createPersistentStore } from './create-persistent-store';
+import type { TenantId } from '@/types/tenant';
 
 // Balance data structure per tenant
 export interface TenantBalance {
@@ -37,21 +38,21 @@ export interface TenantBalance {
 
 // Define persisted data structure
 type BalancePersistedState = {
-  balanceList: Record<string, TenantBalance>;
+  balanceList: Record<TenantId, TenantBalance>;
 };
 
 // Define complete store state
 export type BalanceStoreState = {
   // Persisted fields
-  balanceList: Record<string, TenantBalance>;
+  balanceList: Record<TenantId, TenantBalance>;
 
   // Runtime fields
   ready: boolean;
 
   // Actions
-  setBalance: (tenantId: string, balance: TenantBalance) => Promise<void>;
-  getBalance: (tenantId: string) => TenantBalance | undefined;
-  removeBalance: (tenantId: string) => Promise<void>;
+  setBalance: (tenantId: TenantId, balance: TenantBalance) => Promise<void>;
+  getBalance: (tenantId: TenantId) => TenantBalance | undefined;
+  removeBalance: (tenantId: TenantId) => Promise<void>;
   clearAllBalances: () => Promise<void>;
 
   // Internal methods

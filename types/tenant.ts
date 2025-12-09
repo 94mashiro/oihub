@@ -1,5 +1,5 @@
 export interface Tenant {
-  id: string;
+  id: TenantId;
   name: string;
   token: string;
   userId: string;
@@ -18,3 +18,5 @@ export interface TenantInfo {
     url: string;
   }[];
 }
+
+export type TenantId = string;
