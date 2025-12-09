@@ -16,6 +16,16 @@ import {
   AccordionTrigger,
   AccordionPanel,
 } from '@/components/ui/accordion';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogPopup,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogClose,
+} from '@/components/ui/alert-dialog';
 import { ModelUsagePanel } from './model-usage-panel';
 import { ApiEndpointsPanel } from './api-endpoints-panel';
 import { TokenListPanel } from './token-list-panel';
@@ -27,6 +37,7 @@ interface Props {
 
 const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => {
   const navigate = useNavigate();
+  const removeTenant = useTenantStore((state) => state.removeTenant);
   const tenantInfo = useTenantStore((state) =>
     state.tenantList.find((tenant) => tenant.id === tenantId),
   );
@@ -75,9 +86,33 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
           <EditIcon className="size-3" />
         </Button>
         <GroupSeparator />
-        <Button size="icon" variant="outline" className="size-6" onClick={() => {}}>
-          <Trash className="size-3 text-red-400" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <Button size="icon" variant="outline" className="size-6">
+                <Trash className="size-3 text-red-400" />
+              </Button>
+            }
+          />
+          <AlertDialogPopup>
+            <AlertDialogHeader>
+              <AlertDialogTitle>删除租户</AlertDialogTitle>
+              <AlertDialogDescription>
+                确定要删除「{tenantInfo.name}」吗？此操作无法撤销。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogClose render={<Button variant="outline">取消</Button>} />
+              <AlertDialogClose
+                render={
+                  <Button variant="destructive" onClick={() => removeTenant(tenantId)}>
+                    删除
+                  </Button>
+                }
+              />
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialog>
       </Group>
       <div className="space-y-2">
         <p className="truncate text-sm font-medium">{tenantInfo.name}</p>
