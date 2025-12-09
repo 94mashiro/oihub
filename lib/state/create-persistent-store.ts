@@ -5,6 +5,7 @@
 
 import { createStore } from 'zustand/vanilla';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
 import type { PersistentStoreConfig } from './types';
 
 /**
@@ -50,102 +51,104 @@ export function createPersistentStore<
   const { storageItem, persistConfig, createState } = config;
 
   return createStore<TState>()(
-    subscribeWithSelector((set, get) => {
-      /**
-       * Apply persisted snapshot to in-memory state
-       * Read-only operation, does not trigger persistence
-       */
-      const applySnapshot = (value: TPersistedState | null) => {
-        if (!value) return;
+    subscribeWithSelector(
+      immer((set, get) => {
+        /**
+         * Apply persisted snapshot to in-memory state
+         * Read-only operation, does not trigger persistence
+         */
+        const applySnapshot = (value: TPersistedState | null) => {
+          if (!value) return;
 
-        set((state) => {
-          const updates: Partial<TState> = {};
+          set((state) => {
+            const updates: Partial<TState> = {};
 
-          // Apply only configured persisted fields
-          for (const key of persistConfig.keys) {
-            if (key in value) {
-              // Safe cast: key is guaranteed to be in both TState and TPersistedState
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              updates[key] = value[key] as any;
+            // Apply only configured persisted fields
+            for (const key of persistConfig.keys) {
+              if (key in value) {
+                // Safe cast: key is guaranteed to be in both TState and TPersistedState
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                updates[key] = value[key] as any;
+              }
             }
+
+            return { ...state, ...updates };
+          });
+        };
+
+        /**
+         * Persist helper function for selective persistence
+         * Merges updates with existing persisted data
+         */
+        const persist = async (
+          updater: (state: TState) => Partial<TPersistedState>,
+        ): Promise<void> => {
+          const currentState = get();
+          const updates = updater(currentState);
+
+          // Merge with existing persisted data
+          const currentPersisted = await storageItem.getValue();
+          await storageItem.setValue({
+            ...currentPersisted,
+            ...updates,
+          } as TPersistedState);
+        };
+
+        /**
+         * Hydrate store from persisted storage
+         * Guards against multiple hydrations with ready flag
+         *
+         * CRITICAL: This function must be called via queueMicrotask
+         * after store initialization to avoid get() returning undefined
+         */
+        const hydrate = async () => {
+          const state = get();
+
+          // Guard: prevent duplicate hydration
+          if ((state as any).ready) {
+            return;
           }
 
-          return { ...state, ...updates };
+          try {
+            const persistedValue = await storageItem.getValue();
+            applySnapshot(persistedValue);
+            set((s) => ({ ...s, ready: true }) as TState);
+          } catch (error) {
+            // Even on failure, set ready to allow usage with fallback values
+            console.error('[createPersistentStore] Hydration failed:', error);
+            set((s) => ({ ...s, ready: true }) as TState);
+          }
+        };
+
+        /**
+         * Cross-context synchronization
+         * Listen to storage changes from other contexts and apply updates
+         */
+        storageItem.watch((value: TPersistedState | null) => {
+          applySnapshot(value);
         });
-      };
 
-      /**
-       * Persist helper function for selective persistence
-       * Merges updates with existing persisted data
-       */
-      const persist = async (
-        updater: (state: TState) => Partial<TPersistedState>,
-      ): Promise<void> => {
-        const currentState = get();
-        const updates = updater(currentState);
+        /**
+         * Create the store state with injected helpers
+         * Note: hydrate() is passed but must be called via queueMicrotask externally
+         */
+        const state = createState(set, get, persist);
 
-        // Merge with existing persisted data
-        const currentPersisted = await storageItem.getValue();
-        await storageItem.setValue({
-          ...currentPersisted,
-          ...updates,
-        } as TPersistedState);
-      };
+        /**
+         * CRITICAL: Delay hydration until after store initialization
+         * Using queueMicrotask ensures get() returns the initial state correctly
+         * See storage-state-rules.md line 17 for details
+         */
+        queueMicrotask(() => {
+          void hydrate();
+        });
 
-      /**
-       * Hydrate store from persisted storage
-       * Guards against multiple hydrations with ready flag
-       *
-       * CRITICAL: This function must be called via queueMicrotask
-       * after store initialization to avoid get() returning undefined
-       */
-      const hydrate = async () => {
-        const state = get();
-
-        // Guard: prevent duplicate hydration
-        if ((state as any).ready) {
-          return;
-        }
-
-        try {
-          const persistedValue = await storageItem.getValue();
-          applySnapshot(persistedValue);
-          set((s) => ({ ...s, ready: true }) as TState);
-        } catch (error) {
-          // Even on failure, set ready to allow usage with fallback values
-          console.error('[createPersistentStore] Hydration failed:', error);
-          set((s) => ({ ...s, ready: true }) as TState);
-        }
-      };
-
-      /**
-       * Cross-context synchronization
-       * Listen to storage changes from other contexts and apply updates
-       */
-      storageItem.watch((value: TPersistedState | null) => {
-        applySnapshot(value);
-      });
-
-      /**
-       * Create the store state with injected helpers
-       * Note: hydrate() is passed but must be called via queueMicrotask externally
-       */
-      const state = createState(set, get, persist);
-
-      /**
-       * CRITICAL: Delay hydration until after store initialization
-       * Using queueMicrotask ensures get() returns the initial state correctly
-       * See storage-state-rules.md line 17 for details
-       */
-      queueMicrotask(() => {
-        void hydrate();
-      });
-
-      // Inject hydrate method into state for manual calls if needed
-      return {
-        ...state,
-        hydrate,
-      } as TState;
-    }),
+        // Inject hydrate method into state for manual calls if needed
+        return {
+          ...state,
+          hydrate,
+        } as TState;
+      }),
+    ),
   );
 }

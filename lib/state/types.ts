@@ -4,6 +4,7 @@
  */
 
 import type { WxtStorageItem } from 'wxt/utils/storage';
+import type { Draft } from 'immer';
 
 /**
  * Configuration for selective field persistence
@@ -67,7 +68,7 @@ export type PersistFn<TPersistedState> = (
  * ```
  */
 export type CreateStateFn<TState, TPersistedState> = (
-  set: (updater: (state: TState) => TState) => void,
+  set: (updater: (draft: Draft<TState>) => void) => void,
   get: () => TState,
   persist: PersistFn<TPersistedState>,
 ) => TState;

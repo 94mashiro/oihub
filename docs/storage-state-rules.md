@@ -64,24 +64,35 @@
 - **Mandatory**: NEVER manually call `storageItem.setValue` from inside a `watch` callback, as this creates infinite loops. The factory function's `applySnapshot` is read-only and safe.
 
 ### Action Patterns
-- **Mandatory**: All actions that modify persisted state MUST be async and return `Promise<void>`:
+- **Mandatory**: All actions that modify persisted state MUST be async and return `Promise<void>`.
+- **Mandatory**: Use immer-style direct mutation in `set()` callbacks (immer middleware is built into `createPersistentStore`):
+  ```typescript
+  // Simple assignment
+  set((state) => { state.selectedTenantId = tenantId; });
+
+  // Array operations
+  set((state) => { state.tenantList.push(tenant); });
+  set((state) => { state.tenantList = state.tenantList.filter(t => t.id !== id); });
+
+  // Deep nested updates
+  set((state) => {
+    const tenant = state.tenantList.find(t => t.id === id);
+    if (tenant) Object.assign(tenant, updates);
+  });
+
+  // Object operations
+  set((state) => { state.balanceList[tenantId] = balance; });
+  set((state) => { delete state.balanceList[tenantId]; });
+  ```
+- **Mandatory**: Complete action pattern:
   ```typescript
   setSelectedTenantId: async (tenantId) => {
-    set((state) => ({ ...state, selectedTenantId: tenantId }));
+    set((state) => { state.selectedTenantId = tenantId; });
     await persist((state) => ({
       selectedTenantId: tenantId,
       tenantList: state.tenantList,
     }));
   },
-  ```
-- **Recommended**: For complex nested updates, use `immer`'s `produce` to avoid manual spreading:
-  ```typescript
-  const newList = produce(get().tenantList, (draft) => {
-    const tenant = draft.find((t) => t.id === id);
-    if (tenant) {
-      Object.assign(tenant, updates);
-    }
-  });
   ```
 
 ## Global State Rules
@@ -168,7 +179,7 @@
    });
    ```
 
-3. **Create store with factory**:
+3. **Create store with factory** (immer middleware is built-in, use direct mutation):
    ```typescript
    export const featureStore = createPersistentStore<
      FeatureStoreState,
@@ -185,7 +196,7 @@
        field2: 0,
 
        setField1: async (value) => {
-         set((state) => ({ ...state, field1: value }));
+         set((state) => { state.field1 = value; });
          await persist((state) => ({
            field1: value,
            field2: state.field2,

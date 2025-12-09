@@ -1,14 +1,18 @@
-export type TenantOption = {
-  description: string;
-  label: string;
-  value: string;
-};
+import { Tenant } from '@/types/tenant';
 
-export const tenantOptions: TenantOption[] = [
-  { description: 'npx create-next-app', label: 'Next.js', value: 'next' },
-  { description: 'npm create vite@latest', label: 'Vite', value: 'vite' },
-  { description: 'npm create astro@latest', label: 'Astro', value: 'astro' },
-  { description: 'npx create-remix', label: 'Remix', value: 'remix' },
+export const tenantOptions: Tenant[] = [
+  {
+    id: '1',
+    name: 'PackyCode 01',
+    url: 'https://www.packyapi.com',
+    userId: '4705',
+    token: 'dN+e4mPP+qg+cbDWSJKP8dFFFBAPfg==',
+  },
+  {
+    id: '2',
+    name: 'PackyCode 02',
+    url: 'https://www.packyapi.com',
+    userId: '109',
+    token: 'koJjLXQBzcy88SoZXGt07KSDmFT/+A==',
+  },
 ];
-
-export const defaultTenant = tenantOptions[0];

@@ -1,8 +1,6 @@
 import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
-import { produce } from 'immer';
 import { createPersistentStore } from './create-persistent-store';
-import { createOneAPIClient } from '@/lib/api/oneapi/client';
 
 import type { Tenant, TenantInfo } from '@/types/tenant';
 
@@ -29,7 +27,7 @@ export type TenantStoreState = {
   removeTenant: (id: string) => Promise<void>;
 
   // Async business actions (selective persistence)
-  fetchTenantInfo: (tenantId: string) => Promise<void>;
+  updateTenantInfo: (tenantId: string, info: TenantInfo) => Promise<void>;
 
   // Internal methods
   hydrate: () => Promise<void>;
@@ -73,7 +71,9 @@ export const tenantStore = createPersistentStore<
 
     // Basic setters - using persist() helper
     setSelectedTenantId: async (tenantId) => {
-      set((state) => ({ ...state, selectedTenantId: tenantId }));
+      set((state) => {
+        state.selectedTenantId = tenantId;
+      });
       await persist((state) => ({
         selectedTenantId: tenantId,
         tenantList: state.tenantList,
@@ -81,7 +81,9 @@ export const tenantStore = createPersistentStore<
     },
 
     setTenantList: async (tenants) => {
-      set((state) => ({ ...state, tenantList: tenants }));
+      set((state) => {
+        state.tenantList = tenants;
+      });
       await persist((state) => ({
         selectedTenantId: state.selectedTenantId,
         tenantList: tenants,
@@ -89,72 +91,46 @@ export const tenantStore = createPersistentStore<
     },
 
     addTenant: async (tenant) => {
-      const newList = [...get().tenantList, tenant];
-      set((state) => ({ ...state, tenantList: newList }));
+      set((state) => {
+        state.tenantList.push(tenant);
+      });
       await persist((state) => ({
         selectedTenantId: state.selectedTenantId,
-        tenantList: newList,
+        tenantList: state.tenantList,
       }));
     },
 
     updateTenant: async (id, updates) => {
-      const newList = produce(get().tenantList, (draft) => {
-        const tenant = draft.find((t) => t.id === id);
-        if (tenant) {
-          Object.assign(tenant, updates);
-        }
+      set((state) => {
+        const tenant = state.tenantList.find((t) => t.id === id);
+        if (tenant) Object.assign(tenant, updates);
       });
-      set((state) => ({ ...state, tenantList: newList }));
       await persist((state) => ({
         selectedTenantId: state.selectedTenantId,
-        tenantList: newList,
+        tenantList: state.tenantList,
       }));
     },
 
     removeTenant: async (id) => {
-      const newList = get().tenantList.filter((t) => t.id !== id);
-      set((state) => ({ ...state, tenantList: newList }));
+      set((state) => {
+        state.tenantList = state.tenantList.filter((t) => t.id !== id);
+      });
       await persist((state) => ({
         selectedTenantId: state.selectedTenantId,
-        tenantList: newList,
+        tenantList: state.tenantList,
       }));
     },
 
     // Async business actions
-    fetchTenantInfo: async (tenantId) => {
-      try {
-        const tenant = get().tenantList.find((t) => t.id === tenantId);
-        if (!tenant) return;
-
-        const client = createOneAPIClient({
-          baseURL: tenant.url,
-          token: tenant.token,
-          userId: tenant.userId,
-        });
-
-        const info = await client.get<TenantInfo>('/api/status');
-
-        // Update memory state with immer - 支持深层字段更新
-        const newList = produce(get().tenantList, (draft) => {
-          const target = draft.find((t) => t.id === tenantId);
-          if (target) {
-            if (!target.info) target.info = {} as TenantInfo;
-            target.info.quota_per_unit = info.quota_per_unit;
-            target.info.usd_exchange_rate = info.usd_exchange_rate;
-            target.info.api_info = info.api_info;
-          }
-        });
-
-        set((state) => ({ ...state, tenantList: newList }));
-
-        // Selective persistence - persist the tenant info
-        await persist((state) => ({
-          selectedTenantId: state.selectedTenantId,
-          tenantList: newList,
-        }));
-      } catch (error) {
-        console.error('[fetchTenantInfo] Failed:', error);
-      }
+    updateTenantInfo: async (tenantId, info) => {
+      set((state) => {
+        const target = state.tenantList.find((t) => t.id === tenantId);
+        if (target) target.info = info;
+      });
+      await persist((state) => ({
+        selectedTenantId: state.selectedTenantId,
+        tenantList: state.tenantList,
+      }));
     },
 
     // hydrate is injected by createPersistentStore

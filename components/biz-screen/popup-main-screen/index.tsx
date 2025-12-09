@@ -2,22 +2,22 @@ import TenantSelector from '@/components/biz/tenant-select';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useTenantStore, getSelectedTenant } from '@/lib/state/tenant-store';
+import { refreshTenantData } from '@/lib/state/tenant-data-coordinator';
 import { useEffect } from 'react';
 
 const PopupMainScreen = () => {
   const navigate = useNavigate();
   const selectedTenant = useTenantStore((state) => getSelectedTenant(state));
-  const fetchTenantInfo = useTenantStore((state) => state.fetchTenantInfo);
 
   useEffect(() => {
     if (!selectedTenant?.id) {
       return;
     }
-    fetchTenantInfo(selectedTenant.id);
-  }, [fetchTenantInfo, selectedTenant?.id]);
+    refreshTenantData(selectedTenant.id);
+  }, [selectedTenant?.id]);
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
+    <div className="flex h-full flex-col gap-4">
       <TenantSelector />
 
       {selectedTenant && (

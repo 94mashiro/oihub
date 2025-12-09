@@ -5,12 +5,12 @@ export interface Tenant {
   userId: string;
   url: string;
   info?: TenantInfo;
-  balance?: TenantBalance;
 }
 
 export interface TenantInfo {
   quota_per_unit: number;
   usd_exchange_rate: number;
+  quota_display_type: string;
   api_info: {
     id: number;
     route: string;
@@ -18,5 +18,3 @@ export interface TenantInfo {
     url: string;
   }[];
 }
-
-export interface TenantBalance {}

@@ -58,19 +58,19 @@ const PopupTenantCreateScreen = () => {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
+    <div className="flex h-full flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Create New Tenant</h1>
       </div>
 
       {submitError && (
-        <div className="rounded-lg border border-destructive/36 bg-destructive/4 p-3 text-sm text-destructive-foreground">
+        <div className="border-destructive/36 bg-destructive/4 text-destructive-foreground rounded-lg border p-3 text-sm">
           {submitError}
         </div>
       )}
 
       {!ready ? (
-        <div className="text-sm text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground text-sm">Loading...</div>
       ) : (
         <Form onSubmit={handleSubmit}>
           <Field>
@@ -150,7 +150,7 @@ const PopupTenantCreateScreen = () => {
             <FieldError match="valueMissing">User ID is required</FieldError>
           </Field>
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
