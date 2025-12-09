@@ -7,24 +7,17 @@ import { clientManager, TenantAPIService } from '@/lib/api';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
 
-const ALL_PERIODS = [CostPeriod.DAY_1, CostPeriod.DAY_7, CostPeriod.DAY_14, CostPeriod.DAY_30];
-
 async function refreshTenantData(tenant: Tenant) {
   const client = clientManager.getClient(tenant);
   const api = new TenantAPIService(client);
 
-  const costRequests = ALL_PERIODS.map(async (period) => {
-    const data = await api.getCostData(period);
-    return { period, data };
-  });
-
-  const [infoResult, balanceResult, tokenResult, tokenGroupsResult, ...costResults] =
+  const [infoResult, balanceResult, tokenResult, tokenGroupsResult, costResult] =
     await Promise.allSettled([
       api.getStatus(),
       api.getSelfInfo(),
       api.getTokens(),
       api.getTokenGroups(),
-      ...costRequests,
+      api.getCostData(CostPeriod.DAY_1),
     ]);
 
   if (infoResult.status === 'fulfilled') {
@@ -39,12 +32,19 @@ async function refreshTenantData(tenant: Tenant) {
   if (tokenGroupsResult.status === 'fulfilled') {
     await tokenStore.getState().setTokenGroups(tenant.id, tokenGroupsResult.value);
   }
-  for (const result of costResults) {
-    if (result.status === 'fulfilled') {
-      const { period, data } = result.value;
-      await costStore.getState().setCost(tenant.id, period, data);
-    }
+  if (costResult.status === 'fulfilled') {
+    await costStore.getState().setCost(tenant.id, CostPeriod.DAY_1, costResult.value);
   }
+}
+
+export async function ensureCostLoaded(tenant: Tenant, period: CostPeriod): Promise<void> {
+  const cached = costStore.getState().getCost(tenant.id, period);
+  if (cached) return;
+
+  const client = clientManager.getClient(tenant);
+  const api = new TenantAPIService(client);
+  const data = await api.getCostData(period);
+  await costStore.getState().setCost(tenant.id, period, data);
 }
 
 export function useTenantDataRefresh() {

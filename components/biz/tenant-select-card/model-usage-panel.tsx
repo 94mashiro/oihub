@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useCostStore } from '@/lib/state/cost-store';
+import { ensureCostLoaded } from '@/hooks/use-tenant-data-refresh';
 import { quotaToPrice } from '@/utils/quota-to-price';
 import { formatThousands } from '@/utils/format-number';
 import { Progress, ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
@@ -53,7 +54,14 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
 
   return (
     <div className="space-y-2">
-      <Tabs value={period} onValueChange={(v) => setPeriod(v as CostPeriod)}>
+      <Tabs
+        value={period}
+        onValueChange={(v) => {
+          const newPeriod = v as CostPeriod;
+          setPeriod(newPeriod);
+          if (tenantInfo) ensureCostLoaded(tenantInfo, newPeriod);
+        }}
+      >
         <TabsList className="h-6 gap-0 p-0.5 text-xs">
           {Object.values(CostPeriod).map((p) => (
             <TabsTab key={p} value={p} className="h-5 px-2 py-0 text-xs">
