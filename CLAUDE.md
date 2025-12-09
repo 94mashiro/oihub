@@ -37,6 +37,13 @@ Quick reference:
 ## Storage & State Rules
 Before touching any persistent or cross-context data, read `docs/storage-state-rules.md` and follow every mandatory rule in it: declare storage items under `lib/state` via `storage.defineItem`, keep stores in the Zustand vanilla + `hydrate/ready` pattern, access state from React only through selector hooks, and never interact with `browser.storage*`/`localStorage` directly. Code reviews will enforce this document.
 
+## API Architecture Rules
+Before working with any API calls, read `docs/api-architecture.md` for the layered architecture design. Key rules:
+- **Never create APIClient directly** - use `clientManager.getClient(tenant)` to reuse instances
+- **Never hardcode API URLs in hooks/components** - add endpoints to `TenantAPIService` in `lib/api/services/`
+- **All API responses must have explicit types** - no `any` types allowed
+- Import from `@/lib/api` (unified export), not from internal paths like `@/lib/api/client/`
+
 ## Third-Party Dependency Policy
 Before introducing, upgrading, or otherwise working with any third-party dependency, you must first use Context7 (resolve-library-id + get-library-docs) to gather the latest documentation context, and only proceed to design or implement changes after that context is established.
 

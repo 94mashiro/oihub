@@ -193,6 +193,7 @@ const PopupTenantEditScreen = () => {
                   disabled={isSubmitting}
                   size="sm"
                   className="text-sm"
+                  type="number"
                 />
               )}
             />

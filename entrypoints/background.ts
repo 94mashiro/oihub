@@ -4,27 +4,24 @@ interface FetchRequest {
   url: string;
   method?: string;
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
   timeout?: number;
   cache?: { ttl?: number } | false;
 }
 
 // Simple in-memory cache for GET requests
 const fetchCache = new Map<string, { data: FetchResponse; expiry: number }>();
-const DEFAULT_CACHE_TTL = 30000; // 30 seconds
+const DEFAULT_CACHE_TTL = 60000; // 1 minute
+const MAX_CACHE_SIZE = 100;
 
-/** Simple hash function for cache keys */
-function hashKey(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
-  }
-  return hash.toString(36);
+/** Generate cache key using full URL and user ID */
+function generateCacheKey(url: string, headers: Record<string, string>): string {
+  return JSON.stringify({ url, user: headers['New-Api-User'] });
 }
 
 interface FetchResponse {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   status?: number;
 }
@@ -68,7 +65,7 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
 
   // Check cache for GET requests (key includes user ID for user-specific data)
   const useCache = cache !== false && method === 'GET';
-  const cacheKey = hashKey(`${url}|${headers['New-Api-User'] ?? ''}`);
+  const cacheKey = generateCacheKey(url, headers);
   if (useCache) {
     const cached = fetchCache.get(cacheKey);
     if (cached && cached.expiry > Date.now()) {
@@ -96,7 +93,7 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
     const response = await fetch(url, fetchOptions);
     clearTimeout(timeoutId);
 
-    let data: any;
+    let data: unknown;
     const contentType = response.headers.get('content-type');
 
     if (contentType?.includes('application/json')) {
@@ -108,7 +105,9 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
     if (!response.ok) {
       return {
         success: false,
-        error: data?.message || `HTTP ${response.status}: ${response.statusText}`,
+        error:
+          (data as { message?: string })?.message ||
+          `HTTP ${response.status}: ${response.statusText}`,
         status: response.status,
         data,
       };
@@ -120,15 +119,20 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
       status: response.status,
     };
 
-    // Cache successful GET responses
+    // Cache successful GET responses with LRU eviction
     if (useCache) {
+      // LRU: remove oldest entry if cache is full
+      if (fetchCache.size >= MAX_CACHE_SIZE) {
+        const oldest = fetchCache.keys().next().value;
+        if (oldest) fetchCache.delete(oldest);
+      }
       const ttl = (cache && typeof cache === 'object' ? cache.ttl : undefined) ?? DEFAULT_CACHE_TTL;
       fetchCache.set(cacheKey, { data: result, expiry: Date.now() + ttl });
     }
 
     return result;
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
       return {
         success: false,
         error: 'Request timeout',
@@ -136,7 +140,7 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
     }
     return {
       success: false,
-      error: error.message || 'Network error',
+      error: error instanceof Error ? error.message : 'Network error',
     };
   }
 }
