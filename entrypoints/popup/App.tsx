@@ -2,17 +2,25 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 
 import PopupMainScreen from '@/components/biz-screen/popup-main-screen';
 import PopupTenantCreateScreen from '@/components/biz-screen/popup-tenant-create-screen';
+import PopupTenantEditScreen from '@/components/biz-screen/popup-tenant-edit-screen';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ToastProvider } from '@/components/ui/toast';
 
 const Popup = () => {
   return (
-    <HashRouter>
-      <div className="h-[560px] min-h-[560px] w-[420px] min-w-[420px] overflow-x-hidden overflow-y-auto p-3">
-        <Routes>
-          <Route path="/" element={<PopupMainScreen />} />
-          <Route path="/tenant/create" element={<PopupTenantCreateScreen />} />
-        </Routes>
-      </div>
-    </HashRouter>
+    <ToastProvider position="top-center" limit={1}>
+      <HashRouter>
+        <div className="m-2 w-[420px]">
+          <ScrollArea className="h-[580px]">
+            <Routes>
+              <Route path="/" element={<PopupMainScreen />} />
+              <Route path="/tenant/create" element={<PopupTenantCreateScreen />} />
+              <Route path="/tenant/edit/:id" element={<PopupTenantEditScreen />} />
+            </Routes>
+          </ScrollArea>
+        </div>
+      </HashRouter>
+    </ToastProvider>
   );
 };
 

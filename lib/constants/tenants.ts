@@ -15,4 +15,11 @@ export const tenantOptions: Tenant[] = [
     userId: '109',
     token: 'koJjLXQBzcy88SoZXGt07KSDmFT/+A==',
   },
+  {
+    id: '3',
+    name: 'DuckCoding',
+    url: 'https://www.duckcoding.com',
+    userId: '7712',
+    token: 'KV9X7UbuY3lYNRZC2vuXri2VA6c3',
+  },
 ];

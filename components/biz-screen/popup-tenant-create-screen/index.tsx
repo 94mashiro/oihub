@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 import { useTenantStore } from '@/lib/state/tenant-store';
 import type { Tenant } from '@/types/tenant';
@@ -7,6 +8,28 @@ import { Form } from '@/components/ui/form';
 import { Field, FieldControl, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Frame,
+  FrameDescription,
+  FrameFooter,
+  FrameHeader,
+  FramePanel,
+  FrameTitle,
+} from '@/components/ui/frame';
+const PROVIDER_PRESETS = [
+  {
+    id: 'packy',
+    name: 'PackyAPI',
+    url: 'https://www.packyapi.com',
+    icon: 'https://www.packyapi.com/logo.svg',
+  },
+  {
+    id: 'duckcoding',
+    name: 'DuckCoding',
+    url: 'https://duckcoding.com',
+    icon: 'https://s3.bmp.ovh/imgs/2025/02/26/8e28432e3ca1fefd.gif',
+  },
+] as const;
 
 const PopupTenantCreateScreen = () => {
   const navigate = useNavigate();
@@ -21,19 +44,19 @@ const PopupTenantCreateScreen = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const applyPreset = (preset: (typeof PROVIDER_PRESETS)[number]) => {
+    setFormData((prev) => ({ ...prev, name: preset.name, url: preset.url }));
+  };
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitError(null);
 
-    // Browser validation check
     const form = e.currentTarget;
-    if (!form.checkValidity()) {
-      return;
-    }
+    if (!form.checkValidity()) return;
 
-    // Generate new tenant object
     const newTenant: Tenant = {
       id: crypto.randomUUID(),
       name: formData.name.trim(),
@@ -42,130 +65,169 @@ const PopupTenantCreateScreen = () => {
       userId: formData.userId.trim(),
     };
 
-    // Submit to store
     setIsSubmitting(true);
     try {
       await addTenant(newTenant);
-      // Navigate back on success
       navigate(-1);
     } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : 'Failed to create tenant. Please try again.',
-      );
+      setSubmitError(error instanceof Error ? error.message : '创建失败，请重试');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Create New Tenant</h1>
-      </div>
-
-      {submitError && (
-        <div className="border-destructive/36 bg-destructive/4 text-destructive-foreground rounded-lg border p-3 text-sm">
-          {submitError}
+    <Frame>
+      <FrameHeader className="relative p-2">
+        <div className="absolute top-2.5 left-2">
+          <Button size="icon" variant="ghost" onClick={() => navigate(-1)}>
+            <ArrowLeft />
+          </Button>
         </div>
-      )}
+        <div className="pl-10">
+          <FrameTitle>添加账号</FrameTitle>
+          <FrameDescription className="mt-0.5 text-xs">配置 API 访问凭证</FrameDescription>
+        </div>
+      </FrameHeader>
 
-      {!ready ? (
-        <div className="text-muted-foreground text-sm">Loading...</div>
-      ) : (
-        <Form onSubmit={handleSubmit}>
-          <Field>
-            <FieldLabel htmlFor="tenant-name">Tenant Name</FieldLabel>
-            <FieldControl
-              render={() => (
-                <Input
-                  id="tenant-name"
-                  name="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  required
-                  minLength={1}
-                  placeholder="e.g., My Production Tenant"
-                  disabled={isSubmitting}
-                />
-              )}
-            />
-            <FieldError match="valueMissing">Tenant name is required</FieldError>
-            <FieldError match="tooShort">Tenant name is too short</FieldError>
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="tenant-url">API URL</FieldLabel>
-            <FieldControl
-              render={() => (
-                <Input
-                  id="tenant-url"
-                  name="url"
-                  type="url"
-                  value={formData.url}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
-                  required
-                  placeholder="https://api.example.com"
-                  disabled={isSubmitting}
-                />
-              )}
-            />
-            <FieldError match="valueMissing">API URL is required</FieldError>
-            <FieldError match="typeMismatch">Please enter a valid URL</FieldError>
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="tenant-token">Access Token</FieldLabel>
-            <FieldControl
-              render={() => (
-                <Input
-                  id="tenant-token"
-                  name="token"
-                  type="password"
-                  value={formData.token}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, token: e.target.value }))}
-                  required
-                  placeholder="Enter your access token"
-                  disabled={isSubmitting}
-                />
-              )}
-            />
-            <FieldError match="valueMissing">Access token is required</FieldError>
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="tenant-userId">User ID</FieldLabel>
-            <FieldControl
-              render={() => (
-                <Input
-                  id="tenant-userId"
-                  name="userId"
-                  value={formData.userId}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, userId: e.target.value }))}
-                  required
-                  placeholder="e.g., user123"
-                  disabled={isSubmitting}
-                />
-              )}
-            />
-            <FieldError match="valueMissing">User ID is required</FieldError>
-          </Field>
-
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate(-1)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting || !ready}>
-              {isSubmitting ? 'Creating...' : 'Create Tenant'}
-            </Button>
+      <FramePanel className="p-3">
+        {submitError && (
+          <div className="border-destructive/32 bg-destructive/4 text-destructive-foreground mb-3 rounded-md border p-2.5 text-xs">
+            {submitError}
           </div>
-        </Form>
-      )}
-    </div>
+        )}
+
+        {!ready ? (
+          <div className="text-muted-foreground text-sm">加载中...</div>
+        ) : (
+          <Form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-muted-foreground text-xs">快速选择</span>
+              <div className="flex flex-wrap gap-1.5">
+                {PROVIDER_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2.5 text-xs"
+                    onClick={() => applyPreset(preset)}
+                    disabled={isSubmitting}
+                  >
+                    {preset.icon && <img src={preset.icon} alt="" className="size-3.5" />}
+                    {preset.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <Field>
+              <FieldLabel htmlFor="tenant-name" className="text-xs">
+                名称
+              </FieldLabel>
+              <FieldControl
+                render={() => (
+                  <Input
+                    id="tenant-name"
+                    name="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    required
+                    placeholder="生产环境"
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="text-sm"
+                  />
+                )}
+              />
+              <FieldError match="valueMissing">请输入名称</FieldError>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="tenant-url" className="text-xs">
+                API 地址
+              </FieldLabel>
+              <FieldControl
+                render={() => (
+                  <Input
+                    id="tenant-url"
+                    name="url"
+                    type="url"
+                    value={formData.url}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
+                    required
+                    placeholder="https://api.example.com"
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="text-sm"
+                  />
+                )}
+              />
+              <FieldError match="valueMissing">请输入 API 地址</FieldError>
+              <FieldError match="typeMismatch">请输入有效的 URL</FieldError>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="tenant-token" className="text-xs">
+                访问令牌
+              </FieldLabel>
+              <FieldControl
+                render={() => (
+                  <Input
+                    id="tenant-token"
+                    name="token"
+                    type="password"
+                    value={formData.token}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, token: e.target.value }))}
+                    required
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="text-sm"
+                  />
+                )}
+              />
+              <FieldError match="valueMissing">请输入访问令牌</FieldError>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="tenant-userId" className="text-xs">
+                用户 ID
+              </FieldLabel>
+              <FieldControl
+                render={() => (
+                  <Input
+                    id="tenant-userId"
+                    name="userId"
+                    value={formData.userId}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, userId: e.target.value }))}
+                    required
+                    disabled={isSubmitting}
+                    size="sm"
+                    className="text-sm"
+                  />
+                )}
+              />
+              <FieldError match="valueMissing">请输入用户 ID</FieldError>
+            </Field>
+          </Form>
+        )}
+      </FramePanel>
+
+      <FrameFooter className="flex justify-end gap-2 px-0 py-3">
+        <Button
+          size="sm"
+          type="submit"
+          form="tenant-create-form"
+          disabled={isSubmitting || !ready}
+          onClick={() => {
+            const form = document.querySelector('form');
+            if (form) form.requestSubmit();
+          }}
+        >
+          {isSubmitting ? '创建中...' : '创建'}
+        </Button>
+      </FrameFooter>
+    </Frame>
   );
 };
 

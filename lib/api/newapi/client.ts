@@ -1,22 +1,24 @@
 import { apiFetch } from '@/lib/api/fetch';
-import { OneAPIError, type OneAPIConfig, type OneAPIResponse } from './types';
+import { NewAPIError, type NewAPIConfig, type NewAPIResponse } from './types';
 
 /**
- * OneAPI 客户端 - 使用 background fetch 绕过 CORS
+ * NewAPI 客户端 - 使用 background fetch 绕过 CORS
  */
-export class OneAPIClient {
+export class NewAPIClient {
   private readonly baseURL: string;
   private readonly token: string;
   private readonly userId: string;
   private readonly timeout: number;
   private readonly enableLogging: boolean;
+  private readonly onError?: (error: NewAPIError) => void;
 
-  constructor(config: OneAPIConfig) {
+  constructor(config: NewAPIConfig) {
     this.baseURL = config.baseURL;
     this.token = config.token;
     this.userId = config.userId;
     this.timeout = config.timeout || 30000;
     this.enableLogging = config.enableLogging || false;
+    this.onError = config.onError;
   }
 
   /**
@@ -65,11 +67,11 @@ export class OneAPIClient {
     const fullURL = `${this.baseURL}${url}`;
 
     if (this.enableLogging) {
-      console.log('[OneAPI Request]', method, fullURL);
+      console.log('[NewAPI Request]', method, fullURL);
     }
 
     try {
-      const response = await apiFetch<OneAPIResponse<T>>(fullURL, {
+      const response = await apiFetch<NewAPIResponse<T>>(fullURL, {
         method,
         headers: {
           Authorization: `Bearer ${this.token}`,
@@ -80,13 +82,16 @@ export class OneAPIClient {
       });
 
       if (this.enableLogging) {
-        console.log('[OneAPI Response]', fullURL, response);
+        console.log('[NewAPI Response]', fullURL, response);
       }
 
       return this.unwrap(response);
     } catch (error: any) {
       if (this.enableLogging) {
-        console.error('[OneAPI Error]', fullURL, error);
+        console.error('[NewAPI Error]', fullURL, error);
+      }
+      if (error instanceof NewAPIError && this.onError) {
+        this.onError(error);
       }
       throw error;
     }
@@ -95,17 +100,17 @@ export class OneAPIClient {
   /**
    * 解包业务响应，检查 success 字段
    */
-  private unwrap<T>(response: OneAPIResponse<T>): T {
+  private unwrap<T>(response: NewAPIResponse<T>): T {
     if (!response.success) {
-      throw new OneAPIError(response.message || 'Request failed', undefined, response);
+      throw new NewAPIError(response.message || 'Request failed', undefined, response);
     }
     return response.data;
   }
 }
 
 /**
- * 创建 OneAPI 客户端
+ * 创建 NewAPI 客户端
  */
-export function createOneAPIClient(config: OneAPIConfig): OneAPIClient {
-  return new OneAPIClient(config);
+export function createNewAPIClient(config: NewAPIConfig): NewAPIClient {
+  return new NewAPIClient(config);
 }

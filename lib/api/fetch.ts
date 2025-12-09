@@ -19,10 +19,7 @@ export interface FetchResponse<T = any> {
 /**
  * Fetch API through background script to bypass CORS
  */
-export async function apiFetch<T = any>(
-  url: string,
-  options?: FetchOptions,
-): Promise<T> {
+export async function apiFetch<T = any>(url: string, options?: FetchOptions): Promise<T> {
   const response: FetchResponse<T> = await browser.runtime.sendMessage({
     type: 'FETCH',
     payload: {
