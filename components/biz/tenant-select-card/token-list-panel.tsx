@@ -43,7 +43,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-foreground truncate text-xs font-medium">{token.name}</span>
+                <span className="text-foreground truncate text-xs">{token.name}</span>
                 {token.group && tokenGroups?.[token.group] && (
                   <Badge variant="outline" size="sm" className="shrink-0 gap-0.5">
                     {token.group}

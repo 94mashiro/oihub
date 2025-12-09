@@ -2,6 +2,18 @@
  * Universal API client that uses background script to bypass CORS
  */
 
+import { NewAPIError } from './newapi/types';
+
+const HTTP_STATUS_TEXT: Record<number, string> = {
+  400: 'Bad Request',
+  401: 'Unauthorized',
+  403: 'Forbidden',
+  404: 'Not Found',
+  500: 'Internal Server Error',
+  502: 'Bad Gateway',
+  503: 'Service Unavailable',
+};
+
 export interface FetchOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
@@ -32,7 +44,9 @@ export async function apiFetch<T = any>(url: string, options?: FetchOptions): Pr
   });
 
   if (!response.success) {
-    throw new Error(response.error || 'Request failed');
+    const status = response.status;
+    const message = response.error || (status ? HTTP_STATUS_TEXT[status] : undefined) || 'Request failed';
+    throw new NewAPIError(message, status, response.data);
   }
 
   return response.data as T;

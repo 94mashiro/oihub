@@ -6,6 +6,20 @@ interface FetchRequest {
   headers?: Record<string, string>;
   body?: any;
   timeout?: number;
+  cache?: { ttl?: number } | false;
+}
+
+// Simple in-memory cache for GET requests
+const fetchCache = new Map<string, { data: FetchResponse; expiry: number }>();
+const DEFAULT_CACHE_TTL = 30000; // 30 seconds
+
+/** Simple hash function for cache keys */
+function hashKey(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return hash.toString(36);
 }
 
 interface FetchResponse {
@@ -50,7 +64,17 @@ export default defineBackground(() => {
  * Handle fetch requests in background - bypasses CORS
  */
 async function handleBackgroundFetch(request: FetchRequest): Promise<FetchResponse> {
-  const { url, method = 'GET', headers = {}, body, timeout = 30000 } = request;
+  const { url, method = 'GET', headers = {}, body, timeout = 30000, cache } = request;
+
+  // Check cache for GET requests (key includes user ID for user-specific data)
+  const useCache = cache !== false && method === 'GET';
+  const cacheKey = hashKey(`${url}|${headers['New-Api-User'] ?? ''}`);
+  if (useCache) {
+    const cached = fetchCache.get(cacheKey);
+    if (cached && cached.expiry > Date.now()) {
+      return cached.data;
+    }
+  }
 
   try {
     const controller = new AbortController();
@@ -90,11 +114,19 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
       };
     }
 
-    return {
+    const result: FetchResponse = {
       success: true,
       data,
       status: response.status,
     };
+
+    // Cache successful GET responses
+    if (useCache) {
+      const ttl = (cache && typeof cache === 'object' ? cache.ttl : undefined) ?? DEFAULT_CACHE_TTL;
+      fetchCache.set(cacheKey, { data: result, expiry: Date.now() + ttl });
+    }
+
+    return result;
   } catch (error: any) {
     if (error.name === 'AbortError') {
       return {
