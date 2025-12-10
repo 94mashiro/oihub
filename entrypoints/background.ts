@@ -68,8 +68,15 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
   const cacheKey = generateCacheKey(url, headers);
   if (useCache) {
     const cached = fetchCache.get(cacheKey);
-    if (cached && cached.expiry > Date.now()) {
-      return cached.data;
+    if (cached) {
+      // 检查缓存是否过期
+      if (cached.expiry > Date.now()) {
+        // 缓存有效，直接返回
+        return cached.data;
+      } else {
+        // 缓存已过期，删除过期条目
+        fetchCache.delete(cacheKey);
+      }
     }
   }
 
@@ -121,6 +128,14 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
 
     // Cache successful GET responses with LRU eviction
     if (useCache) {
+      // 清理过期缓存（避免内存泄漏）
+      const now = Date.now();
+      for (const [key, value] of fetchCache.entries()) {
+        if (value.expiry <= now) {
+          fetchCache.delete(key);
+        }
+      }
+
       // LRU: remove oldest entry if cache is full
       if (fetchCache.size >= MAX_CACHE_SIZE) {
         const oldest = fetchCache.keys().next().value;
