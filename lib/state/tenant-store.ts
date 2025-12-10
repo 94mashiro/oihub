@@ -69,35 +69,28 @@ export const tenantStore = createPersistentStore<
     selectedTenantId: '',
     tenantList: [],
 
-    // Basic setters - using persist() helper
+    // Basic setters - using simplified persist() API
     setSelectedTenantId: async (tenantId) => {
       set((state) => {
         state.selectedTenantId = tenantId;
       });
-      await persist((state) => ({
-        selectedTenantId: tenantId,
-        tenantList: state.tenantList,
-      }));
+      // Only need to provide changed field, others auto-merged
+      await persist({ selectedTenantId: tenantId });
     },
 
     setTenantList: async (tenants) => {
       set((state) => {
         state.tenantList = tenants;
       });
-      await persist((state) => ({
-        selectedTenantId: state.selectedTenantId,
-        tenantList: tenants,
-      }));
+      await persist({ tenantList: tenants });
     },
 
     addTenant: async (tenant) => {
       set((state) => {
         state.tenantList.push(tenant);
       });
-      await persist((state) => ({
-        selectedTenantId: state.selectedTenantId,
-        tenantList: state.tenantList,
-      }));
+      // Auto-merges selectedTenantId from current state
+      await persist({});
     },
 
     updateTenant: async (id, updates) => {
@@ -105,20 +98,14 @@ export const tenantStore = createPersistentStore<
         const tenant = state.tenantList.find((t) => t.id === id);
         if (tenant) Object.assign(tenant, updates);
       });
-      await persist((state) => ({
-        selectedTenantId: state.selectedTenantId,
-        tenantList: state.tenantList,
-      }));
+      await persist({});
     },
 
     removeTenant: async (id) => {
       set((state) => {
         state.tenantList = state.tenantList.filter((t) => t.id !== id);
       });
-      await persist((state) => ({
-        selectedTenantId: state.selectedTenantId,
-        tenantList: state.tenantList,
-      }));
+      await persist({});
     },
 
     // Async business actions
@@ -127,10 +114,7 @@ export const tenantStore = createPersistentStore<
         const target = state.tenantList.find((t) => t.id === tenantId);
         if (target) target.info = info;
       });
-      await persist((state) => ({
-        selectedTenantId: state.selectedTenantId,
-        tenantList: state.tenantList,
-      }));
+      await persist({});
     },
 
     // hydrate is injected by createPersistentStore

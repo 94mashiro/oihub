@@ -51,7 +51,7 @@ export const costStore = createPersistentStore<CostStoreState, CostPersistedStat
         }
         state.costList[tenantId][period] = costs;
       });
-      await persist((state) => ({ costList: state.costList }));
+      await persist({});
     },
 
     getCost: (tenantId, period) => get().costList[tenantId]?.[period],
@@ -60,7 +60,7 @@ export const costStore = createPersistentStore<CostStoreState, CostPersistedStat
       set((state) => {
         delete state.costList[tenantId];
       });
-      await persist((state) => ({ costList: state.costList }));
+      await persist({});
     },
 
     hydrate: async () => {},

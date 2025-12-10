@@ -2,7 +2,7 @@ import { RateLimiter } from './rate-limiter';
 import type { RateLimitConfig } from '../types';
 
 const DEFAULT_RATE_LIMIT_CONFIG: RateLimitConfig = {
-  qps: 2,
+  qps: 5,
   cooldownMs: 30000,
 };
 

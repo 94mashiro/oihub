@@ -27,11 +27,10 @@ export class APIClient {
     this.enableLogging = config.enableLogging || false;
     this.onError = config.onError;
 
-    // 默认启用 rate limit
+    // 默认启用 rate limit；即便关闭也保留 cooldown 配置用于 429 冷却
+    const rateLimitOptions = typeof config.rateLimit === 'object' ? config.rateLimit : undefined;
     this.rateLimitEnabled = config.rateLimit !== false;
-    if (this.rateLimitEnabled && typeof config.rateLimit === 'object') {
-      this.rateLimitConfig = config.rateLimit;
-    }
+    this.rateLimitConfig = rateLimitOptions;
 
     // 默认启用重试
     if (config.retry !== false) {
@@ -69,15 +68,18 @@ export class APIClient {
     data: unknown | undefined,
     config: TenantConfig,
   ): Promise<T> {
-    // 获取该 baseURL 对应的限流器
-    const rateLimiter = this.rateLimitEnabled
-      ? getRateLimiter(config.baseURL, this.rateLimitConfig)
-      : undefined;
+    // 获取该 baseURL 对应的限流器（即便关闭限流也用于 429 冷却）
+    const rateLimiter = getRateLimiter(config.baseURL, this.rateLimitConfig);
 
     const doRequest = () => {
-      if (rateLimiter) {
+      if (this.rateLimitEnabled) {
         return rateLimiter.execute(() => this.doRequest<T>(method, url, data, config));
       }
+
+      if (rateLimiter.isCoolingDown()) {
+        throw new RateLimitError('Rate limited - cooling down', rateLimiter.getCooldownUntil());
+      }
+
       return this.doRequest<T>(method, url, data, config);
     };
 
@@ -126,18 +128,14 @@ export class APIClient {
 
       // 检测 429 并触发冷却
       if (error instanceof APIError && error.status === 429) {
-        const rateLimiter = this.rateLimitEnabled
-          ? getRateLimiter(config.baseURL, this.rateLimitConfig)
-          : undefined;
-        if (rateLimiter) {
-          rateLimiter.triggerCooldown();
-          const rateLimitError = new RateLimitError(
-            'Rate limited by server',
-            rateLimiter.getCooldownUntil(),
-          );
-          this.onError?.(rateLimitError);
-          throw rateLimitError;
-        }
+        const rateLimiter = getRateLimiter(config.baseURL, this.rateLimitConfig);
+        rateLimiter.triggerCooldown();
+        const rateLimitError = new RateLimitError(
+          'Rate limited by server',
+          rateLimiter.getCooldownUntil(),
+        );
+        this.onError?.(rateLimitError);
+        throw rateLimitError;
       }
 
       if (error instanceof APIError && this.onError) {

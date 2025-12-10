@@ -48,7 +48,8 @@ export const tokenStore = createPersistentStore<
       set((state) => {
         state.tokenList[tenantId] = tokens;
       });
-      await persist((state) => ({ tokenList: state.tokenList }));
+      // Auto-merges tokenGroups from current state
+      await persist({});
     },
 
     getTokens: (tenantId) => get().tokenList[tenantId],
@@ -60,7 +61,7 @@ export const tokenStore = createPersistentStore<
         }
         state.tokenList[tenantId].push(token);
       });
-      await persist((state) => ({ tokenList: state.tokenList }));
+      await persist({});
     },
 
     removeToken: async (tenantId, key) => {
@@ -69,21 +70,22 @@ export const tokenStore = createPersistentStore<
           state.tokenList[tenantId] = state.tokenList[tenantId].filter((t) => t.key !== key);
         }
       });
-      await persist((state) => ({ tokenList: state.tokenList }));
+      await persist({});
     },
 
     clearTokens: async (tenantId) => {
       set((state) => {
         delete state.tokenList[tenantId];
       });
-      await persist((state) => ({ tokenList: state.tokenList }));
+      await persist({});
     },
 
     setTokenGroups: async (tenantId, groups) => {
       set((state) => {
         state.tokenGroups[tenantId] = groups;
       });
-      await persist((state) => ({ tokenGroups: state.tokenGroups }));
+      // Auto-merges tokenList from current state
+      await persist({});
     },
 
     getTokenGroup: (tenantId, groupId) => get().tokenGroups[tenantId]?.[groupId],

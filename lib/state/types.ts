@@ -25,23 +25,29 @@ export interface PersistConfig<TState, TPersistedKeys extends keyof TState> {
 }
 
 /**
- * Helper function for selective persistence
+ * Simplified persist function that automatically merges all persisted fields
+ * Only need to provide the fields that changed
  *
  * @template TPersistedState - The persisted data structure type
+ * @template TPersistedKeys - Union type of keys to persist
  *
- * @param updater - Function that returns partial updates to persist
+ * @param updates - Partial updates to persist (only changed fields needed)
  * @returns Promise that resolves when persistence completes
  *
  * @example
  * ```typescript
+ * // Old way (verbose, error-prone):
  * await persist((state) => ({
- *   field1: state.field1,
- *   field2: newValue,
+ *   field1: newValue,
+ *   field2: state.field2, // Must include all fields
  * }));
+ *
+ * // New way (concise, safe):
+ * await persist({ field1: newValue }); // Automatically merges field2
  * ```
  */
-export type PersistFn<TPersistedState> = (
-  updater: (state: any) => Partial<TPersistedState>,
+export type PersistFn<TPersistedState, TPersistedKeys extends keyof TPersistedState> = (
+  updates: Partial<Pick<TPersistedState, TPersistedKeys>>,
 ) => Promise<void>;
 
 /**
@@ -49,10 +55,11 @@ export type PersistFn<TPersistedState> = (
  *
  * @template TState - The complete store state type
  * @template TPersistedState - The persisted data structure type
+ * @template TPersistedKeys - Union type of keys to persist
  *
- * @param set - Zustand set function for updating state
+ * @param set - Zustand set function for updating state (with immer)
  * @param get - Zustand get function for reading current state
- * @param persist - Helper function for selective persistence
+ * @param persist - Simplified persist function (auto-merges all persisted fields)
  * @returns The complete initial store state
  *
  * @example
@@ -61,17 +68,26 @@ export type PersistFn<TPersistedState> = (
  *   field1: '',
  *   field2: 0,
  *   action: async () => {
- *     set((state) => ({ ...state, field1: 'new' }));
- *     await persist(() => ({ field1: 'new' }));
+ *     set((state) => { state.field1 = 'new'; });
+ *     await persist({ field1: 'new' }); // Only need changed fields
  *   }
  * })
  * ```
  */
-export type CreateStateFn<TState, TPersistedState> = (
+export type CreateStateFn<
+  TState,
+  TPersistedState extends Record<string, any>,
+  TPersistedKeys extends keyof TState & keyof TPersistedState,
+> = (
   set: (updater: (draft: Draft<TState>) => void) => void,
   get: () => TState,
-  persist: PersistFn<TPersistedState>,
+  persist: PersistFn<TPersistedState, TPersistedKeys>,
 ) => TState;
+
+/**
+ * Error handler for store operations
+ */
+export type StoreErrorHandler = (error: Error, context: string) => void;
 
 /**
  * Configuration for creating a persistent store
@@ -92,7 +108,10 @@ export interface PersistentStoreConfig<
   persistConfig: PersistConfig<TState, TPersistedKeys>;
 
   /** Function to create the store state and actions */
-  createState: CreateStateFn<TState, TPersistedState>;
+  createState: CreateStateFn<TState, TPersistedState, TPersistedKeys>;
+
+  /** Optional error handler for persistence and hydration errors */
+  onError?: StoreErrorHandler;
 }
 
 /**

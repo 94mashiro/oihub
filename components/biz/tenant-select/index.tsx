@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTenantDataRefresh } from '@/hooks/use-tenant-data-refresh';
 
 const TenantSelector = () => {
+  const ready = useTenantStore((state) => state.ready);
   const tenantList = useTenantStore((state) => state.tenantList);
   const selectedTenant = useTenantStore(getSelectedTenant);
   const setSelectedTenantId = useTenantStore((state) => state.setSelectedTenantId);
@@ -32,8 +33,21 @@ const TenantSelector = () => {
   const { refreshAll } = useTenantDataRefresh();
 
   useEffect(() => {
-    refreshAll();
-  }, []);
+    if (ready) {
+      refreshAll();
+    }
+  }, [ready, refreshAll]);
+
+  // Guard: don't render persisted data until store is ready
+  if (!ready) {
+    return (
+      <Frame>
+        <FramePanel className="flex items-center justify-center p-8">
+          <div className="text-muted-foreground text-sm">加载中...</div>
+        </FramePanel>
+      </Frame>
+    );
+  }
 
   return (
     <Frame>

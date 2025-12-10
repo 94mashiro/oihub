@@ -86,7 +86,7 @@ export const balanceStore = createPersistentStore<
       set((state) => {
         state.balanceList[tenantId] = balance;
       });
-      await persist((state) => ({ balanceList: state.balanceList }));
+      await persist({});
     },
 
     getBalance: (tenantId) => get().balanceList[tenantId],
@@ -95,14 +95,14 @@ export const balanceStore = createPersistentStore<
       set((state) => {
         delete state.balanceList[tenantId];
       });
-      await persist((state) => ({ balanceList: state.balanceList }));
+      await persist({});
     },
 
     clearAllBalances: async () => {
       set((state) => {
         state.balanceList = {};
       });
-      await persist(() => ({ balanceList: {} }));
+      await persist({ balanceList: {} });
     },
 
     hydrate: async () => {

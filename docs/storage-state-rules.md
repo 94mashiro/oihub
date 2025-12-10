@@ -19,6 +19,7 @@
 - **Mandatory**: Core infrastructure files:
   - `lib/state/create-persistent-store.ts` - Factory function for persistent stores
   - `lib/state/types.ts` - Shared type definitions for state management
+  - `lib/state/store-ready-guard.tsx` - Ready state guard utilities (HOC, Hook, Component)
 
 ### Storage Item Definition
 - **Mandatory**: Any value that needs to survive reloads or be visible across contexts must be declared via `storage.defineItem` under `lib/state`. Components, hooks, and entrypoints may NOT touch `browser.storage*`, `localStorage`, or ad-hoc caches directly.
@@ -39,16 +40,23 @@
   - Runtime-only fields (e.g., `ready`, `loading`, computed values) that never hit storage
   - Clear separation between persisted data and transient state
   - Type-safe persistence with compile-time checks
-- **Mandatory**: Use the `persist()` helper function provided by `createPersistentStore` for all write operations:
+- **Mandatory**: Use the simplified `persist()` helper function for all write operations:
   ```typescript
-  await persist((state) => ({
-    selectedTenantId: newId,
-    tenantList: state.tenantList,
-  }));
+  // NEW: Simplified API - only provide changed fields
+  await persist({ selectedTenantId: newId });
+  // Automatically merges all other persisted fields (e.g., tenantList)
+  
+  // For multiple field updates:
+  await persist({ field1: value1, field2: value2 });
+  
+  // For state mutations (arrays/objects), empty object auto-merges all:
+  set((state) => { state.tenantList.push(tenant); });
+  await persist({}); // Auto-merges all persisted fields from current state
   ```
-  - The `persist()` helper automatically merges updates with existing persisted data
-  - Always include ALL persisted fields in the updater return value
+  - The `persist()` helper automatically merges provided updates with all other persisted fields
+  - **Only need to provide fields that changed** - other persisted fields are auto-merged
   - Update in-memory state via `set()` FIRST, then call `persist()`, so UI never lags
+  - Empty object `{}` persists all persisted fields from current state (useful after mutations)
 
 ### Hydration & Initialization
 - **Automatic**: The `createPersistentStore` factory automatically handles hydration timing via `queueMicrotask`. Developers do NOT need to manually call `hydrate()` at module initialization.
@@ -84,14 +92,27 @@
   set((state) => { state.balanceList[tenantId] = balance; });
   set((state) => { delete state.balanceList[tenantId]; });
   ```
-- **Mandatory**: Complete action pattern:
+- **Mandatory**: Complete action pattern (simplified):
   ```typescript
+  // Simple field update
   setSelectedTenantId: async (tenantId) => {
     set((state) => { state.selectedTenantId = tenantId; });
-    await persist((state) => ({
-      selectedTenantId: tenantId,
-      tenantList: state.tenantList,
-    }));
+    await persist({ selectedTenantId: tenantId }); // Only changed field needed
+  },
+
+  // Array mutation - use empty object to auto-merge all persisted fields
+  addTenant: async (tenant) => {
+    set((state) => { state.tenantList.push(tenant); });
+    await persist({}); // Auto-merges selectedTenantId and tenantList
+  },
+
+  // Multiple field updates
+  updateMultipleFields: async (updates) => {
+    set((state) => {
+      state.field1 = updates.field1;
+      state.field2 = updates.field2;
+    });
+    await persist({ field1: updates.field1, field2: updates.field2 });
   },
   ```
 
@@ -113,6 +134,16 @@
   ```typescript
   const ready = useTenantStore((state) => state.ready);
   const setTenantId = useTenantStore((state) => state.setSelectedTenantId);
+  ```
+- **Mandatory**: Always check `ready` state before rendering persisted data:
+  ```typescript
+  const ready = useTenantStore((state) => state.ready);
+  if (!ready) return <LoadingSpinner />;
+  
+  // Or use StoreReadyGuard component:
+  <StoreReadyGuard store={tenantStore} fallback={<LoadingSpinner />}>
+    <TenantList />
+  </StoreReadyGuard>
   ```
 - **Prohibited**: Components may NOT call `tenantStore.getState()` or interact with storage items directly. Actions inside the store own persistence and messaging.
 
@@ -197,10 +228,14 @@
 
        setField1: async (value) => {
          set((state) => { state.field1 = value; });
-         await persist((state) => ({
-           field1: value,
-           field2: state.field2,
-         }));
+         // Simplified: only provide changed field, others auto-merged
+         await persist({ field1: value });
+       },
+
+       mutateField2: async () => {
+         set((state) => { state.field2++; });
+         // For mutations, empty object auto-merges all persisted fields
+         await persist({});
        },
 
        hydrate: async () => {},
@@ -237,6 +272,7 @@
 - **Reviewers will reject**: Persistent stores that don't use the `createPersistentStore` factory function.
 - **Reviewers will reject**: Missing `ready` flag checks in UI components that render persisted data.
 - **Reviewers will reject**: Actions that call `storageItem.setValue` directly instead of using the `persist()` helper.
+- **Reviewers will reject**: Using old verbose `persist((state) => ({ ... }))` pattern instead of simplified `persist({ ... })`.
 - **Reviewers will require**: PR descriptions to document the store category (persistent/runtime/component) and storage key.
 
 ### Onboarding Checklist
@@ -253,12 +289,33 @@ When creating a new persistent store, copy `lib/state/tenant-store.ts` and adapt
 - Modify `persistConfig.keys` to match your persisted fields
 - Implement feature-specific actions following the `set() → persist()` pattern
 
-### Migration Guide (from old pattern)
+### Migration Guide
+
+#### From Old Pattern (manual hydration)
 If you encounter stores using the old pattern (manual `hydrate()`, `queueMicrotask`, `storageItem.setValue`), refactor to `createPersistentStore`:
 1. Extract persisted field types into `<Feature>PersistedState`
 2. Replace manual `createStore` + `hydrate` with `createPersistentStore` factory
 3. Configure `persistConfig.keys` for selective persistence
-4. Replace `storageItem.setValue()` calls with `persist()` helper
+4. Replace `storageItem.setValue()` calls with simplified `persist()` helper
 5. Remove manual `queueMicrotask(() => void hydrate())` (now automatic)
+6. Add ready state checks in components
 
-See `lib/state/tenant-store.ts` commit history for a real-world migration example.
+#### From Old Persist API (verbose)
+If you have stores using the old verbose `persist()` API:
+```typescript
+// Old (verbose, error-prone):
+await persist((state) => ({
+  field1: newValue,
+  field2: state.field2, // Must manually include all fields
+}));
+
+// New (simplified, safe):
+await persist({ field1: newValue }); // Auto-merges field2
+```
+
+Migration steps:
+1. Replace `persist((state) => ({ ... }))` with `persist({ ... })`
+2. Remove manual field merging - only provide changed fields
+3. For mutations, use empty object: `await persist({})`
+
+See `lib/state/tenant-store.ts` for the canonical example.
