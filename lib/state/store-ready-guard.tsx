@@ -4,6 +4,7 @@
  */
 
 import { ComponentType, ReactNode } from 'react';
+import { useStoreWithEqualityFn } from 'zustand/traditional';
 import type { StoreApi } from 'zustand/vanilla';
 
 /**
@@ -44,8 +45,8 @@ export function StoreReadyGuard({
   fallback = null,
   selector = (state) => state.ready,
 }: StoreReadyGuardProps) {
-  const ready = store.getState();
-  const isReady = selector(ready);
+  // Use React hook to subscribe to store updates
+  const isReady = useStoreWithEqualityFn(store, selector);
 
   if (!isReady) {
     return <>{fallback}</>;
@@ -56,23 +57,23 @@ export function StoreReadyGuard({
 
 /**
  * Hook to check if a store is ready
- * Note: This is a simple utility. For React components, prefer using the store's
- * dedicated hook (e.g., useTenantStore) with a selector for better reactivity.
+ * Subscribes to store updates and re-renders when ready state changes.
  *
  * @example
  * ```tsx
- * // Prefer this:
+ * // Prefer using the store's dedicated hook when available:
  * const ready = useTenantStore((state) => state.ready);
  *
- * // Or use this utility for non-React contexts:
+ * // Or use this utility for generic StoreApi instances:
  * const ready = useStoreReady(tenantStore);
  * ```
  */
-export function useStoreReady(store: StoreApi<StoreWithReady>): boolean {
-  // For React components, this should use the store's hook with subscription
-  // This is a simple synchronous check - use store hooks in React instead
-  const state = store.getState();
-  return state.ready;
+export function useStoreReady(
+  store: StoreApi<StoreWithReady>,
+  selector: (state: StoreWithReady) => boolean = (state) => state.ready,
+): boolean {
+  // Use React hook to subscribe to store updates
+  return useStoreWithEqualityFn(store, selector);
 }
 
 /**
@@ -93,12 +94,12 @@ export function useStoreReady(store: StoreApi<StoreWithReady>): boolean {
 export function withStoreReady<P extends object>(
   store: StoreApi<StoreWithReady>,
   fallback?: () => ReactNode,
-  selector?: (state: StoreWithReady) => boolean,
+  selector: (state: StoreWithReady) => boolean = (state) => state.ready,
 ) {
   return (Component: ComponentType<P>) => {
     const WrappedComponent = (props: P) => {
-      const ready = store.getState();
-      const isReady = selector ? selector(ready) : ready.ready;
+      // Use React hook to subscribe to store updates
+      const isReady = useStoreWithEqualityFn(store, selector);
 
       if (!isReady) {
         return <>{fallback ? fallback() : null}</>;
