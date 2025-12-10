@@ -12,7 +12,7 @@ class ClientManager {
    * 获取租户对应的 API 客户端（复用已有实例）
    */
   getClient(tenant: Tenant): APIClient {
-    const key = `${tenant.url}|${tenant.userId}`;
+    const key = `${tenant.url}|${tenant.userId}|${tenant.token}`;
     let client = this.clients.get(key);
     if (!client) {
       client = new APIClient({
