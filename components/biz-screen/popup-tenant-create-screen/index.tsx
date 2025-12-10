@@ -16,18 +16,28 @@ import {
   FramePanel,
   FrameTitle,
 } from '@/components/ui/frame';
+import packyLogo from '@/assets/packy-logo.svg';
+import duckcodingLogo from '@/assets/duckcoding-logo.gif';
+import ikuncodeLogo from '@/assets/ikuncode-logo.jpeg';
+
 const PROVIDER_PRESETS = [
   {
     id: 'packy',
     name: 'PackyAPI',
     url: 'https://www.packyapi.com',
-    icon: 'https://www.packyapi.com/logo.svg',
+    icon: packyLogo,
   },
   {
     id: 'duckcoding',
     name: 'DuckCoding',
     url: 'https://duckcoding.com',
-    icon: 'https://s3.bmp.ovh/imgs/2025/02/26/8e28432e3ca1fefd.gif',
+    icon: duckcodingLogo,
+  },
+  {
+    id: 'ikuncode',
+    name: 'IKunCode',
+    url: 'https://api.ikuncode.cc',
+    icon: ikuncodeLogo,
   },
 ] as const;
 
