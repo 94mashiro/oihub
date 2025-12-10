@@ -3,13 +3,12 @@ import { tenantStore } from '@/lib/state/tenant-store';
 import { balanceStore } from '@/lib/state/balance-store';
 import { costStore } from '@/lib/state/cost-store';
 import { tokenStore } from '@/lib/state/token-store';
-import { clientManager, TenantAPIService } from '@/lib/api';
+import { TenantAPIService } from '@/lib/api';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
 
 async function refreshTenantData(tenant: Tenant) {
-  const client = clientManager.getClient(tenant);
-  const api = new TenantAPIService(client);
+  const api = new TenantAPIService(tenant);
 
   const [infoResult, balanceResult, tokenResult, tokenGroupsResult, costResult] =
     await Promise.allSettled([
@@ -41,8 +40,7 @@ export async function ensureCostLoaded(tenant: Tenant, period: CostPeriod): Prom
   const cached = costStore.getState().getCost(tenant.id, period);
   if (cached) return;
 
-  const client = clientManager.getClient(tenant);
-  const api = new TenantAPIService(client);
+  const api = new TenantAPIService(tenant);
   const data = await api.getCostData(period);
   await costStore.getState().setCost(tenant.id, period, data);
 }

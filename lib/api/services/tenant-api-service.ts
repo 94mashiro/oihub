@@ -1,5 +1,6 @@
-import type { APIClient } from '../client/api-client';
-import type { TenantInfo } from '@/types/tenant';
+import { apiClient } from '../client/api-client';
+import type { TenantConfig } from '../types';
+import type { Tenant, TenantInfo } from '@/types/tenant';
 import type { TenantBalance } from '@/lib/state/balance-store';
 import type { CostData } from '@/lib/state/cost-store';
 import type { Token, TokenGroup } from '@/types/token';
@@ -19,33 +20,42 @@ function getTimestampRange(period: CostPeriod): [number, number] {
  * 租户 API 服务 - 封装所有租户相关 API 端点
  */
 export class TenantAPIService {
-  constructor(private client: APIClient) {}
+  private readonly config: TenantConfig;
+
+  constructor(tenant: Tenant) {
+    this.config = {
+      baseURL: tenant.url,
+      token: tenant.token,
+      userId: tenant.userId,
+    };
+  }
 
   /** 获取租户状态信息 */
   getStatus(): Promise<TenantInfo> {
-    return this.client.get('/api/status');
+    return apiClient.get('/api/status', this.config);
   }
 
   /** 获取当前用户信息（余额等） */
   getSelfInfo(): Promise<TenantBalance> {
-    return this.client.get('/api/user/self');
+    return apiClient.get('/api/user/self', this.config);
   }
 
   /** 获取 Token 列表（分页） */
   getTokens(page = 1, size = 100): Promise<PaginationResult<Token>> {
-    return this.client.get(`/api/token/?p=${page}&size=${size}`);
+    return apiClient.get(`/api/token/?p=${page}&size=${size}`, this.config);
   }
 
   /** 获取 Token 分组 */
   getTokenGroups(): Promise<Record<string, TokenGroup>> {
-    return this.client.get('/api/user/self/groups');
+    return apiClient.get('/api/user/self/groups', this.config);
   }
 
   /** 获取消费数据 */
   getCostData(period: CostPeriod): Promise<CostData[]> {
     const [start, end] = getTimestampRange(period);
-    return this.client.get(
+    return apiClient.get(
       `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
+      this.config,
     );
   }
 }

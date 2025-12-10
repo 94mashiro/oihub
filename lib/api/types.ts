@@ -1,4 +1,16 @@
 /**
+ * 租户配置 - 用于请求时传入的认证信息
+ */
+export interface TenantConfig {
+  /** API 基础 URL */
+  baseURL: string;
+  /** 认证 token */
+  token: string;
+  /** 用户 ID */
+  userId: string;
+}
+
+/**
  * 限流配置
  */
 export interface RateLimitConfig {
@@ -23,15 +35,9 @@ export interface RetryConfig {
 }
 
 /**
- * API 客户端配置
+ * API 客户端配置 - 仅包含通用配置，不包含租户特定信息
  */
 export interface ClientConfig {
-  /** API 基础 URL */
-  baseURL: string;
-  /** 认证 token */
-  token: string;
-  /** 用户 ID */
-  userId: string;
   /** 请求超时时间(ms)，默认 30000 */
   timeout?: number;
   /** 是否启用日志，默认 false */
@@ -40,7 +46,7 @@ export interface ClientConfig {
   onError?: (error: APIError) => void;
   /** 限流配置，默认启用。设为 false 禁用 */
   rateLimit?: boolean | RateLimitConfig;
-  /** 重试配置，默认禁用 */
+  /** 重试配置，默认启用 */
   retry?: RetryConfig | false;
 }
 

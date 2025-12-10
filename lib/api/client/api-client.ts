@@ -1,34 +1,36 @@
 import { backgroundFetch } from '../transport/background-transport';
 import { getRateLimiter } from './rate-limiter-registry';
 import { withRetry } from './retry';
-import type { RateLimiter } from './rate-limiter';
-import { APIError, RateLimitError, type ClientConfig, type APIResponse } from '../types';
+import { defaultErrorHandler } from './error-handler';
+import {
+  APIError,
+  RateLimitError,
+  type ClientConfig,
+  type TenantConfig,
+  type APIResponse,
+} from '../types';
 
 /**
  * API 客户端 - 使用 background fetch 绕过 CORS
+ * 全局单例，配置通过请求参数传入
  */
 export class APIClient {
-  private readonly baseURL: string;
-  private readonly token: string;
-  private readonly userId: string;
   private readonly timeout: number;
   private readonly enableLogging: boolean;
   private readonly onError?: (error: APIError) => void;
-  private readonly rateLimiter?: RateLimiter;
   private readonly retryConfig?: { maxRetries: number; baseDelayMs: number; maxDelayMs: number };
+  private readonly rateLimitEnabled: boolean;
+  private readonly rateLimitConfig?: { qps?: number; cooldownMs?: number };
 
-  constructor(config: ClientConfig) {
-    this.baseURL = config.baseURL;
-    this.token = config.token;
-    this.userId = config.userId;
+  constructor(config: ClientConfig = {}) {
     this.timeout = config.timeout || 30000;
     this.enableLogging = config.enableLogging || false;
     this.onError = config.onError;
 
     // 默认启用 rate limit
-    if (config.rateLimit !== false) {
-      const rateLimitConfig = typeof config.rateLimit === 'object' ? config.rateLimit : undefined;
-      this.rateLimiter = getRateLimiter(config.baseURL, rateLimitConfig);
+    this.rateLimitEnabled = config.rateLimit !== false;
+    if (this.rateLimitEnabled && typeof config.rateLimit === 'object') {
+      this.rateLimitConfig = config.rateLimit;
     }
 
     // 默认启用重试
@@ -41,36 +43,42 @@ export class APIClient {
     }
   }
 
-  async get<T = unknown>(url: string): Promise<T> {
-    return this.request<T>('GET', url);
+  async get<T = unknown>(url: string, config: TenantConfig): Promise<T> {
+    return this.request<T>('GET', url, undefined, config);
   }
 
-  async post<T = unknown, D = unknown>(url: string, data?: D): Promise<T> {
-    return this.request<T>('POST', url, data);
+  async post<T = unknown, D = unknown>(url: string, data: D, config: TenantConfig): Promise<T> {
+    return this.request<T>('POST', url, data, config);
   }
 
-  async put<T = unknown, D = unknown>(url: string, data?: D): Promise<T> {
-    return this.request<T>('PUT', url, data);
+  async put<T = unknown, D = unknown>(url: string, data: D, config: TenantConfig): Promise<T> {
+    return this.request<T>('PUT', url, data, config);
   }
 
-  async patch<T = unknown, D = unknown>(url: string, data?: D): Promise<T> {
-    return this.request<T>('PATCH', url, data);
+  async patch<T = unknown, D = unknown>(url: string, data: D, config: TenantConfig): Promise<T> {
+    return this.request<T>('PATCH', url, data, config);
   }
 
-  async delete<T = unknown>(url: string): Promise<T> {
-    return this.request<T>('DELETE', url);
+  async delete<T = unknown>(url: string, config: TenantConfig): Promise<T> {
+    return this.request<T>('DELETE', url, undefined, config);
   }
 
   private async request<T>(
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
-    data?: unknown,
+    data: unknown | undefined,
+    config: TenantConfig,
   ): Promise<T> {
+    // 获取该 baseURL 对应的限流器
+    const rateLimiter = this.rateLimitEnabled
+      ? getRateLimiter(config.baseURL, this.rateLimitConfig)
+      : undefined;
+
     const doRequest = () => {
-      if (this.rateLimiter) {
-        return this.rateLimiter.execute(() => this.doRequest<T>(method, url, data));
+      if (rateLimiter) {
+        return rateLimiter.execute(() => this.doRequest<T>(method, url, data, config));
       }
-      return this.doRequest<T>(method, url, data);
+      return this.doRequest<T>(method, url, data, config);
     };
 
     if (this.retryConfig) {
@@ -86,9 +94,10 @@ export class APIClient {
   private async doRequest<T>(
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
-    data?: unknown,
+    data: unknown | undefined,
+    config: TenantConfig,
   ): Promise<T> {
-    const fullURL = `${this.baseURL}${url}`;
+    const fullURL = `${config.baseURL}${url}`;
 
     if (this.enableLogging) {
       console.log('[API Request]', method, fullURL);
@@ -98,8 +107,8 @@ export class APIClient {
       const response = await backgroundFetch<APIResponse<T>>(fullURL, {
         method,
         headers: {
-          Authorization: `Bearer ${this.token}`,
-          'New-Api-User': this.userId,
+          Authorization: `Bearer ${config.token}`,
+          'New-Api-User': config.userId,
         },
         body: data,
         timeout: this.timeout,
@@ -116,14 +125,19 @@ export class APIClient {
       }
 
       // 检测 429 并触发冷却
-      if (error instanceof APIError && error.status === 429 && this.rateLimiter) {
-        this.rateLimiter.triggerCooldown();
-        const rateLimitError = new RateLimitError(
-          'Rate limited by server',
-          this.rateLimiter.getCooldownUntil(),
-        );
-        this.onError?.(rateLimitError);
-        throw rateLimitError;
+      if (error instanceof APIError && error.status === 429) {
+        const rateLimiter = this.rateLimitEnabled
+          ? getRateLimiter(config.baseURL, this.rateLimitConfig)
+          : undefined;
+        if (rateLimiter) {
+          rateLimiter.triggerCooldown();
+          const rateLimitError = new RateLimitError(
+            'Rate limited by server',
+            rateLimiter.getCooldownUntil(),
+          );
+          this.onError?.(rateLimitError);
+          throw rateLimitError;
+        }
       }
 
       if (error instanceof APIError && this.onError) {
@@ -141,3 +155,12 @@ export class APIClient {
     return response.data;
   }
 }
+
+/**
+ * 全局 API 客户端单例
+ */
+export const apiClient = new APIClient({
+  timeout: 30000,
+  enableLogging: false,
+  onError: defaultErrorHandler,
+});
