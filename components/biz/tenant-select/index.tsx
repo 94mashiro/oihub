@@ -11,7 +11,7 @@ import { getSelectedTenant, useTenantStore } from '@/lib/state/tenant-store';
 import { cn } from '@/lib/utils';
 import TenantSelectCard from '../tenant-select-card';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw, RouteIcon } from 'lucide-react';
+import { Plus, RefreshCw, RouteIcon, Settings } from 'lucide-react';
 import {
   Empty,
   EmptyContent,
@@ -62,6 +62,10 @@ const TenantSelector = () => {
             <GroupSeparator />
             <Button size="sm" variant="outline" onClick={() => navigate('/tenant/create')}>
               <Plus />
+            </Button>
+            <GroupSeparator />
+            <Button size="sm" variant="outline" onClick={() => navigate('/settings')}>
+              <Settings />
             </Button>
           </Group>
         </div>
