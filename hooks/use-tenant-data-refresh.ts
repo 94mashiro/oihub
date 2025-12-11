@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { tenantStore } from '@/lib/state/tenant-store';
 import { balanceStore } from '@/lib/state/balance-store';
 import { costStore } from '@/lib/state/cost-store';
@@ -27,6 +27,8 @@ async function refreshTenantData(tenant: Tenant) {
 }
 
 export function useTenantDataRefresh() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const refresh = useCallback(async () => {
     const state = tenantStore.getState();
     const selectedTenant = state.tenantList.find((t) => t.id === state.selectedTenantId);
@@ -35,9 +37,14 @@ export function useTenantDataRefresh() {
   }, []);
 
   const refreshAll = useCallback(async () => {
-    const { tenantList } = tenantStore.getState();
-    await Promise.allSettled(tenantList.map(refreshTenantData));
+    setIsRefreshing(true);
+    try {
+      const { tenantList } = tenantStore.getState();
+      await Promise.allSettled(tenantList.map(refreshTenantData));
+    } finally {
+      setIsRefreshing(false);
+    }
   }, []);
 
-  return { refresh, refreshAll };
+  return { refresh, refreshAll, isRefreshing };
 }

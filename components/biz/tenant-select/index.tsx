@@ -30,7 +30,7 @@ const TenantSelector = () => {
   const selectedTenant = useTenantStore(getSelectedTenant);
   const setSelectedTenantId = useTenantStore((state) => state.setSelectedTenantId);
   const navigate = useNavigate();
-  const { refreshAll } = useTenantDataRefresh();
+  const { refreshAll, isRefreshing } = useTenantDataRefresh();
 
   useEffect(() => {
     if (ready) {
@@ -56,16 +56,21 @@ const TenantSelector = () => {
         <FrameDescription className="mt-0.5 text-xs">切换账号查看余额和消耗</FrameDescription>
         <div className="absolute top-2 right-2">
           <Group>
-            <Button size="sm" variant="outline" onClick={() => refreshAll()}>
-              <RefreshCw />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => refreshAll()}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={cn(isRefreshing && 'animate-spin', 'size-3')} />
             </Button>
             <GroupSeparator />
             <Button size="sm" variant="outline" onClick={() => navigate('/tenant/create')}>
-              <Plus />
+              <Plus className="size-3" />
             </Button>
             <GroupSeparator />
             <Button size="sm" variant="outline" onClick={() => navigate('/settings')}>
-              <Settings />
+              <Settings className="size-3" />
             </Button>
           </Group>
         </div>
