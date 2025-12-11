@@ -6,17 +6,6 @@ interface FetchRequest {
   headers?: Record<string, string>;
   body?: unknown;
   timeout?: number;
-  cache?: { ttl?: number } | false;
-}
-
-// Simple in-memory cache for GET requests
-const fetchCache = new Map<string, { data: FetchResponse; expiry: number }>();
-const DEFAULT_CACHE_TTL = 60000; // 1 minute
-const MAX_CACHE_SIZE = 100;
-
-/** Generate cache key using full URL and user ID */
-function generateCacheKey(url: string, headers: Record<string, string>): string {
-  return JSON.stringify({ url, user: headers['New-Api-User'] });
 }
 
 interface FetchResponse {
@@ -30,7 +19,7 @@ export default defineBackground(() => {
   console.log('Hello background!', { id: browser.runtime.id });
 
   // Universal fetch handler - bypasses CORS
-  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'FETCH') {
       handleBackgroundFetch(message.payload)
         .then(sendResponse)
@@ -61,24 +50,7 @@ export default defineBackground(() => {
  * Handle fetch requests in background - bypasses CORS
  */
 async function handleBackgroundFetch(request: FetchRequest): Promise<FetchResponse> {
-  const { url, method = 'GET', headers = {}, body, timeout = 30000, cache } = request;
-
-  // Check cache for GET requests (key includes user ID for user-specific data)
-  const useCache = cache !== false && method === 'GET';
-  const cacheKey = generateCacheKey(url, headers);
-  if (useCache) {
-    const cached = fetchCache.get(cacheKey);
-    if (cached) {
-      // 检查缓存是否过期
-      if (cached.expiry > Date.now()) {
-        // 缓存有效，直接返回
-        return cached.data;
-      } else {
-        // 缓存已过期，删除过期条目
-        fetchCache.delete(cacheKey);
-      }
-    }
-  }
+  const { url, method = 'GET', headers = {}, body, timeout = 30000 } = request;
 
   try {
     const controller = new AbortController();
@@ -120,32 +92,11 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
       };
     }
 
-    const result: FetchResponse = {
+    return {
       success: true,
       data,
       status: response.status,
     };
-
-    // Cache successful GET responses with LRU eviction
-    if (useCache) {
-      // 清理过期缓存（避免内存泄漏）
-      const now = Date.now();
-      for (const [key, value] of fetchCache.entries()) {
-        if (value.expiry <= now) {
-          fetchCache.delete(key);
-        }
-      }
-
-      // LRU: remove oldest entry if cache is full
-      if (fetchCache.size >= MAX_CACHE_SIZE) {
-        const oldest = fetchCache.keys().next().value;
-        if (oldest) fetchCache.delete(oldest);
-      }
-      const ttl = (cache && typeof cache === 'object' ? cache.ttl : undefined) ?? DEFAULT_CACHE_TTL;
-      fetchCache.set(cacheKey, { data: result, expiry: Date.now() + ttl });
-    }
-
-    return result;
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       return {

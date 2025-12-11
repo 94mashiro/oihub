@@ -3,7 +3,6 @@
  */
 
 import { APIError } from '../types';
-import { deduplicator } from './deduplicator';
 
 const HTTP_STATUS_TEXT: Record<number, string> = {
   400: 'Bad Request',
@@ -36,19 +35,6 @@ export async function backgroundFetch<T = unknown>(
   url: string,
   options?: FetchOptions,
 ): Promise<T> {
-  const method = options?.method || 'GET';
-  const headers = options?.headers || {};
-
-  // GET 请求启用去重
-  if (method === 'GET') {
-    const dedupeKey = deduplicator.generateKey(url, method, headers['New-Api-User']);
-    return deduplicator.dedupe(dedupeKey, () => doFetch<T>(url, options));
-  }
-
-  return doFetch<T>(url, options);
-}
-
-async function doFetch<T>(url: string, options?: FetchOptions): Promise<T> {
   const response: FetchResponse<T> = await browser.runtime.sendMessage({
     type: 'FETCH',
     payload: {
