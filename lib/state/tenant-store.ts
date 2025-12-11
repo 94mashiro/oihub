@@ -4,6 +4,8 @@ import { createPersistentStore } from './create-persistent-store';
 
 import type { Tenant, TenantId, TenantInfo } from '@/types/tenant';
 
+export { getSelectedTenant } from './selectors';
+
 // Define persisted data structure
 type TenantPersistedState = {
   selectedTenantId: TenantId;
@@ -31,14 +33,6 @@ export type TenantStoreState = {
 
   // Internal methods
   hydrate: () => Promise<void>;
-};
-
-/**
- * Helper function to compute selectedTenant from state
- * Use this in selectors instead of storing selectedTenant in state
- */
-export const getSelectedTenant = (state: TenantStoreState): Tenant | null => {
-  return state.tenantList.find((t) => t.id === state.selectedTenantId) ?? null;
 };
 
 // Define storage item
@@ -86,6 +80,12 @@ export const tenantStore = createPersistentStore<
     },
 
     addTenant: async (tenant) => {
+      const existing = get().tenantList.find(
+        (t) => t.url === tenant.url && t.userId === tenant.userId,
+      );
+      if (existing) {
+        throw new Error(`账号已存在：${existing.name}`);
+      }
       set((state) => {
         state.tenantList.push(tenant);
       });

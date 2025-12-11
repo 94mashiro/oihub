@@ -1,18 +1,17 @@
 import { RateLimitError, type RateLimitConfig } from '../types';
 
 /**
- * 请求限流器 - 基于任务队列的 QPS 控制和冷却期管理
+ * 请求限流器 - 基于滑动窗口的 QPS 控制和冷却期管理
  */
 export class RateLimiter {
-  private queue: Promise<void> = Promise.resolve();
+  private timestamps: number[] = [];
   private cooldownUntil = 0;
-  private readonly interval: number;
+  private readonly qps: number;
+  private readonly windowMs = 1000;
   private readonly cooldownMs: number;
-  private taskId = 0;
-  private pendingRejects = new Map<number, (error: Error) => void>();
 
   constructor(config: RateLimitConfig) {
-    this.interval = 1000 / (config.qps ?? 2);
+    this.qps = config.qps ?? 2;
     this.cooldownMs = config.cooldownMs ?? 30000;
   }
 
@@ -26,49 +25,23 @@ export class RateLimiter {
 
   triggerCooldown(durationMs?: number): void {
     this.cooldownUntil = Date.now() + (durationMs ?? this.cooldownMs);
-    // 立即 reject 所有等待中的任务
-    const error = new RateLimitError('Rate limited - cooling down', this.cooldownUntil);
-    for (const reject of this.pendingRejects.values()) {
-      reject(error);
-    }
-    this.pendingRejects.clear();
   }
 
   async execute<T>(fn: () => Promise<T>): Promise<T> {
-    const id = ++this.taskId;
-
     if (this.isCoolingDown()) {
       throw new RateLimitError('Rate limited - cooling down', this.cooldownUntil);
     }
 
-    let resolve!: (value: T) => void;
-    let reject!: (error: unknown) => void;
-    const result = new Promise<T>((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
+    const now = Date.now();
+    this.timestamps = this.timestamps.filter((t) => now - t < this.windowMs);
 
-    this.pendingRejects.set(id, reject as (error: Error) => void);
+    if (this.timestamps.length < this.qps) {
+      this.timestamps.push(now);
+      return fn();
+    }
 
-    this.queue = this.queue.then(async () => {
-      // 已被 cooldown reject
-      if (!this.pendingRejects.has(id)) return;
-      this.pendingRejects.delete(id);
-
-      if (this.isCoolingDown()) {
-        reject(new RateLimitError('Rate limited - cooling down', this.cooldownUntil));
-        return;
-      }
-
-      await new Promise((r) => setTimeout(r, this.interval));
-
-      try {
-        resolve(await fn());
-      } catch (error) {
-        reject(error);
-      }
-    });
-
-    return result;
+    const waitTime = this.windowMs - (now - this.timestamps[0]);
+    await new Promise((r) => setTimeout(r, waitTime));
+    return this.execute(fn);
   }
 }

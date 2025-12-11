@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useCostStore } from '@/lib/state/cost-store';
-import { ensureCostLoaded } from '@/hooks/use-tenant-data-refresh';
+import { useCostLoader } from '@/hooks/use-cost-loader';
 import { quotaToPrice } from '@/utils/quota-to-price';
 import { formatThousands } from '@/utils/format-number';
 import { Progress, ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs';
 import { CostPeriod } from '@/types/api';
+import { Loader2 } from 'lucide-react';
 
 const PERIOD_LABELS: Record<CostPeriod, string> = {
   [CostPeriod.DAY_1]: '今日',
@@ -23,6 +24,7 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
   const [period, setPeriod] = useState<CostPeriod>(CostPeriod.DAY_1);
   const tenantInfo = useTenantStore((state) => state.tenantList.find((t) => t.id === tenantId));
   const costList = useCostStore((state) => state.costList[tenantId]?.[period]);
+  const { loading } = useCostLoader(tenantId, period);
 
   const quotaUnit = tenantInfo?.info?.quota_per_unit;
   const displayType = tenantInfo?.info?.quota_display_type;
@@ -54,14 +56,7 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
 
   return (
     <div className="space-y-2">
-      <Tabs
-        value={period}
-        onValueChange={(v) => {
-          const newPeriod = v as CostPeriod;
-          setPeriod(newPeriod);
-          if (tenantInfo) ensureCostLoaded(tenantInfo, newPeriod);
-        }}
-      >
+      <Tabs value={period} onValueChange={(v) => setPeriod(v as CostPeriod)}>
         <TabsList className="h-6 gap-0 p-0.5 text-xs">
           {Object.values(CostPeriod).map((p) => (
             <TabsTab key={p} value={p} className="h-5 px-2 py-0 text-xs">
@@ -71,7 +66,12 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
         </TabsList>
       </Tabs>
 
-      {modelUsage.length === 0 ? (
+      {loading && !costList ? (
+        <div className="flex items-center gap-2 py-2">
+          <Loader2 className="text-muted-foreground size-3 animate-spin" />
+          <span className="text-muted-foreground text-xs">加载中...</span>
+        </div>
+      ) : modelUsage.length === 0 ? (
         <p className="text-muted-foreground text-xs">暂无数据</p>
       ) : (
         modelUsage.map((item) => (

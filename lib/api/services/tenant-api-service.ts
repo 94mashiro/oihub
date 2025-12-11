@@ -6,7 +6,7 @@ import type { CostData } from '@/lib/state/cost-store';
 import type { Token, TokenGroup } from '@/types/token';
 import { CostPeriod, COST_PERIOD_DAYS, type PaginationResult } from '@/types/api';
 
-function getTimestampRange(period: CostPeriod): [number, number] {
+export function getTimestampRange(period: CostPeriod): [number, number] {
   const now = new Date();
   const end = Math.floor(now.setHours(23, 59, 59, 999) / 1000);
   const days = COST_PERIOD_DAYS[period];

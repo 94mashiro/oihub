@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useTokenStore } from '@/lib/state/token-store';
+import { useTokensLoader } from '@/hooks/use-tokens-loader';
 import { quotaToPrice } from '@/utils/quota-to-price';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipPopup } from '@/components/ui/tooltip';
-import { Copy, Check, Info } from 'lucide-react';
+import { Copy, Check, Info, Loader2 } from 'lucide-react';
 
 interface Props {
   tenantId: string;
@@ -16,6 +17,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
   const tenantInfo = useTenantStore((state) => state.tenantList.find((t) => t.id === tenantId));
   const tokenList = useTokenStore((state) => state.tokenList[tenantId]);
   const tokenGroups = useTokenStore((state) => state.tokenGroups[tenantId]);
+  const { loading } = useTokensLoader(tenantId);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const quotaUnit = tenantInfo?.info?.quota_per_unit;
@@ -27,6 +29,15 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1500);
   };
+
+  if (loading && !tokenList) {
+    return (
+      <div className="flex items-center gap-2 py-2">
+        <Loader2 className="text-muted-foreground size-3 animate-spin" />
+        <span className="text-muted-foreground text-xs">加载中...</span>
+      </div>
+    );
+  }
 
   if (!tokenList || tokenList.length === 0) {
     return <p className="text-muted-foreground text-xs">暂无令牌</p>;
