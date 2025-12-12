@@ -19,11 +19,11 @@ export const UsageDisplay: React.FC<UsageDisplayProps> = ({
   separator = '/',
   className,
 }) => {
-  const hasCost = cost != null && cost !== 0;
-  const hasTokens = tokens != null;
-  const costStr = hasCost ? quotaToPrice(cost, quotaPerUnit, displayType) : null;
-  const tokensStr = hasTokens ? formatThousands(tokens) : null;
-  const tokenLabel = (tokens ?? 0) <= 1 ? 'token' : 'tokens';
+  const hasCost = typeof cost === 'number';
+  const hasTokens = typeof tokens === 'number';
+  const costStr = hasCost ? quotaToPrice(cost as number, quotaPerUnit, displayType) : null;
+  const tokensStr = hasTokens ? formatThousands(tokens as number) : null;
+  const tokenLabel = (typeof tokens === 'number' ? tokens : 0) <= 1 ? 'token' : 'tokens';
 
   let content: string;
   if (costStr && tokensStr) {
