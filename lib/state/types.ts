@@ -90,13 +90,13 @@ export type CreateStateFn<
 export type StoreErrorHandler = (error: Error, context: string) => void;
 
 /**
- * Configuration for creating a persistent store
+ * Configuration for creating a store (with default persistence)
  *
  * @template TState - The complete store state type
  * @template TPersistedState - The persisted data structure type (must be object type)
  * @template TPersistedKeys - Union type of keys to persist
  */
-export interface PersistentStoreConfig<
+export interface StoreConfig<
   TState,
   TPersistedState extends Record<string, any>,
   TPersistedKeys extends keyof TState & keyof TPersistedState,

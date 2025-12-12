@@ -1,6 +1,6 @@
 import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
-import { createPersistentStore } from './create-persistent-store';
+import { createStore } from './create-store';
 import type { TenantId } from '@/types/tenant';
 
 // Balance data structure per tenant
@@ -67,7 +67,7 @@ const balanceStorageItem = storage.defineItem<BalancePersistedState>('local:bala
 });
 
 // Create store using factory function
-export const balanceStore = createPersistentStore<
+export const balanceStore = createStore<
   BalanceStoreState,
   BalancePersistedState,
   'balanceList'

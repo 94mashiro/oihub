@@ -16,8 +16,8 @@ export function useCostLoader(tenantId: string, period: CostPeriod) {
 
     api
       .getCostData(period)
-      .then((data) => {
-        costStore.getState().setCost(tenantId, period, data);
+      .then(async (data) => {
+        await costStore.getState().setCost(tenantId, period, data);
       })
       .finally(() => setLoading(false));
   }, [tenant, tenantId, period]);

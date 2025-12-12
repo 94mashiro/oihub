@@ -9,10 +9,10 @@
  * - Automatic cross-context synchronization
  */
 
-import { createStore } from 'zustand/vanilla';
+import { createStore as createZustandStore } from 'zustand/vanilla';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import type { PersistentStoreConfig, StoreErrorHandler } from './types';
+import type { StoreConfig, StoreErrorHandler } from './types';
 
 /**
  * Creates a Zustand vanilla store with:
@@ -30,7 +30,7 @@ import type { PersistentStoreConfig, StoreErrorHandler } from './types';
  *
  * @example
  * ```typescript
- * const store = createPersistentStore({
+ * const store = createStore({
  *   storageItem: tenantStorageItem,
  *   persistConfig: {
  *     keys: ['selectedTenantId', 'tenantList']
@@ -47,22 +47,22 @@ import type { PersistentStoreConfig, StoreErrorHandler } from './types';
  * });
  * ```
  */
-export function createPersistentStore<
+export function createStore<
   TState,
   TPersistedState extends Record<string, any>,
   TPersistedKeys extends keyof TState & keyof TPersistedState,
->(config: PersistentStoreConfig<TState, TPersistedState, TPersistedKeys>) {
+>(config: StoreConfig<TState, TPersistedState, TPersistedKeys>) {
   const { storageItem, persistConfig, createState, onError } = config;
 
   const handleError: StoreErrorHandler = (error, context) => {
     if (onError) {
       onError(error, context);
     } else {
-      console.error(`[createPersistentStore] ${context}:`, error);
+      console.error(`[createStore] ${context}:`, error);
     }
   };
 
-  return createStore<TState>()(
+  return createZustandStore<TState>()(
     subscribeWithSelector(
       immer((set, get) => {
         /**

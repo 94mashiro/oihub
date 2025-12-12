@@ -1,6 +1,6 @@
 import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
-import { createPersistentStore } from './create-persistent-store';
+import { createStore } from './create-store';
 
 import type { Tenant, TenantId, TenantInfo } from '@/types/tenant';
 
@@ -44,7 +44,7 @@ const tenantStorageItem = storage.defineItem<TenantPersistedState>('local:tenant
 });
 
 // Create store using factory function
-export const tenantStore = createPersistentStore<
+export const tenantStore = createStore<
   TenantStoreState,
   TenantPersistedState,
   'selectedTenantId' | 'tenantList'

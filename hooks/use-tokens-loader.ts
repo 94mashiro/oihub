@@ -14,9 +14,9 @@ export function useTokensLoader(tenantId: string) {
     const api = new TenantAPIService(tenant);
 
     Promise.all([api.getTokens(), api.getTokenGroups()])
-      .then(([tokens, groups]) => {
-        tokenStore.getState().setTokens(tenantId, tokens.items);
-        tokenStore.getState().setTokenGroups(tenantId, groups);
+      .then(async ([tokens, groups]) => {
+        await tokenStore.getState().setTokens(tenantId, tokens.items);
+        await tokenStore.getState().setTokenGroups(tenantId, groups);
       })
       .finally(() => setLoading(false));
   }, [tenant, tenantId]);

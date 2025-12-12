@@ -22,7 +22,7 @@ async function refreshTenantData(tenant: Tenant) {
     await balanceStore.getState().setBalance(tenant.id, balanceResult.value);
   }
   if (costResult.status === 'fulfilled') {
-    costStore.getState().setCost(tenant.id, CostPeriod.DAY_1, costResult.value);
+    await costStore.getState().setCost(tenant.id, CostPeriod.DAY_1, costResult.value);
 
     // Trigger usage alert check in background
     const tenantInfo = infoResult.status === 'fulfilled' ? infoResult.value : tenant.info;

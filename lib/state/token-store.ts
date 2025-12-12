@@ -1,40 +1,82 @@
-import { createStore } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
+import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
+import { createStore } from './create-store';
 import type { Token, TokenGroup } from '@/types/token';
 import type { TenantId } from '@/types/tenant';
 
-export type TokenStoreState = {
+// Define persisted data structure
+type TokenPersistedState = {
   tokenList: Record<TenantId, Token[]>;
   tokenGroups: Record<TenantId, Record<string, TokenGroup>>;
-  setTokens: (tenantId: TenantId, tokens: Token[]) => void;
-  getTokens: (tenantId: TenantId) => Token[] | undefined;
-  setTokenGroups: (tenantId: TenantId, groups: Record<string, TokenGroup>) => void;
-  getTokenGroup: (tenantId: TenantId, groupId: string) => TokenGroup | undefined;
 };
 
-export const tokenStore = createStore<TokenStoreState>()(
-  immer((set, get) => ({
+// Define complete store state
+export type TokenStoreState = {
+  // Persisted fields
+  tokenList: Record<TenantId, Token[]>;
+  tokenGroups: Record<TenantId, Record<string, TokenGroup>>;
+
+  // Runtime fields
+  ready: boolean;
+
+  // Actions
+  setTokens: (tenantId: TenantId, tokens: Token[]) => Promise<void>;
+  getTokens: (tenantId: TenantId) => Token[] | undefined;
+  setTokenGroups: (tenantId: TenantId, groups: Record<string, TokenGroup>) => Promise<void>;
+  getTokenGroup: (tenantId: TenantId, groupId: string) => TokenGroup | undefined;
+
+  // Internal methods
+  hydrate: () => Promise<void>;
+};
+
+// Define storage item
+const tokenStorageItem = storage.defineItem<TokenPersistedState>('local:token', {
+  fallback: {
+    tokenList: {},
+    tokenGroups: {},
+  },
+});
+
+// Create store using factory function
+export const tokenStore = createStore<
+  TokenStoreState,
+  TokenPersistedState,
+  'tokenList' | 'tokenGroups'
+>({
+  storageItem: tokenStorageItem,
+
+  persistConfig: {
+    keys: ['tokenList', 'tokenGroups'],
+  },
+
+  createState: (set, get, persist) => ({
+    ready: false,
     tokenList: {},
     tokenGroups: {},
 
-    setTokens: (tenantId, tokens) => {
+    setTokens: async (tenantId, tokens) => {
       set((state) => {
         state.tokenList[tenantId] = tokens;
       });
+      await persist({});
     },
 
     getTokens: (tenantId) => get().tokenList[tenantId],
 
-    setTokenGroups: (tenantId, groups) => {
+    setTokenGroups: async (tenantId, groups) => {
       set((state) => {
         state.tokenGroups[tenantId] = groups;
       });
+      await persist({});
     },
 
     getTokenGroup: (tenantId, groupId) => get().tokenGroups[tenantId]?.[groupId],
-  })),
-);
+
+    hydrate: async () => {
+      // Implemented by factory function
+    },
+  }),
+});
 
 export const useTokenStore = <T>(
   selector: (state: TokenStoreState) => T,

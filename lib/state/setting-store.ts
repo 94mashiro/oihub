@@ -1,6 +1,6 @@
 import { storage } from '#imports';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
-import { createPersistentStore } from './create-persistent-store';
+import { createStore } from './create-store';
 
 import type { TenantId } from '@/types/tenant';
 
@@ -54,7 +54,7 @@ const settingStorageItem = storage.defineItem<SettingPersistedState>('local:sett
 });
 
 // Create store using factory function
-export const settingStore = createPersistentStore<
+export const settingStore = createStore<
   SettingStoreState,
   SettingPersistedState,
   'dailyUsageAlert' | 'alertedToday'
