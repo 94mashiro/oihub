@@ -29,22 +29,81 @@ export interface FetchResponse<T = unknown> {
 }
 
 /**
+ * Check if running in service worker (background script) context
+ */
+function isBackgroundContext(): boolean {
+  return (
+    typeof ServiceWorkerGlobalScope !== 'undefined' && self instanceof ServiceWorkerGlobalScope
+  );
+}
+
+/**
+ * Direct fetch for use in background context
+ */
+async function directFetch<T>(url: string, options?: FetchOptions): Promise<FetchResponse<T>> {
+  const { method = 'GET', headers = {}, body, timeout = 30000 } = options || {};
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const fetchOptions: RequestInit = {
+      method,
+      headers: { 'Content-Type': 'application/json', ...headers },
+      signal: controller.signal,
+    };
+
+    if (body && method !== 'GET' && method !== 'HEAD') {
+      fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
+    }
+
+    const response = await fetch(url, fetchOptions);
+    clearTimeout(timeoutId);
+
+    const contentType = response.headers.get('content-type');
+    const data = contentType?.includes('application/json')
+      ? await response.json()
+      : await response.text();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: (data as { message?: string })?.message || `HTTP ${response.status}`,
+        status: response.status,
+        data,
+      };
+    }
+
+    return { success: true, data, status: response.status };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      return { success: false, error: 'Request timeout' };
+    }
+    return { success: false, error: error instanceof Error ? error.message : 'Network error' };
+  }
+}
+
+/**
  * 通过 background script 发送请求，绕过 CORS
+ * 在 background 上下文中直接使用 fetch，在其他上下文中通过 message passing
  */
 export async function backgroundFetch<T = unknown>(
   url: string,
   options?: FetchOptions,
 ): Promise<T> {
-  const response: FetchResponse<T> = await browser.runtime.sendMessage({
-    type: 'FETCH',
-    payload: {
-      url,
-      method: options?.method || 'GET',
-      headers: options?.headers || {},
-      body: options?.body,
-      timeout: options?.timeout,
-    },
-  });
+  const response: FetchResponse<T> = isBackgroundContext()
+    ? await directFetch<T>(url, options)
+    : await browser.runtime.sendMessage({
+        type: 'FETCH',
+        payload: {
+          url,
+          method: options?.method || 'GET',
+          headers: options?.headers || {},
+          body: options?.body,
+          timeout: options?.timeout,
+        },
+      });
 
   if (!response.success) {
     const status = response.status;

@@ -36,6 +36,7 @@ export default defineBackground(() => {
   void pollDailyUsageAndAlert();
 
   browser.alarms.onAlarm.addListener((alarm) => {
+    console.log('[background] Alarm triggered:', alarm.name);
     if (alarm.name === ALARM_NAME) {
       void pollDailyUsageAndAlert();
     }
@@ -86,11 +87,34 @@ export default defineBackground(() => {
 });
 
 /**
+ * Wait for stores to be hydrated before reading state.
+ */
+async function waitForStoresReady(timeoutMs = 5000): Promise<boolean> {
+  const start = Date.now();
+  console.log('[background] Waiting for stores to hydrate...');
+  while (Date.now() - start < timeoutMs) {
+    if (tenantStore.getState().ready && settingStore.getState().ready) {
+      console.log('[background] Stores ready after', Date.now() - start, 'ms');
+      return true;
+    }
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  console.warn('[background] Store hydration timeout, proceeding with current state');
+  return false;
+}
+
+/**
  * Poll daily usage for tenants with enabled alerts, then trigger notifications if needed.
  */
 async function pollDailyUsageAndAlert(): Promise<void> {
+  console.log('[background] pollDailyUsageAndAlert started');
+  await waitForStoresReady();
+
   const { tenantList } = tenantStore.getState();
   const settingState = settingStore.getState();
+
+  console.log('[background] tenantList count:', tenantList.length);
+  console.log('[background] dailyUsageAlert config:', settingState.dailyUsageAlert);
 
   const enabledTenantIds = new Set(
     Object.entries(settingState.dailyUsageAlert)
@@ -98,10 +122,18 @@ async function pollDailyUsageAndAlert(): Promise<void> {
       .map(([tenantId]) => tenantId),
   );
 
-  if (enabledTenantIds.size === 0) return;
+  if (enabledTenantIds.size === 0) {
+    console.log('[background] No enabled alerts, skipping');
+    return;
+  }
 
   const targets = tenantList.filter((t) => enabledTenantIds.has(t.id));
-  if (targets.length === 0) return;
+  if (targets.length === 0) {
+    console.log('[background] No matching tenants for alerts, skipping');
+    return;
+  }
+
+  console.log('[background] Polling usage for', targets.length, 'tenant(s)');
 
   await Promise.allSettled(
     targets.map(async (tenant) => {
