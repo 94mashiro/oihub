@@ -38,7 +38,7 @@ const PopupSettingsScreen = () => {
             <FrameDescription className="mt-0.5 text-xs">配置扩展选项</FrameDescription>
           </div>
         </FrameHeader>
-        <FramePanel className="p-3">
+        <FramePanel className="rounded-md p-2">
           <p className="text-muted-foreground text-xs">加载中...</p>
         </FramePanel>
       </Frame>
@@ -58,7 +58,7 @@ const PopupSettingsScreen = () => {
           <FrameDescription className="mt-0.5 text-xs">配置扩展选项</FrameDescription>
         </div>
       </FrameHeader>
-      <FramePanel className="p-3">
+      <FramePanel className="rounded-md p-2">
         <div className="space-y-3">
           <div className="flex items-center gap-1.5">
             <Bell className="text-muted-foreground size-3.5" />
