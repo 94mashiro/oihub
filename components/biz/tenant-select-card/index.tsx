@@ -5,7 +5,7 @@ import { useBalanceStore } from '@/lib/state/balance-store';
 import { useCostStore } from '@/lib/state/cost-store';
 import { CostPeriod } from '@/types/api';
 import { Button } from '@/components/ui/button';
-import { EditIcon, Trash } from 'lucide-react';
+import { EditIcon, ExternalLinkIcon, Trash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GroupSeparator, Group } from '@/components/ui/group';
 import { Collapsible, CollapsiblePanel } from '@/components/ui/collapsible';
@@ -58,6 +58,14 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
 
   const quotaUnit = tenantInfo.info?.quota_per_unit;
   const displayType = tenantInfo.info?.quota_display_type;
+
+  let tokenManageUrl: string | null = null;
+  try {
+    const baseUrl = new URL(tenantInfo.url);
+    tokenManageUrl = `${baseUrl.origin}/console/token`;
+  } catch {
+    tokenManageUrl = null;
+  }
 
   const todayCostRaw = todayCostInfo?.reduce((t, c) => t + c.quota, 0) ?? null;
   const todayTokensRaw = todayCostInfo?.reduce((t, c) => t + c.token_used, 0) ?? null;
@@ -155,7 +163,29 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
               </AccordionItem>
 
               <AccordionItem value="tokens">
-                <AccordionTrigger className="py-2 text-xs">令牌列表</AccordionTrigger>
+                <AccordionTrigger className="py-2 text-xs">
+                  <div className="flex items-center gap-1">
+                    <span>令牌列表</span>
+                    {tokenManageUrl ? (
+                      <a
+                        href={tokenManageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-muted-foreground hover:text-foreground inline-flex items-center"
+                        title="打开令牌管理页面"
+                        onClick={(e) => {
+                          // 防止触发 Accordion 的展开/收起
+                          e.stopPropagation();
+                        }}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <ExternalLinkIcon className="size-3" />
+                      </a>
+                    ) : null}
+                  </div>
+                </AccordionTrigger>
                 <AccordionPanel className="pb-2">
                   <TokenListPanel tenantId={tenantId} />
                 </AccordionPanel>
