@@ -1,6 +1,8 @@
 import { getSelectedTenant, tenantStore } from '@/lib/state/tenant-store';
 import { settingStore } from '@/lib/state/setting-store';
 import { quotaToCurrency } from '@/lib/utils/quota-converter';
+import { TenantAPIService } from '@/lib/api';
+import { CostPeriod } from '@/types/api';
 import type { TenantId, TenantInfo } from '@/types/tenant';
 
 interface FetchRequest {
@@ -20,6 +22,24 @@ interface FetchResponse {
 
 export default defineBackground(() => {
   console.log('Hello background!', { id: browser.runtime.id });
+
+  // 定时轮询当日用量并触发告警（使用 alarms 以适配 MV3 service worker 生命周期）
+  const ALARM_NAME = 'poll-daily-usage';
+  const POLL_PERIOD_MINUTES = 1;
+
+  // Create repeating alarm on startup
+  browser.alarms
+    .create(ALARM_NAME, { periodInMinutes: POLL_PERIOD_MINUTES })
+    .catch((error) => console.error('Failed to create usage polling alarm:', error));
+
+  // Run once immediately
+  void pollDailyUsageAndAlert();
+
+  browser.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === ALARM_NAME) {
+      void pollDailyUsageAndAlert();
+    }
+  });
 
   // Universal fetch handler - bypasses CORS
   browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -64,6 +84,52 @@ export default defineBackground(() => {
     unsubscribe();
   };
 });
+
+/**
+ * Poll daily usage for tenants with enabled alerts, then trigger notifications if needed.
+ */
+async function pollDailyUsageAndAlert(): Promise<void> {
+  const { tenantList } = tenantStore.getState();
+  const settingState = settingStore.getState();
+
+  const enabledTenantIds = new Set(
+    Object.entries(settingState.dailyUsageAlert)
+      .filter(([, cfg]) => cfg?.enabled && cfg.threshold > 0)
+      .map(([tenantId]) => tenantId),
+  );
+
+  if (enabledTenantIds.size === 0) return;
+
+  const targets = tenantList.filter((t) => enabledTenantIds.has(t.id));
+  if (targets.length === 0) return;
+
+  await Promise.allSettled(
+    targets.map(async (tenant) => {
+      try {
+        const api = new TenantAPIService(tenant);
+
+        const [infoResult, costResult] = await Promise.allSettled([
+          // tenant.info 可能为空或过期，拉取最新 status 用于展示
+          api.getStatus(),
+          api.getCostData(CostPeriod.DAY_1),
+        ]);
+
+        const tenantInfo: TenantInfo | undefined =
+          infoResult.status === 'fulfilled' ? infoResult.value : tenant.info;
+        if (!tenantInfo) return;
+
+        if (costResult.status === 'fulfilled') {
+          const todayUsage = costResult.value.reduce((sum, item) => sum + item.quota, 0);
+          await checkAndTriggerAlert(tenant.id, tenant.name, tenantInfo, todayUsage);
+        } else {
+          console.warn('Failed to fetch cost data for tenant', tenant.id, costResult.reason);
+        }
+      } catch (error) {
+        console.error('Error polling daily usage for tenant', tenant.id, error);
+      }
+    }),
+  );
+}
 
 /**
  * Handle fetch requests in background - bypasses CORS
