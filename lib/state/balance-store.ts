@@ -67,11 +67,7 @@ const balanceStorageItem = storage.defineItem<BalancePersistedState>('local:bala
 });
 
 // Create store using factory function
-export const balanceStore = createStore<
-  BalanceStoreState,
-  BalancePersistedState,
-  'balanceList'
->({
+export const balanceStore = createStore<BalanceStoreState, BalancePersistedState, 'balanceList'>({
   storageItem: balanceStorageItem,
 
   persistConfig: {

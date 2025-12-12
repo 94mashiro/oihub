@@ -17,6 +17,13 @@ export interface TenantInfo {
     description: string;
     url: string;
   }[];
+  announcements?: {
+    content: string;
+    extra: string;
+    id: number;
+    publishDate: string;
+    type: string;
+  }[];
 }
 
 export type TenantId = string;

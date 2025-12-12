@@ -44,11 +44,7 @@ const costStorageItem = storage.defineItem<CostPersistedState>('local:cost', {
 });
 
 // Create store using factory function
-export const costStore = createStore<
-  CostStoreState,
-  CostPersistedState,
-  'costList'
->({
+export const costStore = createStore<CostStoreState, CostPersistedState, 'costList'>({
   storageItem: costStorageItem,
 
   persistConfig: {

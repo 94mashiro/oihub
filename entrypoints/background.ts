@@ -8,11 +8,7 @@ export default defineBackground(() => {
 
   messageRouter.init();
 
-  const cleanup = moduleRegistry.initAll([
-    fetchProxyModule,
-    usageAlertModule,
-    tenantWatcherModule,
-  ]);
+  const cleanup = moduleRegistry.initAll([fetchProxyModule, usageAlertModule, tenantWatcherModule]);
 
   return cleanup;
 });

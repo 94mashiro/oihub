@@ -26,10 +26,7 @@ export type SettingStoreState = {
   ready: boolean;
 
   // Actions
-  setDailyUsageAlert: (
-    tenantId: TenantId,
-    config: DailyUsageAlertConfig,
-  ) => Promise<void>;
+  setDailyUsageAlert: (tenantId: TenantId, config: DailyUsageAlertConfig) => Promise<void>;
   removeDailyUsageAlert: (tenantId: TenantId) => Promise<void>;
   markAlerted: (tenantId: TenantId) => Promise<void>;
   clearAlertedToday: () => Promise<void>;

@@ -2,7 +2,13 @@ import { describe, expect, test } from 'bun:test';
 import { getSelectedTenant, type TenantListState } from './selectors';
 
 describe('getSelectedTenant', () => {
-  const mockTenant = { id: 'tenant-1', name: 'Test Tenant', url: 'https://example.com', userId: 'user-1', token: 'token-1' };
+  const mockTenant = {
+    id: 'tenant-1',
+    name: 'Test Tenant',
+    url: 'https://example.com',
+    userId: 'user-1',
+    token: 'token-1',
+  };
 
   test('returns tenant when found', () => {
     const state = {
