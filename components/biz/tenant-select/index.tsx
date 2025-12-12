@@ -56,6 +56,10 @@ const TenantSelector = () => {
         <FrameDescription className="mt-0.5 text-xs">切换账号查看余额和消耗</FrameDescription>
         <div className="absolute top-2 right-2">
           <Group>
+            <Button size="sm" variant="outline" onClick={() => navigate('/tenant/create')}>
+              <Plus className="size-3" />
+            </Button>
+            <GroupSeparator />
             <Button
               size="sm"
               variant="outline"
@@ -63,10 +67,6 @@ const TenantSelector = () => {
               disabled={isRefreshing}
             >
               <RefreshCw className={cn(isRefreshing && 'animate-spin', 'size-3')} />
-            </Button>
-            <GroupSeparator />
-            <Button size="sm" variant="outline" onClick={() => navigate('/tenant/create')}>
-              <Plus className="size-3" />
             </Button>
             <GroupSeparator />
             <Button size="sm" variant="outline" onClick={() => navigate('/settings')}>
