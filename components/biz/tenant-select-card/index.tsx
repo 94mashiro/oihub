@@ -1,9 +1,8 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { UsageDisplay } from '@/components/ui/usage-display';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useBalanceStore } from '@/lib/state/balance-store';
-import { quotaToPrice } from '@/utils/quota-to-price';
 import { useCostStore } from '@/lib/state/cost-store';
-import { formatThousands } from '@/utils/format-number';
 import { CostPeriod } from '@/types/api';
 import { Button } from '@/components/ui/button';
 import { EditIcon, Trash } from 'lucide-react';
@@ -60,19 +59,8 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
   const quotaUnit = tenantInfo.info?.quota_per_unit;
   const displayType = tenantInfo.info?.quota_display_type;
 
-  const balance = balanceInfo ? quotaToPrice(balanceInfo.quota, quotaUnit, displayType) : null;
-  const usedQuota = balanceInfo
-    ? quotaToPrice(balanceInfo.used_quota, quotaUnit, displayType)
-    : null;
-  const todayCost = todayCostInfo
-    ? quotaToPrice(
-        todayCostInfo.reduce((t, c) => t + c.quota, 0),
-        quotaUnit,
-        displayType,
-      )
-    : null;
+  const todayCostRaw = todayCostInfo?.reduce((t, c) => t + c.quota, 0) ?? null;
   const todayTokensRaw = todayCostInfo?.reduce((t, c) => t + c.token_used, 0) ?? null;
-  const todayTokens = todayTokensRaw !== null ? formatThousands(todayTokensRaw) : null;
 
   return (
     <div className="group relative">
@@ -119,27 +107,40 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
         <div>
           <p className="text-muted-foreground text-xs">余额</p>
           <p className="text-foreground text-xl font-semibold tracking-tight">
-            {balance ?? <Skeleton className="h-7 w-20" />}
+            {balanceInfo ? (
+              <UsageDisplay
+                cost={balanceInfo.quota}
+                quotaPerUnit={quotaUnit}
+                displayType={displayType}
+              />
+            ) : (
+              <Skeleton className="h-7 w-20" />
+            )}
           </p>
         </div>
         <div className="text-muted-foreground space-y-0.5 text-xs">
           <div className="flex justify-between">
             <span>历史消耗</span>
-            <span className="text-foreground">
-              {usedQuota ?? <Skeleton className="inline-block h-3 w-12" />}
-            </span>
+            {balanceInfo ? (
+              <UsageDisplay
+                className="text-foreground"
+                cost={balanceInfo.used_quota}
+                quotaPerUnit={quotaUnit}
+                displayType={displayType}
+              />
+            ) : (
+              <Skeleton className="inline-block h-3 w-12" />
+            )}
           </div>
           <div className="flex justify-between">
-            <span>今日费用</span>
-            <span className="text-foreground">{todayCost ?? '–'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>今日用量</span>
-            <span className="text-foreground">
-              {todayTokens
-                ? `${todayTokens} ${(todayTokensRaw || 0) <= 1 ? 'token' : 'tokens'}`
-                : '–'}
-            </span>
+            <span>今日消耗</span>
+            <UsageDisplay
+              className="text-foreground"
+              cost={todayCostRaw}
+              tokens={todayTokensRaw}
+              quotaPerUnit={quotaUnit}
+              displayType={displayType}
+            />
           </div>
         </div>
 

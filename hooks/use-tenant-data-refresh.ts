@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { tenantStore } from '@/lib/state/tenant-store';
 import { balanceStore } from '@/lib/state/balance-store';
-import { costStore } from '@/lib/state/cost-store';
+import { costStore, type CostData } from '@/lib/state/cost-store';
 import { TenantAPIService } from '@/lib/api';
-import type { Tenant } from '@/types/tenant';
+import type { Tenant, TenantInfo } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
 
 async function refreshTenantData(tenant: Tenant) {
@@ -23,7 +23,40 @@ async function refreshTenantData(tenant: Tenant) {
   }
   if (costResult.status === 'fulfilled') {
     costStore.getState().setCost(tenant.id, CostPeriod.DAY_1, costResult.value);
+
+    // Trigger usage alert check in background
+    const tenantInfo = infoResult.status === 'fulfilled' ? infoResult.value : tenant.info;
+    if (tenantInfo) {
+      const todayUsage = calculateTodayUsage(costResult.value);
+      triggerUsageAlertCheck(tenant.id, tenant.name, tenantInfo, todayUsage);
+    }
   }
+}
+
+/**
+ * Calculate total quota usage from cost data
+ */
+function calculateTodayUsage(costData: CostData[]): number {
+  return costData.reduce((sum, item) => sum + item.quota, 0);
+}
+
+/**
+ * Send message to background to check usage alert
+ */
+function triggerUsageAlertCheck(
+  tenantId: string,
+  tenantName: string,
+  tenantInfo: TenantInfo,
+  todayUsage: number,
+): void {
+  browser.runtime
+    .sendMessage({
+      type: 'CHECK_USAGE_ALERT',
+      payload: { tenantId, tenantName, tenantInfo, todayUsage },
+    })
+    .catch((error) => {
+      console.error('Failed to send usage alert check message:', error);
+    });
 }
 
 export function useTenantDataRefresh() {

@@ -2,9 +2,8 @@ import { useMemo, useState } from 'react';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useCostStore } from '@/lib/state/cost-store';
 import { useCostLoader } from '@/hooks/use-cost-loader';
-import { quotaToPrice } from '@/utils/quota-to-price';
-import { formatThousands } from '@/utils/format-number';
 import { Progress, ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
+import { UsageDisplay } from '@/components/ui/usage-display';
 import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs';
 import { CostPeriod } from '@/types/api';
 import { Loader2 } from 'lucide-react';
@@ -78,10 +77,14 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
           <div key={item.model} className="space-y-1">
             <div className="flex items-center justify-between text-xs">
               <span className="text-foreground truncate">{item.model}</span>
-              <span className="text-muted-foreground tabular-nums">
-                {quotaToPrice(item.quota, quotaUnit, displayType)} · {formatThousands(item.tokens)}{' '}
-                tokens
-              </span>
+              <UsageDisplay
+                className="text-muted-foreground tabular-nums"
+                cost={item.quota}
+                tokens={item.tokens}
+                quotaPerUnit={quotaUnit}
+                displayType={displayType}
+                separator="/"
+              />
             </div>
             <Progress value={item.percent} className="h-1">
               <ProgressTrack className="h-1">

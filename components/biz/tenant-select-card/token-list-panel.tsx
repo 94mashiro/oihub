@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useTokenStore } from '@/lib/state/token-store';
 import { useTokensLoader } from '@/hooks/use-tokens-loader';
-import { quotaToPrice } from '@/utils/quota-to-price';
+import { UsageDisplay } from '@/components/ui/usage-display';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -77,9 +77,12 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
               <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-[10px]">
                 <span>
                   已用{' '}
-                  <span className="tabular-nums">
-                    {quotaToPrice(token.used_quota, quotaUnit, displayType)}
-                  </span>
+                  <UsageDisplay
+                    className="tabular-nums"
+                    cost={token.used_quota}
+                    quotaPerUnit={quotaUnit}
+                    displayType={displayType}
+                  />
                 </span>
                 <Separator orientation="vertical" className="h-2.5" />
                 <span>

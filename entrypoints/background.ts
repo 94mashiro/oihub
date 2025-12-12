@@ -1,4 +1,7 @@
 import { getSelectedTenant, tenantStore } from '@/lib/state/tenant-store';
+import { settingStore } from '@/lib/state/setting-store';
+import { quotaToCurrency } from '@/lib/utils/quota-converter';
+import type { TenantId, TenantInfo } from '@/types/tenant';
 
 interface FetchRequest {
   url: string;
@@ -40,6 +43,22 @@ export default defineBackground(() => {
     },
     { fireImmediately: true },
   );
+
+  // Listen for CHECK_USAGE_ALERT messages from popup
+  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.type === 'CHECK_USAGE_ALERT') {
+      const { tenantId, tenantName, tenantInfo, todayUsage } = message.payload as {
+        tenantId: TenantId;
+        tenantName: string;
+        tenantInfo: TenantInfo;
+        todayUsage: number;
+      };
+      checkAndTriggerAlert(tenantId, tenantName, tenantInfo, todayUsage)
+        .then(() => sendResponse({ success: true }))
+        .catch((error) => sendResponse({ success: false, error: error.message }));
+      return true;
+    }
+  });
 
   return () => {
     unsubscribe();
@@ -108,5 +127,66 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
       success: false,
       error: error instanceof Error ? error.message : 'Network error',
     };
+  }
+}
+
+/**
+ * Get today's date string in YYYY-MM-DD format
+ */
+function getTodayString(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Check if usage exceeds threshold and trigger notification
+ */
+async function checkAndTriggerAlert(
+  tenantId: TenantId,
+  tenantName: string,
+  tenantInfo: TenantInfo,
+  todayUsage: number,
+): Promise<void> {
+  const state = settingStore.getState();
+  const config = state.dailyUsageAlert[tenantId];
+
+  // Skip if alert not enabled or no threshold set
+  if (!config?.enabled || config.threshold <= 0) {
+    return;
+  }
+
+  // Skip if already alerted today
+  const today = getTodayString();
+  const alertedDate = state.alertedToday[tenantId];
+  if (alertedDate === today) {
+    return;
+  }
+
+  // Clear stale alerted records (from previous days)
+  if (alertedDate && alertedDate !== today) {
+    await state.clearAlertedToday();
+  }
+
+  // Check if usage exceeds threshold
+  if (todayUsage >= config.threshold) {
+    // Mark as alerted
+    await state.markAlerted(tenantId);
+
+    // Convert to currency for display
+    const usageCurrency = quotaToCurrency(todayUsage, tenantInfo);
+    const thresholdCurrency = quotaToCurrency(config.threshold, tenantInfo);
+    const displayType = tenantInfo.quota_display_type || 'CNY';
+
+    // Send notification
+    try {
+      await browser.notifications.create(`usage-alert-${tenantId}`, {
+        type: 'basic',
+        iconUrl: browser.runtime.getURL('/icon/128.png'),
+        title: `${tenantName} 额度告警`,
+        message: `今日用量 ${usageCurrency.toFixed(2)} ${displayType} 已达到阈值 ${thresholdCurrency.toFixed(2)} ${displayType}`,
+      });
+    } catch (error) {
+      console.error('Failed to create notification:', error);
+    }
   }
 }
