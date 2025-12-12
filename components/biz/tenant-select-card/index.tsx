@@ -28,6 +28,7 @@ import {
 import { ModelUsagePanel } from './model-usage-panel';
 import { ApiEndpointsPanel } from './api-endpoints-panel';
 import { TokenListPanel } from './token-list-panel';
+import { AnnouncementPanel } from './announcement-panel';
 
 interface Props {
   tenantId: string;
@@ -197,6 +198,15 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
                   <ApiEndpointsPanel tenantId={tenantId} />
                 </AccordionPanel>
               </AccordionItem>
+
+              {tenantInfo.info?.announcements && tenantInfo.info.announcements.length > 0 && (
+                <AccordionItem value="announcements">
+                  <AccordionTrigger className="py-2 text-xs">公告</AccordionTrigger>
+                  <AccordionPanel className="pb-2">
+                    <AnnouncementPanel announcements={tenantInfo.info.announcements} />
+                  </AccordionPanel>
+                </AccordionItem>
+              )}
             </Accordion>
           </CollapsiblePanel>
         </Collapsible>
