@@ -44,17 +44,17 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
   }
 
   return (
-    <div className="divide-border/50 divide-y">
+    <div className="flex flex-col gap-2">
       {[...tokenList]
         .sort((a, b) => (b.accessed_time || 0) - (a.accessed_time || 0))
         .map((token) => (
           <div
             key={token.key}
-            className="group/token flex items-center gap-3 py-2 first:pt-0 last:pb-0"
+            className="group/token border-border flex items-center gap-2 border-b pb-2 last:border-b-0 last:pb-0"
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-foreground truncate text-xs">{token.name}</span>
+                <span className="text-foreground truncate text-xs font-medium">{token.name}</span>
                 {token.group && tokenGroups?.[token.group] && (
                   <Badge variant="outline" size="sm" className="shrink-0 gap-0.5">
                     {token.group}
@@ -74,11 +74,10 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                   </Badge>
                 )}
               </div>
-              <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-[10px]">
+              <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-[10px]">
                 <span>
                   已用{' '}
                   <UsageDisplay
-                    className="tabular-nums"
                     cost={token.used_quota}
                     quotaPerUnit={quotaUnit}
                     displayType={displayType}
@@ -90,12 +89,6 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                     ? `${new Date(token.accessed_time * 1000).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 最后使用`
                     : '从未访问'}
                 </span>
-                {/* <Separator orientation="vertical" className="h-2.5" />
-              <span>
-                {token.created_time
-                  ? `${new Date(token.created_time * 1000).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 创建`
-                  : '–'}
-              </span> */}
               </div>
             </div>
             <Button

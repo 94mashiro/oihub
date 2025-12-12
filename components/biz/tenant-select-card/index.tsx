@@ -111,11 +111,11 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
           </AlertDialogPopup>
         </AlertDialog>
       </Group>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         <p className="truncate text-sm font-medium">{tenantInfo.name}</p>
         <div>
           <p className="text-muted-foreground text-xs">余额</p>
-          <p className="text-foreground text-xl font-semibold tracking-tight">
+          <p className="text-foreground text-2xl font-semibold tracking-tight">
             {balanceInfo ? (
               <UsageDisplay
                 cost={balanceInfo.quota}
@@ -123,16 +123,25 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
                 displayType={displayType}
               />
             ) : (
-              <Skeleton className="h-7 w-20" />
+              <Skeleton className="h-8 w-24" />
             )}
           </p>
         </div>
-        <div className="text-muted-foreground space-y-0.5 text-xs">
+        <div className="text-muted-foreground flex flex-col gap-1 text-xs">
+          <div className="flex justify-between">
+            <span className="text-foreground font-medium">今日消耗</span>
+            <UsageDisplay
+              className="text-foreground font-medium"
+              cost={todayCostRaw}
+              tokens={todayTokensRaw}
+              quotaPerUnit={quotaUnit}
+              displayType={displayType}
+            />
+          </div>
           <div className="flex justify-between">
             <span>历史消耗</span>
             {balanceInfo ? (
               <UsageDisplay
-                className="text-foreground"
                 cost={balanceInfo.used_quota}
                 quotaPerUnit={quotaUnit}
                 displayType={displayType}
@@ -140,16 +149,6 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
             ) : (
               <Skeleton className="inline-block h-3 w-12" />
             )}
-          </div>
-          <div className="flex justify-between">
-            <span>今日消耗</span>
-            <UsageDisplay
-              className="text-foreground"
-              cost={todayCostRaw}
-              tokens={todayTokensRaw}
-              quotaPerUnit={quotaUnit}
-              displayType={displayType}
-            />
           </div>
         </div>
 

@@ -1,5 +1,10 @@
 export const quotaToPrice = (quota: number, quotaPerUnit = 1, unit?: string) => {
-  return `${showDisplayUnit(unit)}${(quota / quotaPerUnit).toFixed(2)}`;
+  const value = quota / quotaPerUnit;
+  const formatted = value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${showDisplayUnit(unit)}${formatted}`;
 };
 
 const showDisplayUnit = (unit?: string) => {

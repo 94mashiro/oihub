@@ -36,5 +36,5 @@ export const UsageDisplay: React.FC<UsageDisplayProps> = ({
     content = '–';
   }
 
-  return <span className={cn(className)}>{content}</span>;
+  return <span className={cn('tabular-nums', className)}>{content}</span>;
 };

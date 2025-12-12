@@ -25,11 +25,11 @@ export const ApiEndpointsPanel: React.FC<Props> = ({ tenantId }) => {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       {apiEndpoints.map((endpoint) => (
-        <div key={endpoint.id}>
+        <div key={endpoint.id} className="flex flex-col gap-0.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-foreground">{endpoint.route}</span>
+            <span className="text-foreground font-medium">{endpoint.route}</span>
             <Button
               size="icon"
               variant="ghost"
@@ -44,7 +44,7 @@ export const ApiEndpointsPanel: React.FC<Props> = ({ tenantId }) => {
               )}
             </Button>
           </div>
-          <p className="text-muted-foreground truncate font-mono text-[11px]">{endpoint.url}</p>
+          <p className="text-muted-foreground truncate font-mono text-[10px]">{endpoint.url}</p>
         </div>
       ))}
     </div>

@@ -31,8 +31,8 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
   const quotaUnit = tenantInfo?.info?.quota_per_unit;
   const displayType = tenantInfo?.info?.quota_display_type;
 
-  const modelUsage = useMemo(() => {
-    if (!costList || costList.length === 0) return [];
+  const { modelUsage, totalCost, totalTokens } = useMemo(() => {
+    if (!costList || costList.length === 0) return { modelUsage: [], totalCost: 0, totalTokens: 0 };
 
     const grouped = costList.reduce(
       (acc, c) => {
@@ -45,13 +45,12 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
     );
 
     const entries = Object.entries(grouped);
-    const total =
-      sortBy === 'cost'
-        ? entries.reduce((t, [, d]) => t + d.quota, 0)
-        : entries.reduce((t, [, d]) => t + d.tokens, 0);
-    if (total === 0) return [];
+    const totalCost = entries.reduce((t, [, d]) => t + d.quota, 0);
+    const totalTokens = entries.reduce((t, [, d]) => t + d.tokens, 0);
+    const total = sortBy === 'cost' ? totalCost : totalTokens;
+    if (total === 0) return { modelUsage: [], totalCost: 0, totalTokens: 0 };
 
-    return entries
+    const modelUsage = entries
       .map(([model, data]) => ({
         model,
         ...data,
@@ -59,10 +58,12 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
       }))
       .sort((a, b) => (sortBy === 'cost' ? b.quota - a.quota : b.tokens - a.tokens))
       .slice(0, 5);
+
+    return { modelUsage, totalCost, totalTokens };
   }, [costList, sortBy]);
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <Tabs value={period} onValueChange={(v) => setPeriod(v as CostPeriod)}>
           <TabsList className="h-6 gap-0 p-0.5 text-xs">
@@ -93,26 +94,40 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
       ) : modelUsage.length === 0 ? (
         <p className="text-muted-foreground text-xs">暂无数据</p>
       ) : (
-        modelUsage.map((item) => (
-          <div key={item.model} className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-foreground truncate">{item.model}</span>
-              <UsageDisplay
-                className="text-muted-foreground tabular-nums"
-                cost={item.quota}
-                tokens={item.tokens}
-                quotaPerUnit={quotaUnit}
-                displayType={displayType}
-                separator="/"
-              />
-            </div>
-            <Progress value={item.percent} className="h-1">
-              <ProgressTrack className="h-1">
-                <ProgressIndicator className="bg-foreground/72" />
-              </ProgressTrack>
-            </Progress>
+        <>
+          <div className="border-border flex justify-between border-b pb-2 text-xs font-medium">
+            <span>总计</span>
+            <UsageDisplay
+              cost={totalCost}
+              tokens={totalTokens}
+              quotaPerUnit={quotaUnit}
+              displayType={displayType}
+              separator="/"
+            />
           </div>
-        ))
+          <div className="flex flex-col gap-2">
+            {modelUsage.map((item) => (
+              <div key={item.model} className="flex flex-col gap-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-foreground truncate">{item.model}</span>
+                  <UsageDisplay
+                    className="text-muted-foreground"
+                    cost={item.quota}
+                    tokens={item.tokens}
+                    quotaPerUnit={quotaUnit}
+                    displayType={displayType}
+                    separator="/"
+                  />
+                </div>
+                <Progress value={item.percent} className="h-1">
+                  <ProgressTrack className="h-1">
+                    <ProgressIndicator className="bg-foreground/72" />
+                  </ProgressTrack>
+                </Progress>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
