@@ -1,82 +1,62 @@
-import { describe, expect, test } from 'bun:test';
-import type { DailyUsageAlertConfig, SettingStoreState } from './setting-store';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import {
+  installFakeBrowser,
+  resetFakeBrowser,
+  waitForStoreReady,
+} from '@/lib/test/wxt-test-helpers';
 
-// Test helper functions and state logic without WXT storage dependency
+describe('settingStore', () => {
+  beforeEach(() => {
+    installFakeBrowser();
+    resetFakeBrowser();
+  });
 
-describe('DailyUsageAlertConfig type', () => {
-  test('config structure is correct', () => {
-    const config: DailyUsageAlertConfig = {
+  test('setDailyUsageAlert and removeDailyUsageAlert update state', async () => {
+    const { settingStore } = await import('./setting-store');
+    await waitForStoreReady(settingStore);
+
+    const tenantId = 'tenant-1' as any;
+    await settingStore.getState().setDailyUsageAlert(tenantId, { enabled: true, threshold: 123 });
+
+    expect(settingStore.getState().dailyUsageAlert[tenantId]).toEqual({
       enabled: true,
-      threshold: 500000,
-    };
-    expect(config.enabled).toBe(true);
-    expect(config.threshold).toBe(500000);
+      threshold: 123,
+    });
+
+    await settingStore.getState().removeDailyUsageAlert(tenantId);
+    expect(settingStore.getState().dailyUsageAlert[tenantId]).toBeUndefined();
   });
 
-  test('disabled config', () => {
-    const config: DailyUsageAlertConfig = {
-      enabled: false,
-      threshold: 0,
-    };
-    expect(config.enabled).toBe(false);
-    expect(config.threshold).toBe(0);
-  });
-});
+  test('markAlerted sets alertedToday and isAlertedToday returns true', async () => {
+    const { settingStore } = await import('./setting-store');
+    await waitForStoreReady(settingStore);
 
-describe('isAlertedToday logic', () => {
-  const getTodayString = (): string => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  };
+    const tenantId = 'tenant-2' as any;
 
-  test('returns true when alerted today', () => {
-    const today = getTodayString();
-    const alertedToday: Record<string, string> = {
-      'tenant-1': today,
-    };
-    expect(alertedToday['tenant-1'] === today).toBe(true);
+    await settingStore.getState().clearAlertedToday();
+    expect(settingStore.getState().isAlertedToday(tenantId)).toBe(false);
+
+    await settingStore.getState().markAlerted(tenantId);
+    expect(settingStore.getState().isAlertedToday(tenantId)).toBe(true);
+    expect(settingStore.getState().alertedToday[tenantId]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  test('returns false when alerted on different day', () => {
-    const today = getTodayString();
-    const alertedToday: Record<string, string> = {
-      'tenant-1': '2020-01-01',
-    };
-    expect(alertedToday['tenant-1'] === today).toBe(false);
-  });
+  test('clearAlertedToday clears all alertedToday entries', async () => {
+    const { settingStore } = await import('./setting-store');
+    await waitForStoreReady(settingStore);
 
-  test('returns false when not alerted', () => {
-    const today = getTodayString();
-    const alertedToday: Record<string, string> = {};
-    expect(alertedToday['tenant-1'] === today).toBe(false);
-  });
-});
+    const tenantA = 'tenant-a' as any;
+    const tenantB = 'tenant-b' as any;
 
-describe('SettingStoreState structure', () => {
-  test('initial state structure', () => {
-    const initialState: Partial<SettingStoreState> = {
-      ready: false,
-      dailyUsageAlert: {},
-      alertedToday: {},
-    };
-    expect(initialState.ready).toBe(false);
-    expect(initialState.dailyUsageAlert).toEqual({});
-    expect(initialState.alertedToday).toEqual({});
-  });
+    await settingStore.getState().markAlerted(tenantA);
+    await settingStore.getState().markAlerted(tenantB);
 
-  test('state with alert configs', () => {
-    const state: Partial<SettingStoreState> = {
-      ready: true,
-      dailyUsageAlert: {
-        'tenant-1': { enabled: true, threshold: 1000000 },
-        'tenant-2': { enabled: false, threshold: 0 },
-      },
-      alertedToday: {
-        'tenant-1': '2025-12-12',
-      },
-    };
-    expect(state.dailyUsageAlert?.['tenant-1']?.enabled).toBe(true);
-    expect(state.dailyUsageAlert?.['tenant-2']?.enabled).toBe(false);
-    expect(state.alertedToday?.['tenant-1']).toBe('2025-12-12');
+    expect(Object.keys(settingStore.getState().alertedToday).length).toBeGreaterThanOrEqual(2);
+
+    await settingStore.getState().clearAlertedToday();
+
+    expect(settingStore.getState().alertedToday).toEqual({});
+    expect(settingStore.getState().isAlertedToday(tenantA)).toBe(false);
+    expect(settingStore.getState().isAlertedToday(tenantB)).toBe(false);
   });
 });

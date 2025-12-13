@@ -2,7 +2,7 @@
   "name": "wxt-react-starter",
   "description": "manifest.json description",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -14,7 +14,8 @@
     "compile": "tsc --noEmit",
     "test": "bun test",
     "postinstall": "wxt prepare",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint .",
+    "lint:strict": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check"

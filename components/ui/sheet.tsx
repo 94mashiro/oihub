@@ -48,6 +48,7 @@ function SheetViewport({
         side === 'left' && 'flex justify-start',
         side === 'right' && 'flex justify-end',
         inset && 'sm:p-4',
+        className,
       )}
       data-slot="sheet-viewport"
       {...props}

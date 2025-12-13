@@ -73,7 +73,7 @@ export const AnnouncementPanel = ({ announcements }: AnnouncementPanelProps) => 
         )}
       </div>
       <div
-        className="text-foreground text-xs [&_a]:underline [&_p+p]:mt-1.5 [&_p]:leading-relaxed"
+        className="text-foreground text-xs [&_a]:underline [&_p]:leading-relaxed [&_p+p]:mt-1.5"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(current.content) }}
       />
     </div>

@@ -7,7 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipPopup } from '@/components/ui/tooltip';
+import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs';
 import { Copy, Check, Info, Loader2 } from 'lucide-react';
+
+type SortBy = 'time' | 'cost';
 
 interface Props {
   tenantId: string;
@@ -19,6 +22,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
   const tokenGroups = useTokenStore((state) => state.tokenGroups[tenantId]);
   const { loading } = useTokensLoader(tenantId);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortBy>('time');
 
   const quotaUnit = tenantInfo?.info?.quota_per_unit;
   const displayType = tenantInfo?.info?.quota_display_type;
@@ -45,8 +49,22 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
 
   return (
     <div className="flex flex-col gap-2">
+      <Tabs value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+        <TabsList className="h-6 gap-0 p-0.5 text-xs">
+          <TabsTab value="time" className="h-5 px-2 py-0 text-xs">
+            时间
+          </TabsTab>
+          <TabsTab value="cost" className="h-5 px-2 py-0 text-xs">
+            金额
+          </TabsTab>
+        </TabsList>
+      </Tabs>
       {[...tokenList]
-        .sort((a, b) => (b.accessed_time || 0) - (a.accessed_time || 0))
+        .sort((a, b) =>
+          sortBy === 'time'
+            ? (b.accessed_time || 0) - (a.accessed_time || 0)
+            : (b.used_quota || 0) - (a.used_quota || 0),
+        )
         .map((token) => (
           <div
             key={token.key}

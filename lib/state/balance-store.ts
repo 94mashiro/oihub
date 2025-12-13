@@ -1,4 +1,4 @@
-import { storage } from '#imports';
+import { storage } from 'wxt/utils/storage';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createStore } from './create-store';
 import type { TenantId } from '@/types/tenant';

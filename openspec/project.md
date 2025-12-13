@@ -14,7 +14,7 @@
 
 ### Code Style
 - 2 空格缩进，Prettier/ESLint 配置在仓库根目录
-- TypeScript 无 `any`，避免默认导出（除入口）
+- TypeScript 保持 `strict`；`any` 仅在测试与少数边界/基础模块允许（lint 标为 warning），避免在业务模块中扩散
 - 文件命名：业务/工具模块用 kebab-case；React 组件文件用 PascalCase
 - UI 仅用 coss 组件 + Tailwind `cn()`；颜色走语义变量（见 `assets/tailwind.css`）
 

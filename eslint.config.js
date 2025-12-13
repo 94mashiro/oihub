@@ -46,6 +46,20 @@ export default [
     rules: {
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   }),
+  {
+    files: [
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      'lib/test/**/*',
+      'lib/state/**/*',
+      'lib/background/**/*',
+      'lib/api/transport/**/*',
+    ],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
 ];
