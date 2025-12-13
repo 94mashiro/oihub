@@ -18,13 +18,13 @@
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Client Layer - APIClient + ClientManager                    │
+│ Client Layer - APIClient（`apiClient` 全局单例）             │
 │ 职责: HTTP 方法、rate limiting、重试、错误处理               │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Transport Layer - BackgroundTransport                       │
-│ 职责: CORS bypass、缓存、请求去重                            │
+│ 职责: CORS bypass（message passing），不包含缓存/去重         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -35,11 +35,9 @@ lib/api/
 ├── types.ts                     # 统一类型定义
 ├── index.ts                     # 统一导出
 ├── transport/
-│   ├── background-transport.ts  # CORS bypass + 请求去重
-│   └── deduplicator.ts          # 请求去重器
+│   └── background-transport.ts  # CORS bypass（无缓存/去重）
 ├── client/
 │   ├── api-client.ts            # HTTP 客户端
-│   ├── client-manager.ts        # 客户端实例管理器
 │   ├── rate-limiter.ts          # 限流器
 │   ├── rate-limiter-registry.ts # 限流器注册表
 │   ├── retry.ts                 # 指数退避重试
@@ -56,9 +54,9 @@ lib/api/
 // ❌ 错误 - 直接创建 client
 const client = new APIClient({ baseURL, token, userId });
 
-// ✅ 正确 - 通过 clientManager 获取
-import { clientManager } from '@/lib/api';
-const client = clientManager.getClient(tenant);
+// ✅ 正确 - 使用全局单例（或更推荐：直接使用 TenantAPIService）
+import { apiClient } from '@/lib/api';
+const data = await apiClient.get('/api/user/self', { baseURL, token, userId });
 ```
 
 ### 2. 使用 Service 层封装端点
@@ -69,7 +67,7 @@ const data = await client.get('/api/user/self');
 
 // ✅ 正确 - 通过 Service 调用
 import { TenantAPIService } from '@/lib/api';
-const api = new TenantAPIService(client);
+const api = new TenantAPIService(tenant);
 const data = await api.getSelfInfo();
 ```
 
@@ -81,7 +79,7 @@ const data = await api.getSelfInfo();
 export class TenantAPIService {
   // 新增端点示例
   async getNewFeature(): Promise<NewFeatureResponse> {
-    return this.client.get('/api/new-feature');
+    return apiClient.get('/api/new-feature', this.config);
   }
 }
 ```
@@ -109,8 +107,7 @@ export class TenantAPIService {
 
 ### 请求去重（GET 请求）
 
-- 相同 URL + 用户的 GET 请求自动去重
-- 并发请求共享同一个 Promise
+- 当前 background fetch 层不提供请求去重（如需去重请在上层自行实现）
 
 ### Rate Limiting
 
@@ -120,20 +117,17 @@ export class TenantAPIService {
 
 ### 缓存（Background 层）
 
-- GET 请求默认缓存 1 分钟
-- 缓存 key = URL + 用户 ID
-- LRU 淘汰，最多 100 条
+- 当前 background fetch 层不提供缓存（如需缓存请在上层自行实现）
 
 ## 使用示例
 
 ### 在 Hook 中使用
 
 ```typescript
-import { clientManager, TenantAPIService } from '@/lib/api';
+import { TenantAPIService } from '@/lib/api';
 
 async function refreshTenantData(tenant: Tenant) {
-  const client = clientManager.getClient(tenant);
-  const api = new TenantAPIService(client);
+  const api = new TenantAPIService(tenant);
 
   const [info, balance] = await Promise.allSettled([
     api.getStatus(),
@@ -144,27 +138,10 @@ async function refreshTenantData(tenant: Tenant) {
 }
 ```
 
-### 禁用重试
+### 重试配置
 
-```typescript
-const client = new APIClient({
-  ...config,
-  retry: false,
-});
-```
-
-### 自定义重试配置
-
-```typescript
-const client = new APIClient({
-  ...config,
-  retry: {
-    maxRetries: 5,
-    baseDelayMs: 500,
-    maxDelayMs: 30000,
-  },
-});
-```
+- 重试与限流配置由 `lib/api/client/api-client.ts` 中的 `apiClient` 全局单例负责
+- 如需调整默认策略，请在该文件中修改单例配置（避免在业务代码中散落创建新 client）
 
 ## 扩展指南
 

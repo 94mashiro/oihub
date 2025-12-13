@@ -15,7 +15,7 @@ const HTTP_STATUS_TEXT: Record<number, string> = {
 };
 
 export interface FetchOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: unknown;
   timeout?: number;
@@ -32,9 +32,11 @@ export interface FetchResponse<T = unknown> {
  * Check if running in service worker (background script) context
  */
 function isBackgroundContext(): boolean {
-  return (
-    typeof ServiceWorkerGlobalScope !== 'undefined' && self instanceof ServiceWorkerGlobalScope
-  );
+  // TS 环境未必包含 ServiceWorkerGlobalScope 的类型声明（取决于 tsconfig lib），
+  // 这里用运行时检测避免类型依赖；行为保持不变。
+  const SWGS = (globalThis as unknown as { ServiceWorkerGlobalScope?: unknown })
+    .ServiceWorkerGlobalScope;
+  return typeof SWGS !== 'undefined' && self instanceof (SWGS as any);
 }
 
 /**

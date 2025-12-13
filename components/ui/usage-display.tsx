@@ -1,5 +1,5 @@
-import { quotaToPrice } from '@/utils/quota-to-price';
-import { formatThousands } from '@/utils/format-number';
+import { quotaToPrice } from '@/lib/utils/quota-to-price';
+import { formatThousands } from '@/lib/utils/format-number';
 import { cn } from '@/lib/utils';
 
 interface UsageDisplayProps {

@@ -21,7 +21,7 @@
 ### Architecture Patterns
 - WXT 多入口：`entrypoints/background.ts`（service worker）、`entrypoints/content.ts`（DOM 注入）、`entrypoints/popup/`（React UI）
 - `@/` 解析到仓库根，跨模块引用不使用深层相对路径
-- API 访问通过 `lib/api` 层，复用 `clientManager.getClient`，端点集中于 `services/tenant-api-service.ts`
+- API 访问通过 `lib/api` 层，使用 `apiClient` 全局单例，端点集中于 `services/tenant-api-service.ts`
 - 状态存储遵循 `docs/storage-state-rules.md`：`storage.defineItem`、Zustand hydrate/ready 守卫，不直接触碰 `browser.storage*`
 
 ### Testing Strategy

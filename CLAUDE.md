@@ -58,7 +58,7 @@ Before touching any persistent or cross-context data, read `docs/storage-state-r
 
 ## API Architecture Rules
 Before working with any API calls, read `docs/api-architecture.md` for the layered architecture design. Key rules:
-- **Never create APIClient directly** - use `clientManager.getClient(tenant)` to reuse instances
+- **Never create APIClient directly** - use the exported `apiClient` singleton (or prefer `TenantAPIService`)
 - **Never hardcode API URLs in hooks/components** - add endpoints to `TenantAPIService` in `lib/api/services/`
 - **All API responses must have explicit types** - no `any` types allowed
 - Import from `@/lib/api` (unified export), not from internal paths like `@/lib/api/client/`
