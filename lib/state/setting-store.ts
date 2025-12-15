@@ -10,10 +10,16 @@ export interface DailyUsageAlertConfig {
   threshold: number; // Stored in raw quota units
 }
 
+// Experimental features configuration
+export interface ExperimentalFeaturesConfig {
+  tokenExport: boolean;
+}
+
 // Define persisted data structure
 type SettingPersistedState = {
   dailyUsageAlert: Record<TenantId, DailyUsageAlertConfig>;
   alertedToday: Record<TenantId, string>; // value is date string like "2025-12-12"
+  experimentalFeatures: ExperimentalFeaturesConfig;
 };
 
 // Define complete store state
@@ -21,6 +27,7 @@ export type SettingStoreState = {
   // Persisted fields
   dailyUsageAlert: Record<TenantId, DailyUsageAlertConfig>;
   alertedToday: Record<TenantId, string>;
+  experimentalFeatures: ExperimentalFeaturesConfig;
 
   // Runtime fields
   ready: boolean;
@@ -31,6 +38,10 @@ export type SettingStoreState = {
   markAlerted: (tenantId: TenantId) => Promise<void>;
   clearAlertedToday: () => Promise<void>;
   isAlertedToday: (tenantId: TenantId) => boolean;
+  setExperimentalFeature: <K extends keyof ExperimentalFeaturesConfig>(
+    key: K,
+    value: ExperimentalFeaturesConfig[K],
+  ) => Promise<void>;
 
   // Internal methods
   hydrate: () => Promise<void>;
@@ -47,6 +58,7 @@ const settingStorageItem = storage.defineItem<SettingPersistedState>('local:sett
   fallback: {
     dailyUsageAlert: {},
     alertedToday: {},
+    experimentalFeatures: { tokenExport: false },
   },
 });
 
@@ -54,12 +66,12 @@ const settingStorageItem = storage.defineItem<SettingPersistedState>('local:sett
 export const settingStore = createStore<
   SettingStoreState,
   SettingPersistedState,
-  'dailyUsageAlert' | 'alertedToday'
+  'dailyUsageAlert' | 'alertedToday' | 'experimentalFeatures'
 >({
   storageItem: settingStorageItem,
 
   persistConfig: {
-    keys: ['dailyUsageAlert', 'alertedToday'],
+    keys: ['dailyUsageAlert', 'alertedToday', 'experimentalFeatures'],
   },
 
   createState: (set, get, persist) => ({
@@ -67,6 +79,7 @@ export const settingStore = createStore<
     ready: false,
     dailyUsageAlert: {},
     alertedToday: {},
+    experimentalFeatures: { tokenExport: false },
 
     setDailyUsageAlert: async (tenantId, config) => {
       set((state) => {
@@ -100,6 +113,13 @@ export const settingStore = createStore<
     isAlertedToday: (tenantId) => {
       const today = getTodayString();
       return get().alertedToday[tenantId] === today;
+    },
+
+    setExperimentalFeature: async (key, value) => {
+      set((state) => {
+        state.experimentalFeatures[key] = value;
+      });
+      await persist({});
     },
 
     hydrate: async () => {

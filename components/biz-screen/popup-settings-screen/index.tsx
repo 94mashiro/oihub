@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell } from 'lucide-react';
+import { ArrowLeft, Bell, FlaskConical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Frame,
@@ -22,6 +22,8 @@ const PopupSettingsScreen = () => {
   const tenantReady = useTenantStore((state) => state.ready);
   const dailyUsageAlert = useSettingStore((state) => state.dailyUsageAlert);
   const setDailyUsageAlert = useSettingStore((state) => state.setDailyUsageAlert);
+  const experimentalFeatures = useSettingStore((state) => state.experimentalFeatures);
+  const setExperimentalFeature = useSettingStore((state) => state.setExperimentalFeature);
   const settingReady = useSettingStore((state) => state.ready);
 
   if (!tenantReady || !settingReady) {
@@ -81,6 +83,31 @@ const PopupSettingsScreen = () => {
               ))}
             </div>
           )}
+        </div>
+      </FramePanel>
+      <FramePanel className="rounded-md p-2">
+        <div className="space-y-3">
+          <div className="flex items-center gap-1.5">
+            <FlaskConical className="text-muted-foreground size-3.5" />
+            <span className="text-sm font-medium">实验性功能</span>
+          </div>
+          <p className="text-muted-foreground text-xs">这些功能仍在开发中，可能不稳定</p>
+          <div className="divide-border/50 divide-y">
+            <div className="py-2.5 first:pt-0 last:pb-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <span className="text-foreground text-xs font-medium">一键导出</span>
+                  <p className="text-muted-foreground mt-0.5 text-[10px]">
+                    在令牌列表中显示一键导出按钮
+                  </p>
+                </div>
+                <Switch
+                  checked={experimentalFeatures.tokenExport}
+                  onCheckedChange={(checked) => setExperimentalFeature('tokenExport', checked)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </FramePanel>
     </Frame>

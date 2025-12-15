@@ -8,7 +8,18 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipPopup } from '@/components/ui/tooltip';
 import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs';
-import { Copy, Check, Info, Loader2 } from 'lucide-react';
+import {
+  Menu,
+  MenuTrigger,
+  MenuPopup,
+  MenuItem,
+  MenuGroup,
+  MenuGroupLabel,
+} from '@/components/ui/menu';
+import { Copy, Check, Info, Loader2, ExternalLink } from 'lucide-react';
+import { ClaudeIcon, OpenAIIcon, GeminiIcon } from '@/components/ui/icons/provider-icons';
+import { buildCCSwitchDeeplink, type CCSwitchApp } from '@/lib/utils/ccswitch-deeplink';
+import { useSettingStore } from '@/lib/state/setting-store';
 
 type SortBy = 'time' | 'cost';
 
@@ -21,6 +32,9 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
   const tokenList = useTokenStore((state) => state.tokenList[tenantId]);
   const tokenGroups = useTokenStore((state) => state.tokenGroups[tenantId]);
   const { loading } = useTokensLoader(tenantId);
+  const tokenExportEnabled = useSettingStore(
+    (state) => state.experimentalFeatures.tokenExport,
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>('time');
 
@@ -32,6 +46,13 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  const handleExport = (tokenKey: string, tokenName: string, app: CCSwitchApp) => {
+    const baseUrl = tenantInfo?.url || '';
+    const name = tenantInfo?.name ? `${tenantInfo.name} - ${tokenName}` : tokenName;
+    const url = buildCCSwitchDeeplink({ app, name, baseUrl, tokenKey });
+    window.open(url);
   };
 
   if (loading && !tokenList) {
@@ -109,24 +130,64 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                 </span>
               </div>
             </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 shrink-0 gap-1 px-2 text-[10px] opacity-0 transition-opacity group-hover/token:opacity-100"
-              onClick={(e) => handleCopy(e, `token-${token.key}`, `sk-${token.key}`)}
-            >
-              {copiedId === `token-${token.key}` ? (
-                <>
-                  <Check className="size-3" />
-                  已复制
-                </>
-              ) : (
-                <>
-                  <Copy className="size-3" />
-                  复制
-                </>
+            <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover/token:opacity-100">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 gap-1 px-2 text-[10px]"
+                onClick={(e) => handleCopy(e, `token-${token.key}`, `sk-${token.key}`)}
+              >
+                {copiedId === `token-${token.key}` ? (
+                  <>
+                    <Check className="size-3" />
+                    已复制
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-3" />
+                    复制
+                  </>
+                )}
+              </Button>
+              {tokenExportEnabled && (
+                <Menu>
+                  <MenuTrigger
+                    render={
+                      <Button size="sm" variant="ghost" className="h-6 gap-1 px-2 text-[10px]">
+                        <ExternalLink className="size-3" />
+                        导出
+                      </Button>
+                    }
+                  />
+                  <MenuPopup className="min-w-28">
+                    <MenuGroup>
+                      <MenuGroupLabel className="text-[10px]">导出到 CC Switch</MenuGroupLabel>
+                      <MenuItem
+                        className="text-xs"
+                        onClick={() => handleExport(token.key, token.name, 'claude')}
+                      >
+                        <ClaudeIcon className="size-3.5" />
+                        Claude
+                      </MenuItem>
+                      <MenuItem
+                        className="text-xs"
+                        onClick={() => handleExport(token.key, token.name, 'codex')}
+                      >
+                        <OpenAIIcon className="size-3.5" />
+                        Codex
+                      </MenuItem>
+                      <MenuItem
+                        className="text-xs"
+                        onClick={() => handleExport(token.key, token.name, 'gemini')}
+                      >
+                        <GeminiIcon className="size-3.5" />
+                        Gemini
+                      </MenuItem>
+                    </MenuGroup>
+                  </MenuPopup>
+                </Menu>
               )}
-            </Button>
+            </div>
           </div>
         ))}
     </div>
