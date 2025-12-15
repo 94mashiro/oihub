@@ -61,18 +61,18 @@ const PopupSettingsScreen = () => {
         </div>
       </FrameHeader>
       <FramePanel className="rounded-md p-2">
-        <div className="space-y-3">
-          <div className="flex items-center gap-1.5">
+        <div>
+          <div className="flex items-center gap-1">
             <Bell className="text-muted-foreground size-3.5" />
             <span className="text-sm font-medium">今日额度告警</span>
           </div>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             当账号今日用量达到设定阈值时，发送浏览器通知提醒
           </p>
           {tenantList.length === 0 ? (
-            <p className="text-muted-foreground text-xs">暂无账号，请先添加账号</p>
+            <p className="text-muted-foreground mt-3 text-xs">暂无账号，请先添加账号</p>
           ) : (
-            <div className="divide-border/50 divide-y">
+            <div className="divide-border/50 mt-3 divide-y">
               {tenantList.map((tenant) => (
                 <TenantAlertConfig
                   key={tenant.id}
@@ -86,13 +86,13 @@ const PopupSettingsScreen = () => {
         </div>
       </FramePanel>
       <FramePanel className="rounded-md p-2">
-        <div className="space-y-3">
-          <div className="flex items-center gap-1.5">
+        <div>
+          <div className="flex items-center gap-1">
             <FlaskConical className="text-muted-foreground size-3.5" />
             <span className="text-sm font-medium">实验性功能</span>
           </div>
-          <p className="text-muted-foreground text-xs">这些功能仍在开发中，可能不稳定</p>
-          <div className="divide-border/50 divide-y">
+          <p className="text-muted-foreground mt-0.5 text-xs">这些功能仍在开发中，可能不稳定</p>
+          <div className="divide-border/50 mt-3 divide-y">
             <div className="py-2.5 first:pt-0 last:pb-0">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
