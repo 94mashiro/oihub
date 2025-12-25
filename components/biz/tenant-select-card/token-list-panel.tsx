@@ -83,23 +83,23 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
       {[...tokenList]
         .sort((a, b) =>
           sortBy === 'time'
-            ? (b.accessed_time || 0) - (a.accessed_time || 0)
-            : (b.used_quota || 0) - (a.used_quota || 0),
+            ? (b.lastUsedAt || 0) - (a.lastUsedAt || 0)
+            : (b.creditConsumed || 0) - (a.creditConsumed || 0),
         )
         .map((token) => (
           <div
-            key={token.key}
+            key={token.secretKey}
             className="group/token border-border flex items-center gap-2 border-b pb-2 last:border-b-0 last:pb-0"
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-foreground truncate text-xs font-medium">{token.name}</span>
+                <span className="text-foreground truncate text-xs font-medium">{token.label}</span>
                 {token.group && tokenGroups?.[token.group] && (
                   <Badge variant="outline" size="sm" className="shrink-0 gap-0.5">
                     {token.group}
-                    {tokenGroups[token.group].ratio !== 1 && (
+                    {tokenGroups[token.group].multiplier !== 1 && (
                       <span className="text-muted-foreground">
-                        ×{tokenGroups[token.group].ratio}
+                        ×{tokenGroups[token.group].multiplier}
                       </span>
                     )}
                     <Tooltip>
@@ -107,7 +107,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                         <Info className="text-muted-foreground size-2.5" />
                       </TooltipTrigger>
                       <TooltipPopup className="max-w-64">
-                        {tokenGroups[token.group].desc || token.group}
+                        {tokenGroups[token.group].description || token.group}
                       </TooltipPopup>
                     </Tooltip>
                   </Badge>
@@ -117,15 +117,15 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                 <span>
                   已用{' '}
                   <UsageDisplay
-                    cost={token.used_quota}
+                    cost={token.creditConsumed}
                     quotaPerUnit={quotaUnit}
                     displayType={displayType}
                   />
                 </span>
                 <Separator orientation="vertical" className="h-2.5" />
                 <span>
-                  {token.accessed_time
-                    ? `${new Date(token.accessed_time * 1000).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 最后使用`
+                  {token.lastUsedAt
+                    ? `${new Date(token.lastUsedAt * 1000).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 最后使用`
                     : '从未访问'}
                 </span>
               </div>
@@ -135,9 +135,9 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                 size="sm"
                 variant="ghost"
                 className="h-6 gap-1 px-2 text-[10px]"
-                onClick={(e) => handleCopy(e, `token-${token.key}`, `sk-${token.key}`)}
+                onClick={(e) => handleCopy(e, `token-${token.secretKey}`, `sk-${token.secretKey}`)}
               >
-                {copiedId === `token-${token.key}` ? (
+                {copiedId === `token-${token.secretKey}` ? (
                   <>
                     <Check className="size-3" />
                     已复制
@@ -164,21 +164,21 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                       <MenuGroupLabel className="text-[10px]">导出到 CC Switch</MenuGroupLabel>
                       <MenuItem
                         className="text-xs"
-                        onClick={() => handleExport(token.key, token.name, 'claude')}
+                        onClick={() => handleExport(token.secretKey, token.label, 'claude')}
                       >
                         <ClaudeIcon className="size-3.5" />
                         Claude
                       </MenuItem>
                       <MenuItem
                         className="text-xs"
-                        onClick={() => handleExport(token.key, token.name, 'codex')}
+                        onClick={() => handleExport(token.secretKey, token.label, 'codex')}
                       >
                         <OpenAIIcon className="size-3.5" />
                         Codex
                       </MenuItem>
                       <MenuItem
                         className="text-xs"
-                        onClick={() => handleExport(token.key, token.name, 'gemini')}
+                        onClick={() => handleExport(token.secretKey, token.label, 'gemini')}
                       >
                         <GeminiIcon className="size-3.5" />
                         Gemini

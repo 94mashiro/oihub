@@ -1,13 +1,14 @@
 import { useCallback, useState } from 'react';
 import { tenantStore } from '@/lib/state/tenant-store';
 import { balanceStore } from '@/lib/state/balance-store';
-import { costStore, type CostData } from '@/lib/state/cost-store';
+import { costStore } from '@/lib/state/cost-store';
 import { TenantAPIService } from '@/lib/api';
+import type { Cost } from '@/lib/api/adapters';
 import type { Tenant, TenantInfo } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
 
 async function refreshTenantData(tenant: Tenant) {
-  const api = new TenantAPIService(tenant);
+  const api = new TenantAPIService(tenant, tenant.platformType ?? 'newapi');
 
   const [infoResult, balanceResult, costResult] = await Promise.allSettled([
     api.getStatus(),
@@ -36,8 +37,8 @@ async function refreshTenantData(tenant: Tenant) {
 /**
  * Calculate total quota usage from cost data
  */
-function calculateTodayUsage(costData: CostData[]): number {
-  return costData.reduce((sum, item) => sum + item.quota, 0);
+function calculateTodayUsage(costData: Cost[]): number {
+  return costData.reduce((sum, item) => sum + item.creditCost, 0);
 }
 
 /**

@@ -68,8 +68,8 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
     tokenManageUrl = null;
   }
 
-  const todayCostRaw = todayCostInfo?.reduce((t, c) => t + c.quota, 0) ?? null;
-  const todayTokensRaw = todayCostInfo?.reduce((t, c) => t + c.token_used, 0) ?? null;
+  const todayCostRaw = todayCostInfo?.reduce((t, c) => t + c.creditCost, 0) ?? null;
+  const todayTokensRaw = todayCostInfo?.reduce((t, c) => t + c.tokenUsage, 0) ?? null;
 
   return (
     <div className="group relative">
@@ -118,7 +118,7 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
           <p className="text-foreground text-2xl font-semibold tracking-tight">
             {balanceInfo ? (
               <UsageDisplay
-                cost={balanceInfo.quota}
+                cost={balanceInfo.remainingCredit}
                 quotaPerUnit={quotaUnit}
                 displayType={displayType}
               />
@@ -142,7 +142,7 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
             <span>历史消耗</span>
             {balanceInfo ? (
               <UsageDisplay
-                cost={balanceInfo.used_quota}
+                cost={balanceInfo.consumedCredit}
                 quotaPerUnit={quotaUnit}
                 displayType={displayType}
               />

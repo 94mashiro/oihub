@@ -2,56 +2,24 @@ import { storage } from 'wxt/utils/storage';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createStore } from './create-store';
 import type { TenantId } from '@/types/tenant';
-
-// Balance data structure per tenant
-export interface TenantBalance {
-  id: number;
-  username: string;
-  display_name: string;
-  email: string;
-  role: number;
-  status: number;
-  group: string;
-  quota: number;
-  used_quota: number;
-  request_count: number;
-  aff_code: string;
-  aff_count: number;
-  aff_quota: number;
-  aff_history_quota: number;
-  inviter_id: number;
-  github_id: string;
-  telegram_id: string;
-  wechat_id: string;
-  linux_do_id: string;
-  oidc_id: string;
-  stripe_customer: string;
-  setting: string;
-  sidebar_modules: string;
-  permissions: {
-    sidebar_modules: {
-      admin: boolean;
-    };
-    sidebar_settings: boolean;
-  };
-}
+import type { Balance } from '@/lib/api/adapters';
 
 // Define persisted data structure
 type BalancePersistedState = {
-  balanceList: Record<TenantId, TenantBalance>;
+  balanceList: Record<TenantId, Balance>;
 };
 
 // Define complete store state
 export type BalanceStoreState = {
   // Persisted fields
-  balanceList: Record<TenantId, TenantBalance>;
+  balanceList: Record<TenantId, Balance>;
 
   // Runtime fields
   ready: boolean;
 
   // Actions
-  setBalance: (tenantId: TenantId, balance: TenantBalance) => Promise<void>;
-  getBalance: (tenantId: TenantId) => TenantBalance | undefined;
+  setBalance: (tenantId: TenantId, balance: Balance) => Promise<void>;
+  getBalance: (tenantId: TenantId) => Balance | undefined;
   removeBalance: (tenantId: TenantId) => Promise<void>;
   clearAllBalances: () => Promise<void>;
 

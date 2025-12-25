@@ -36,9 +36,9 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
 
     const grouped = costList.reduce(
       (acc, c) => {
-        if (!acc[c.model_name]) acc[c.model_name] = { quota: 0, tokens: 0 };
-        acc[c.model_name].quota += c.quota;
-        acc[c.model_name].tokens += c.token_used;
+        if (!acc[c.modelId]) acc[c.modelId] = { quota: 0, tokens: 0 };
+        acc[c.modelId].quota += c.creditCost;
+        acc[c.modelId].tokens += c.tokenUsage;
         return acc;
       },
       {} as Record<string, { quota: number; tokens: number }>,

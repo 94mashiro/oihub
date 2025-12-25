@@ -3,34 +3,24 @@ import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createStore } from './create-store';
 import type { TenantId } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
-
-export interface CostData {
-  count: number;
-  created_at: number;
-  id: number;
-  model_name: string;
-  quota: number;
-  token_used: number;
-  user_id: number;
-  username: string;
-}
+import type { Cost } from '@/lib/api/adapters';
 
 // Define persisted data structure
 type CostPersistedState = {
-  costList: Record<TenantId, Partial<Record<CostPeriod, CostData[]>>>;
+  costList: Record<TenantId, Partial<Record<CostPeriod, Cost[]>>>;
 };
 
 // Define complete store state
 export type CostStoreState = {
   // Persisted fields
-  costList: Record<TenantId, Partial<Record<CostPeriod, CostData[]>>>;
+  costList: Record<TenantId, Partial<Record<CostPeriod, Cost[]>>>;
 
   // Runtime fields
   ready: boolean;
 
   // Actions
-  setCost: (tenantId: TenantId, period: CostPeriod, costs: CostData[]) => Promise<void>;
-  getCost: (tenantId: TenantId, period: CostPeriod) => CostData[] | undefined;
+  setCost: (tenantId: TenantId, period: CostPeriod, costs: Cost[]) => Promise<void>;
+  getCost: (tenantId: TenantId, period: CostPeriod) => Cost[] | undefined;
 
   // Internal methods
   hydrate: () => Promise<void>;

@@ -42,3 +42,10 @@ Before introducing, upgrading, or otherwise working with any third-party depende
 
 ## Security & Configuration Tips
 Store secrets in local `.env` files loaded by WXT; never hard-code API keys inside `entrypoints`. Review `public/manifest.json` before release to ensure permissions are minimal, and double-check external URLs referenced from `content.ts`.
+
+## Active Technologies
+- TypeScript 5.x (strict mode) + WXT (browser extension framework), Zustand (state management), React 18, Tailwind CSS (001-store-field-abstraction)
+- WXT storage API (chrome.storage.local/sync abstraction) (001-store-field-abstraction)
+
+## Recent Changes
+- 001-store-field-abstraction: Added TypeScript 5.x (strict mode) + WXT (browser extension framework), Zustand (state management), React 18, Tailwind CSS

@@ -1,3 +1,5 @@
+import type { PlatformType } from '@/lib/api/adapters';
+
 export interface Tenant {
   id: TenantId;
   name: string;
@@ -5,6 +7,7 @@ export interface Tenant {
   userId: string;
   url: string;
   info?: TenantInfo;
+  platformType?: PlatformType;
 }
 
 export interface TenantInfo {

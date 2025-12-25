@@ -97,7 +97,7 @@ async function pollDailyUsageAndAlert(): Promise<void> {
   await Promise.allSettled(
     targets.map(async (tenant) => {
       try {
-        const api = new TenantAPIService(tenant);
+        const api = new TenantAPIService(tenant, tenant.platformType ?? 'newapi');
         const [infoResult, costResult] = await Promise.allSettled([
           api.getStatus(),
           api.getCostData(CostPeriod.DAY_1),
@@ -108,7 +108,7 @@ async function pollDailyUsageAndAlert(): Promise<void> {
         if (!tenantInfo) return;
 
         if (costResult.status === 'fulfilled') {
-          const todayUsage = costResult.value.reduce((sum, item) => sum + item.quota, 0);
+          const todayUsage = costResult.value.reduce((sum, item) => sum + item.creditCost, 0);
           await checkAndTriggerAlert(tenant.id, tenant.name, tenantInfo, todayUsage);
         } else {
           console.warn('Failed to fetch cost data for tenant', tenant.id, costResult.reason);
