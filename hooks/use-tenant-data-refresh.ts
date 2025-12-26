@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { tenantStore } from '@/lib/state/tenant-store';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { getRawService } from '@/lib/api/services';
-import { getAdapterV2 } from '@/lib/api/adapters';
+import { getAdapter } from '@/lib/api/adapters';
 import {
   BalanceOrchestrator,
   CostOrchestrator,
@@ -14,7 +14,7 @@ import { CostPeriod } from '@/types/api';
 
 async function refreshTenantData(tenant: Tenant) {
   const service = getRawService(tenant);
-  const adapter = getAdapterV2(tenant.platformType ?? 'newapi');
+  const adapter = getAdapter(tenant.platformType ?? 'newapi');
 
   const infoOrchestrator = new TenantInfoOrchestrator(tenant, service, adapter);
   const balanceOrchestrator = new BalanceOrchestrator(tenant, service, adapter);

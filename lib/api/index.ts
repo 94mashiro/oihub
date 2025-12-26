@@ -7,8 +7,8 @@ export { APIClient } from './client/api-client';
 export { defaultErrorHandler, showApiError } from './client/error-handler';
 
 // Services
-export { PlatformAPIService } from './services';
-export type { IPlatformService } from './services';
+export { getRawService } from './services';
+export type { IRawPlatformService } from './services';
 
 // Errors
 export { PlatformAPIError, AdapterTransformError, PlatformNotSupportedError } from './errors';

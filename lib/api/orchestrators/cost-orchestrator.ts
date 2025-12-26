@@ -7,7 +7,7 @@ import type {
   CostsWithMeta,
 } from './types';
 import type { IRawPlatformService } from '@/lib/api/services/types';
-import type { PlatformAdapterV2 } from '@/lib/api/adapters/types';
+import type { PlatformAdapter } from '@/lib/api/adapters/types';
 import { costStore } from '@/lib/state/cost-store';
 import { CostPeriod } from '@/types/api';
 import { TransformationError } from '@/lib/errors/transformation-error';
@@ -18,7 +18,7 @@ export class CostOrchestrator implements DomainOrchestrator<CostsWithMeta> {
   constructor(
     private readonly tenant: Tenant,
     private readonly service: IRawPlatformService,
-    private readonly adapter: PlatformAdapterV2,
+    private readonly adapter: PlatformAdapter,
     private readonly period: CostPeriod,
   ) {}
 

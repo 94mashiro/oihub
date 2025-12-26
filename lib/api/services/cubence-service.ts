@@ -1,11 +1,8 @@
 import { APIClient } from '../client/api-client';
-import type { Tenant, TenantInfo } from '@/types/tenant';
-import type { Balance, Cost, Token, TokenGroup } from '@/lib/api/adapters';
-import { getAdapter } from '@/lib/api/adapters';
-import { CostPeriod, COST_PERIOD_DAYS, type PaginationResult } from '@/types/api';
-import type { IPlatformService, IRawPlatformService } from './types';
+import type { Tenant } from '@/types/tenant';
+import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
+import type { IRawPlatformService } from './types';
 import type { RawAPIResponse } from '@/lib/api/orchestrators/types';
-import { PlatformAPIError } from '../errors';
 
 function getTimestampRange(period: CostPeriod): [number, number] {
   const now = new Date();
@@ -62,73 +59,16 @@ export class CubenceRawService implements IRawPlatformService {
   }
 
   async fetchTenantInfo(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/v1/dashboard/overview');
-    return { data, status: 200 };
-  }
-}
-
-/**
- * Legacy Cubence service - maintains backward compatibility.
- */
-export class CubenceService implements IPlatformService {
-  private readonly client: APIClient;
-  private readonly adapter;
-
-  constructor(tenant: Tenant) {
-    this.client = createCubenceClient(tenant);
-    this.adapter = getAdapter('cubence');
-  }
-
-  async getTenantInfo(): Promise<TenantInfo> {
-    try {
-      const raw = await this.client.get('/api/v1/dashboard/overview');
-      return this.adapter.normalizeTenantInfo(raw);
-    } catch (error) {
-      throw new PlatformAPIError('cubence', 'getTenantInfo', error as Error);
-    }
-  }
-
-  async getBalance(): Promise<Balance> {
-    try {
-      const raw = await this.client.get('/api/user/self');
-      return this.adapter.normalizeBalance(raw);
-    } catch (error) {
-      throw new PlatformAPIError('cubence', 'getBalance', error as Error);
-    }
-  }
-
-  async getTokens(page = 1, size = 100): Promise<PaginationResult<Token>> {
-    try {
-      const result = await this.client.get<PaginationResult<unknown>>(
-        `/api/token/?p=${page}&size=${size}`,
-      );
-      return {
-        ...result,
-        items: this.adapter.normalizeTokens(result.items),
-      };
-    } catch (error) {
-      throw new PlatformAPIError('cubence', 'getTokens', error as Error);
-    }
-  }
-
-  async getTokenGroups(): Promise<Record<string, TokenGroup>> {
-    try {
-      const raw = await this.client.get('/api/user/self/groups');
-      return this.adapter.normalizeTokenGroups(raw);
-    } catch (error) {
-      throw new PlatformAPIError('cubence', 'getTokenGroups', error as Error);
-    }
-  }
-
-  async getCostData(period: CostPeriod): Promise<Cost[]> {
-    try {
-      const [start, end] = getTimestampRange(period);
-      const raw = await this.client.get<unknown[]>(
-        `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
-      );
-      return this.adapter.normalizeCosts(raw);
-    } catch (error) {
-      throw new PlatformAPIError('cubence', 'getCostData', error as Error);
-    }
+    const [overviewData, announcementsData] = await Promise.all([
+      this.client.get('/api/v1/dashboard/overview'),
+      this.client.get('/api/v1/announcements?page=1&page_size=10'),
+    ]);
+    return {
+      data: {
+        overview: overviewData,
+        announcements: announcementsData,
+      },
+      status: 200,
+    };
   }
 }

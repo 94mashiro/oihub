@@ -7,7 +7,7 @@ import type {
   TokensWithMeta,
 } from './types';
 import type { IRawPlatformService } from '@/lib/api/services/types';
-import type { PlatformAdapterV2 } from '@/lib/api/adapters/types';
+import type { PlatformAdapter } from '@/lib/api/adapters/types';
 import { tokenStore } from '@/lib/state/token-store';
 import { TransformationError } from '@/lib/errors/transformation-error';
 
@@ -22,7 +22,7 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensWithMeta> {
   constructor(
     private readonly tenant: Tenant,
     private readonly service: IRawPlatformService,
-    private readonly adapter: PlatformAdapterV2,
+    private readonly adapter: PlatformAdapter,
   ) {}
 
   async refresh(): Promise<OrchestratorResult<TokensWithMeta>> {
@@ -44,7 +44,8 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensWithMeta> {
       errors.push({
         source: 'tokens',
         type: 'api',
-        message: tokensResult.reason instanceof Error ? tokensResult.reason.message : 'Unknown error',
+        message:
+          tokensResult.reason instanceof Error ? tokensResult.reason.message : 'Unknown error',
         recoverable: true,
       });
     }
@@ -56,7 +57,8 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensWithMeta> {
       errors.push({
         source: 'groups',
         type: 'api',
-        message: groupsResult.reason instanceof Error ? groupsResult.reason.message : 'Unknown error',
+        message:
+          groupsResult.reason instanceof Error ? groupsResult.reason.message : 'Unknown error',
         recoverable: true,
       });
     }

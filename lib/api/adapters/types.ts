@@ -67,21 +67,11 @@ export type PlatformType = 'newapi' | 'packycode_codex' | 'cubence';
 // Platform Adapter Interface
 // =============================================================================
 
-/** Interface that platform implementations must fulfill. */
-export interface PlatformAdapter {
-  readonly platformType: PlatformType;
-  normalizeBalance(raw: unknown): Balance;
-  normalizeCosts(raw: unknown[]): Cost[];
-  normalizeTokens(raw: unknown[]): Token[];
-  normalizeTokenGroups(raw: unknown): Record<string, TokenGroup>;
-  normalizeTenantInfo(raw: unknown): import('@/types/tenant').TenantInfo;
-}
-
 /**
- * Updated platform adapter interface.
+ * Platform adapter interface.
  * Adapters accept source bags for multi-API merge support.
  */
-export interface PlatformAdapterV2 {
+export interface PlatformAdapter {
   readonly platformType: PlatformType;
   /** Transform balance sources into normalized Balance */
   normalizeBalance(sources: BalanceSources): Balance;

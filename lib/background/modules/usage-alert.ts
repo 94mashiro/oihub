@@ -4,7 +4,7 @@ import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { settingStore } from '@/lib/state/setting-store';
 import { quotaToCurrency } from '@/lib/utils/quota-converter';
 import { getRawService } from '@/lib/api/services';
-import { getAdapterV2 } from '@/lib/api/adapters';
+import { getAdapter } from '@/lib/api/adapters';
 import { TenantInfoOrchestrator, CostOrchestrator } from '@/lib/api/orchestrators';
 import { CostPeriod } from '@/types/api';
 import type { TenantId, TenantInfo } from '@/types/tenant';
@@ -101,7 +101,7 @@ async function pollDailyUsageAndAlert(): Promise<void> {
     targets.map(async (tenant) => {
       try {
         const service = getRawService(tenant);
-        const adapter = getAdapterV2(tenant.platformType ?? 'newapi');
+        const adapter = getAdapter(tenant.platformType ?? 'newapi');
 
         const infoOrchestrator = new TenantInfoOrchestrator(tenant, service, adapter);
         const costOrchestrator = new CostOrchestrator(tenant, service, adapter, CostPeriod.DAY_1);

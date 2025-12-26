@@ -7,7 +7,7 @@ import type {
   TenantInfoWithMeta,
 } from './types';
 import type { IRawPlatformService } from '@/lib/api/services/types';
-import type { PlatformAdapterV2 } from '@/lib/api/adapters/types';
+import type { PlatformAdapter } from '@/lib/api/adapters/types';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { TransformationError } from '@/lib/errors/transformation-error';
 
@@ -17,7 +17,7 @@ export class TenantInfoOrchestrator implements DomainOrchestrator<TenantInfoWith
   constructor(
     private readonly tenant: Tenant,
     private readonly service: IRawPlatformService,
-    private readonly adapter: PlatformAdapterV2,
+    private readonly adapter: PlatformAdapter,
   ) {}
 
   async refresh(): Promise<OrchestratorResult<TenantInfoWithMeta>> {
