@@ -14,6 +14,7 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import packyLogo from '@/assets/packy-logo.svg';
+import cubenceLogo from '@/assets/cubence.svg';
 
 export interface TenantFormData {
   name: string;
@@ -46,11 +47,19 @@ const PROVIDER_PRESETS = [
     icon: packyLogo,
     platformType: 'packycode_codex' as PlatformType,
   },
+  {
+    id: 'cubence',
+    name: 'Cubence',
+    url: 'https://cubence.com',
+    icon: cubenceLogo,
+    platformType: 'cubence' as PlatformType,
+  },
 ];
 
 const PLATFORM_TYPE_OPTIONS = [
   { value: 'newapi', label: 'NewAPI' },
   { value: 'packycode_codex', label: 'PackyCode(Codex)' },
+  { value: 'cubence', label: 'Cubence' },
 ] as const;
 
 export const TenantForm = ({
