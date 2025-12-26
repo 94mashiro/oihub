@@ -18,6 +18,7 @@ async function refreshTenantData(tenant: Tenant) {
   ]);
 
   if (infoResult.status === 'fulfilled') {
+    console.log('infoResult', infoResult.value);
     tenantInfoStore.getState().setTenantInfo(tenant.id, infoResult.value);
   }
   if (balanceResult.status === 'fulfilled') {

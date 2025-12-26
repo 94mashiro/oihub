@@ -5,7 +5,7 @@ import path from 'path';
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   manifest: {
-    permissions: ['storage', 'notifications', 'alarms'],
+    permissions: ['storage', 'notifications', 'alarms', 'cookies'],
     host_permissions: ['<all_urls>'],
   },
   modules: ['@wxt-dev/module-react'],

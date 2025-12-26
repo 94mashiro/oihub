@@ -30,8 +30,7 @@ export class CubenceService implements IPlatformService {
     this.client = new APIClient({
       baseURL: tenant.url,
       headers: {
-        Authorization: `Bearer ${tenant.token}`,
-        // Cubence 不需要 userId
+        Cookie: `token=${tenant.token}`,
       },
       timeout: 30000,
       enableLogging: false,
@@ -43,7 +42,8 @@ export class CubenceService implements IPlatformService {
   async getTenantInfo(): Promise<TenantInfo> {
     try {
       // TODO: Update endpoint path based on Cubence API
-      const raw = await this.client.get('/api/status');
+      const raw = await this.client.get('/api/v1/dashboard/overview');
+      console.log('raw', raw, this.adapter.normalizeTenantInfo(raw));
       return this.adapter.normalizeTenantInfo(raw);
     } catch (error) {
       throw new PlatformAPIError('cubence', 'getTenantInfo', error as Error);

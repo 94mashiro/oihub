@@ -114,7 +114,15 @@ export const cubenceAdapter: PlatformAdapter = {
       exchangeRate: typeof data.exchange_rate === 'number' ? data.exchange_rate : undefined,
       displayFormat: typeof data.display_format === 'string' ? data.display_format : undefined,
       endpoints: Array.isArray(data.endpoints) ? data.endpoints : undefined,
-      notices: Array.isArray(data.notices) ? data.notices : undefined,
+      notices: Array.isArray(data.announcements)
+        ? (data.announcements as any).map((it: any) => ({
+            id: it.id,
+            content: it.content,
+            extra: it.title,
+            publishDate: it.published_at,
+            type: undefined,
+          }))
+        : undefined,
     };
   },
 };

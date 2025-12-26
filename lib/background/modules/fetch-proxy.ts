@@ -19,13 +19,44 @@ async function handleBackgroundFetch(request: FetchRequest): Promise<FetchRespon
   const { url, method = 'GET', headers = {}, body, timeout = 30000 } = request;
 
   try {
+    let requestHeaders = headers;
+
+    // 从 headers 中提取 Cookie 并使用 chrome.cookies API 设置
+    const cookieHeader = headers.Cookie || headers.cookie;
+    if (cookieHeader) {
+      const parsedUrl = new URL(url);
+      const cookiePairs = cookieHeader.split(';').map((pair) => pair.trim());
+
+      for (const pair of cookiePairs) {
+        const [name, value] = pair.split('=');
+        if (name && value) {
+          // 使用 chrome.cookies API 设置 cookie
+          await browser.cookies.set({
+            url: parsedUrl.origin,
+            name: name.trim(),
+            value: value.trim(),
+            path: '/',
+            sameSite: 'no_restriction',
+            secure: parsedUrl.protocol === 'https:',
+          });
+        }
+      }
+
+      // 从 headers 中移除 Cookie,因为已经通过 cookies API 设置
+      const filteredHeaders = { ...headers };
+      delete filteredHeaders.Cookie;
+      delete filteredHeaders.cookie;
+      requestHeaders = filteredHeaders;
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     const fetchOptions: RequestInit = {
       method,
-      headers: { 'Content-Type': 'application/json', ...headers },
+      headers: { 'Content-Type': 'application/json', ...requestHeaders },
       signal: controller.signal,
+      credentials: 'include',
     };
 
     if (body && method !== 'GET' && method !== 'HEAD') {
