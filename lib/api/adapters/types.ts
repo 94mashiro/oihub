@@ -54,7 +54,7 @@ export interface TokenGroup {
 // =============================================================================
 
 /** Supported platform types. */
-export type PlatformType = 'newapi';
+export type PlatformType = 'newapi' | 'packycode_codex';
 
 // =============================================================================
 // Platform Adapter Interface
