@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { tokenStore } from '@/lib/state/token-store';
 import { useTenantStore } from '@/lib/state/tenant-store';
-import { TenantAPIService } from '@/lib/api';
+import { PlatformAPIService } from '@/lib/api';
 
 export function useTokensLoader(tenantId: string) {
   const [loading, setLoading] = useState(false);
@@ -11,7 +11,7 @@ export function useTokensLoader(tenantId: string) {
     if (!tenant) return;
 
     setLoading(true);
-    const api = new TenantAPIService(tenant);
+    const api = new PlatformAPIService(tenant);
 
     Promise.all([api.getTokens(), api.getTokenGroups()])
       .then(async ([tokens, groups]) => {

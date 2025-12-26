@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { getTimestampRange } from './tenant-api-service';
+import { getTimestampRange } from './newapi-service';
 import { CostPeriod } from '@/types/api';
 
 describe('getTimestampRange', () => {

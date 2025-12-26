@@ -13,7 +13,11 @@ export { APIClient, apiClient } from './client/api-client';
 export { defaultErrorHandler, showApiError } from './client/error-handler';
 
 // Services
-export { TenantAPIService } from './services/tenant-api-service';
+export { PlatformAPIService } from './services';
+export type { IPlatformService } from './services';
+
+// Errors
+export { PlatformAPIError, AdapterTransformError, PlatformNotSupportedError } from './errors';
 
 // Transport
 export { backgroundFetch } from './transport/background-transport';

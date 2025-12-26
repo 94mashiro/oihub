@@ -3,17 +3,17 @@ import { tenantStore } from '@/lib/state/tenant-store';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { balanceStore } from '@/lib/state/balance-store';
 import { costStore } from '@/lib/state/cost-store';
-import { TenantAPIService } from '@/lib/api';
+import { PlatformAPIService } from '@/lib/api';
 import type { Cost } from '@/lib/api/adapters';
 import type { Tenant, TenantInfo } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
 
 async function refreshTenantData(tenant: Tenant) {
-  const api = new TenantAPIService(tenant);
+  const api = new PlatformAPIService(tenant);
 
   const [infoResult, balanceResult, costResult] = await Promise.allSettled([
-    api.getStatus(),
-    api.getSelfInfo(),
+    api.getTenantInfo(),
+    api.getBalance(),
     api.getCostData(CostPeriod.DAY_1),
   ]);
 

@@ -3,7 +3,7 @@ import { tenantStore } from '@/lib/state/tenant-store';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { settingStore } from '@/lib/state/setting-store';
 import { quotaToCurrency } from '@/lib/utils/quota-converter';
-import { TenantAPIService } from '@/lib/api';
+import { PlatformAPIService } from '@/lib/api';
 import { CostPeriod } from '@/types/api';
 import type { TenantId, TenantInfo } from '@/types/tenant';
 import { messageRouter, type BackgroundModule } from '@/lib/background';
@@ -98,9 +98,9 @@ async function pollDailyUsageAndAlert(): Promise<void> {
   await Promise.allSettled(
     targets.map(async (tenant) => {
       try {
-        const api = new TenantAPIService(tenant);
+        const api = new PlatformAPIService(tenant);
         const [infoResult, costResult] = await Promise.allSettled([
-          api.getStatus(),
+          api.getTenantInfo(),
           api.getCostData(CostPeriod.DAY_1),
         ]);
 

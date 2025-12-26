@@ -46,6 +46,7 @@ Store secrets in local `.env` files loaded by WXT; never hard-code API keys insi
 ## Active Technologies
 - TypeScript 5.x (strict mode) + WXT (browser extension framework), Zustand (state management), React 18, Tailwind CSS (001-store-field-abstraction)
 - WXT storage API (chrome.storage.local/sync abstraction) (001-store-field-abstraction)
+- TypeScript 5.9.2 (strict mode) + WXT (browser extension framework), Zustand (state management), React 18 (002-platform-api-service)
 
 ## Recent Changes
 - 001-store-field-abstraction: Added TypeScript 5.x (strict mode) + WXT (browser extension framework), Zustand (state management), React 18, Tailwind CSS
