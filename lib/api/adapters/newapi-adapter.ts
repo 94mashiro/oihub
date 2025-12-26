@@ -11,6 +11,7 @@ import type {
   TokenGroup,
   PlatformAdapter,
 } from './types';
+import type { TenantInfo } from '@/types/tenant';
 
 // =============================================================================
 // Raw NewAPI Types (platform-specific)
@@ -84,5 +85,31 @@ export const newAPIAdapter: PlatformAdapter = {
         },
       ]),
     );
+  },
+
+  normalizeTenantInfo(raw: unknown): TenantInfo {
+    if (!raw || typeof raw !== 'object') {
+      return {};
+    }
+
+    const data = raw as Record<string, unknown>;
+
+    return {
+      creditUnit: typeof data.quota_per_unit === 'number'
+        ? data.quota_per_unit
+        : undefined,
+      exchangeRate: typeof data.usd_exchange_rate === 'number'
+        ? data.usd_exchange_rate
+        : undefined,
+      displayFormat: typeof data.quota_display_type === 'string'
+        ? data.quota_display_type
+        : undefined,
+      endpoints: Array.isArray(data.api_info)
+        ? data.api_info
+        : undefined,
+      notices: Array.isArray(data.announcements)
+        ? data.announcements
+        : undefined,
+    };
   },
 };

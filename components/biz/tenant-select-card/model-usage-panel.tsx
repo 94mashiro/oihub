@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useTenantStore } from '@/lib/state/tenant-store';
+import { useTenantInfoStore } from '@/lib/state/tenant-info-store';
 import { useCostStore } from '@/lib/state/cost-store';
 import { useCostLoader } from '@/hooks/use-cost-loader';
 import { Progress, ProgressTrack, ProgressIndicator } from '@/components/ui/progress';
@@ -24,12 +24,12 @@ interface Props {
 export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
   const [period, setPeriod] = useState<CostPeriod>(CostPeriod.DAY_1);
   const [sortBy, setSortBy] = useState<SortBy>('cost');
-  const tenantInfo = useTenantStore((state) => state.tenantList.find((t) => t.id === tenantId));
+  const tenantInfoData = useTenantInfoStore((state) => state.tenantInfoMap[tenantId]);
   const costList = useCostStore((state) => state.costList[tenantId]?.[period]);
   const { loading } = useCostLoader(tenantId, period);
 
-  const quotaUnit = tenantInfo?.info?.quota_per_unit;
-  const displayType = tenantInfo?.info?.quota_display_type;
+  const quotaUnit = tenantInfoData?.creditUnit;
+  const displayType = tenantInfoData?.displayFormat;
 
   const { modelUsage, totalCost, totalTokens } = useMemo(() => {
     if (!costList || costList.length === 0) return { modelUsage: [], totalCost: 0, totalTokens: 0 };

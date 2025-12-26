@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTenantStore } from '@/lib/state/tenant-store';
+import { useTenantInfoStore } from '@/lib/state/tenant-info-store';
 import { useTokenStore } from '@/lib/state/token-store';
 import { useTokensLoader } from '@/hooks/use-tokens-loader';
 import { UsageDisplay } from '@/components/ui/usage-display';
@@ -29,6 +30,7 @@ interface Props {
 
 export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
   const tenantInfo = useTenantStore((state) => state.tenantList.find((t) => t.id === tenantId));
+  const tenantInfoData = useTenantInfoStore((state) => state.tenantInfoMap[tenantId]);
   const tokenList = useTokenStore((state) => state.tokenList[tenantId]);
   const tokenGroups = useTokenStore((state) => state.tokenGroups[tenantId]);
   const { loading } = useTokensLoader(tenantId);
@@ -38,8 +40,8 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>('time');
 
-  const quotaUnit = tenantInfo?.info?.quota_per_unit;
-  const displayType = tenantInfo?.info?.quota_display_type;
+  const quotaUnit = tenantInfoData?.creditUnit;
+  const displayType = tenantInfoData?.displayFormat;
 
   const handleCopy = (e: React.MouseEvent, id: string, text: string) => {
     e.stopPropagation();

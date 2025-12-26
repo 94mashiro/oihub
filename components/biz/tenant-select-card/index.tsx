@@ -1,6 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { UsageDisplay } from '@/components/ui/usage-display';
 import { useTenantStore } from '@/lib/state/tenant-store';
+import { useTenantInfoStore } from '@/lib/state/tenant-info-store';
 import { useBalanceStore } from '@/lib/state/balance-store';
 import { useCostStore } from '@/lib/state/cost-store';
 import { CostPeriod } from '@/types/api';
@@ -41,6 +42,7 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
   const tenantInfo = useTenantStore((state) =>
     state.tenantList.find((tenant) => tenant.id === tenantId),
   );
+  const tenantInfoData = useTenantInfoStore((state) => state.tenantInfoMap[tenantId]);
   const balanceInfo = useBalanceStore((state) => state.balanceList[tenantId]);
   const todayCostInfo = useCostStore((state) => state.costList[tenantId]?.[CostPeriod.DAY_1]);
 
@@ -57,8 +59,8 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
     );
   }
 
-  const quotaUnit = tenantInfo.info?.quota_per_unit;
-  const displayType = tenantInfo.info?.quota_display_type;
+  const quotaUnit = tenantInfoData?.creditUnit;
+  const displayType = tenantInfoData?.displayFormat;
 
   let tokenManageUrl: string | null = null;
   try {
@@ -198,11 +200,11 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
                 </AccordionPanel>
               </AccordionItem>
 
-              {tenantInfo.info?.announcements && tenantInfo.info.announcements.length > 0 && (
+              {tenantInfoData?.notices && tenantInfoData.notices.length > 0 && (
                 <AccordionItem value="announcements">
                   <AccordionTrigger className="py-2 text-xs">公告</AccordionTrigger>
                   <AccordionPanel className="pb-2">
-                    <AnnouncementPanel announcements={tenantInfo.info.announcements} />
+                    <AnnouncementPanel announcements={tenantInfoData.notices} />
                   </AccordionPanel>
                 </AccordionItem>
               )}

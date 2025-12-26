@@ -3,9 +3,9 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { TenantInfo } from '@/types/tenant';
+import type { Notice } from '@/types/tenant';
 
-type Announcement = NonNullable<TenantInfo['announcements']>[number];
+type Announcement = Notice;
 
 interface AnnouncementPanelProps {
   announcements: Announcement[];

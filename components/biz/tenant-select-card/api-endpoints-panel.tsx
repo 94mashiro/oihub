@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTenantStore } from '@/lib/state/tenant-store';
+import { useTenantInfoStore } from '@/lib/state/tenant-info-store';
 import { Button } from '@/components/ui/button';
 import { Copy, Check } from 'lucide-react';
 
@@ -8,9 +8,7 @@ interface Props {
 }
 
 export const ApiEndpointsPanel: React.FC<Props> = ({ tenantId }) => {
-  const apiEndpoints = useTenantStore(
-    (state) => state.tenantList.find((t) => t.id === tenantId)?.info?.api_info,
-  );
+  const apiEndpoints = useTenantInfoStore((state) => state.tenantInfoMap[tenantId]?.endpoints);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopy = (e: React.MouseEvent, id: string, text: string) => {

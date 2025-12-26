@@ -1,6 +1,7 @@
 import { storage } from 'wxt/utils/storage';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createStore } from './create-store';
+import { tenantInfoStore } from './tenant-info-store';
 
 import type { Tenant, TenantId, TenantInfo } from '@/types/tenant';
 
@@ -27,9 +28,6 @@ export type TenantStoreState = {
   addTenant: (tenant: Tenant) => Promise<void>;
   updateTenant: (id: TenantId, updates: Partial<Tenant>) => Promise<void>;
   removeTenant: (id: TenantId) => Promise<void>;
-
-  // Async business actions (selective persistence)
-  updateTenantInfo: (tenantId: TenantId, info: TenantInfo) => Promise<void>;
 
   // Internal methods
   hydrate: () => Promise<void>;
@@ -105,15 +103,7 @@ export const tenantStore = createStore<
       set((state) => {
         state.tenantList = state.tenantList.filter((t) => t.id !== id);
       });
-      await persist({});
-    },
-
-    // Async business actions
-    updateTenantInfo: async (tenantId, info) => {
-      set((state) => {
-        const target = state.tenantList.find((t) => t.id === tenantId);
-        if (target) target.info = info;
-      });
+      tenantInfoStore.getState().removeTenantInfo(id);
       await persist({});
     },
 

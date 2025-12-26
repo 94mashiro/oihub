@@ -1,5 +1,6 @@
 import type { Browser } from 'wxt/browser';
 import { tenantStore } from '@/lib/state/tenant-store';
+import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { settingStore } from '@/lib/state/setting-store';
 import { quotaToCurrency } from '@/lib/utils/quota-converter';
 import { TenantAPIService } from '@/lib/api';
@@ -53,7 +54,7 @@ async function checkAndTriggerAlert(
 
     const usageCurrency = quotaToCurrency(todayUsage, tenantInfo);
     const thresholdCurrency = quotaToCurrency(config.threshold, tenantInfo);
-    const displayType = tenantInfo.quota_display_type || 'CNY';
+    const displayType = tenantInfo.displayFormat || 'CNY';
 
     try {
       await browser.notifications.create(`usage-alert-${tenantId}`, {
@@ -103,8 +104,12 @@ async function pollDailyUsageAndAlert(): Promise<void> {
           api.getCostData(CostPeriod.DAY_1),
         ]);
 
+        if (infoResult.status === 'fulfilled') {
+          await tenantInfoStore.getState().setTenantInfo(tenant.id, infoResult.value);
+        }
+
         const tenantInfo: TenantInfo | undefined =
-          infoResult.status === 'fulfilled' ? infoResult.value : tenant.info;
+          infoResult.status === 'fulfilled' ? infoResult.value : tenantInfoStore.getState().getTenantInfo(tenant.id);
         if (!tenantInfo) return;
 
         if (costResult.status === 'fulfilled') {

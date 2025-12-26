@@ -32,8 +32,9 @@ export class TenantAPIService {
   }
 
   /** 获取租户状态信息 */
-  getStatus(): Promise<TenantInfo> {
-    return apiClient.get('/api/status', this.config);
+  async getStatus(): Promise<TenantInfo> {
+    const raw = await apiClient.get('/api/status', this.config);
+    return this.adapter.normalizeTenantInfo(raw);
   }
 
   /** 获取当前用户信息（余额等） */

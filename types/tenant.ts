@@ -6,27 +6,30 @@ export interface Tenant {
   token: string;
   userId: string;
   url: string;
-  info?: TenantInfo;
   platformType?: PlatformType;
 }
 
+export interface ApiEndpoint {
+  id: number;
+  route: string;
+  description: string;
+  url: string;
+}
+
+export interface Notice {
+  id: number;
+  content: string;
+  extra: string;
+  publishDate: string;
+  type: string;
+}
+
 export interface TenantInfo {
-  quota_per_unit: number;
-  usd_exchange_rate: number;
-  quota_display_type: string;
-  api_info: {
-    id: number;
-    route: string;
-    description: string;
-    url: string;
-  }[];
-  announcements?: {
-    content: string;
-    extra: string;
-    id: number;
-    publishDate: string;
-    type: string;
-  }[];
+  creditUnit?: number;
+  exchangeRate?: number;
+  displayFormat?: string;
+  endpoints?: ApiEndpoint[];
+  notices?: Notice[];
 }
 
 export type TenantId = string;

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { tenantStore } from '@/lib/state/tenant-store';
+import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { balanceStore } from '@/lib/state/balance-store';
 import { costStore } from '@/lib/state/cost-store';
 import { TenantAPIService } from '@/lib/api';
@@ -17,7 +18,7 @@ async function refreshTenantData(tenant: Tenant) {
   ]);
 
   if (infoResult.status === 'fulfilled') {
-    await tenantStore.getState().updateTenantInfo(tenant.id, infoResult.value);
+    tenantInfoStore.getState().setTenantInfo(tenant.id, infoResult.value);
   }
   if (balanceResult.status === 'fulfilled') {
     await balanceStore.getState().setBalance(tenant.id, balanceResult.value);
@@ -26,7 +27,7 @@ async function refreshTenantData(tenant: Tenant) {
     await costStore.getState().setCost(tenant.id, CostPeriod.DAY_1, costResult.value);
 
     // Trigger usage alert check in background
-    const tenantInfo = infoResult.status === 'fulfilled' ? infoResult.value : tenant.info;
+    const tenantInfo = infoResult.status === 'fulfilled' ? infoResult.value : tenantInfoStore.getState().getTenantInfo(tenant.id);
     if (tenantInfo) {
       const todayUsage = calculateTodayUsage(costResult.value);
       triggerUsageAlertCheck(tenant.id, tenant.name, tenantInfo, todayUsage);

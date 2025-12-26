@@ -24,3 +24,16 @@ web-ext.config.ts
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables
+.env*
+!.env.example
+
+# Build artifacts
+dist/
+build/
+*.tmp
+*.swp
+
+# OS files
+Thumbs.db

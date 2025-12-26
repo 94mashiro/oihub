@@ -12,6 +12,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { useTenantStore } from '@/lib/state/tenant-store';
+import { useTenantInfoStore } from '@/lib/state/tenant-info-store';
 import { useSettingStore } from '@/lib/state/setting-store';
 import { quotaToCurrency, currencyToQuota } from '@/lib/utils/quota-converter';
 import type { Tenant } from '@/types/tenant';
@@ -123,7 +124,7 @@ interface TenantAlertConfigProps {
 const TenantAlertConfig = ({ tenant, config, onConfigChange }: TenantAlertConfigProps) => {
   const enabled = config?.enabled ?? false;
   const threshold = config?.threshold ?? 0;
-  const tenantInfo = tenant.info;
+  const tenantInfo = useTenantInfoStore((state) => state.tenantInfoMap[tenant.id]);
 
   // Local state for input value (in currency units)
   const [inputValue, setInputValue] = useState('');
@@ -170,7 +171,7 @@ const TenantAlertConfig = ({ tenant, config, onConfigChange }: TenantAlertConfig
   };
 
   const hasInfo = !!tenantInfo;
-  const displayType = tenantInfo?.quota_display_type || 'CNY';
+  const displayType = tenantInfo?.displayFormat || 'CNY';
 
   return (
     <div className="py-2.5 first:pt-0 last:pb-0">

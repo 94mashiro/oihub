@@ -3,10 +3,10 @@ import { quotaToCurrency, currencyToQuota } from './quota-converter';
 import type { TenantInfo } from '@/types/tenant';
 
 const mockTenantInfo: TenantInfo = {
-  quota_per_unit: 500000, // 500000 quota = 1 USD
-  usd_exchange_rate: 7.2, // Not used in conversion, only for reference
-  quota_display_type: 'USD',
-  api_info: [],
+  creditUnit: 500000, // 500000 quota = 1 USD
+  exchangeRate: 7.2, // Not used in conversion, only for reference
+  displayFormat: 'USD',
+  endpoints: [],
 };
 
 describe('quotaToCurrency', () => {
@@ -27,7 +27,7 @@ describe('quotaToCurrency', () => {
   test('handles zero quota_per_unit', () => {
     const zeroUnitInfo: TenantInfo = {
       ...mockTenantInfo,
-      quota_per_unit: 0,
+      creditUnit: 0,
     };
     expect(quotaToCurrency(500000, zeroUnitInfo)).toBe(0);
   });

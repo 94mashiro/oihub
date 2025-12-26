@@ -67,4 +67,5 @@ export interface PlatformAdapter {
   normalizeCosts(raw: unknown[]): Cost[];
   normalizeTokens(raw: unknown[]): Token[];
   normalizeTokenGroups(raw: unknown): Record<string, TokenGroup>;
+  normalizeTenantInfo(raw: unknown): import('@/types/tenant').TenantInfo;
 }
