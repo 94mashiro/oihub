@@ -5,6 +5,13 @@
  * Platform adapters transform raw API responses into these types.
  */
 
+import type {
+  BalanceSources,
+  CostSources,
+  TokenSources,
+  TenantInfoSources,
+} from '@/lib/api/orchestrators/types';
+
 // =============================================================================
 // Core Normalized Types
 // =============================================================================
@@ -68,4 +75,22 @@ export interface PlatformAdapter {
   normalizeTokens(raw: unknown[]): Token[];
   normalizeTokenGroups(raw: unknown): Record<string, TokenGroup>;
   normalizeTenantInfo(raw: unknown): import('@/types/tenant').TenantInfo;
+}
+
+/**
+ * Updated platform adapter interface.
+ * Adapters accept source bags for multi-API merge support.
+ */
+export interface PlatformAdapterV2 {
+  readonly platformType: PlatformType;
+  /** Transform balance sources into normalized Balance */
+  normalizeBalance(sources: BalanceSources): Balance;
+  /** Transform cost sources into normalized Cost array */
+  normalizeCosts(sources: CostSources): Cost[];
+  /** Transform token sources into normalized Token array */
+  normalizeTokens(sources: TokenSources): Token[];
+  /** Transform token sources into TokenGroup map */
+  normalizeTokenGroups(sources: TokenSources): Record<string, TokenGroup>;
+  /** Transform tenant info sources into TenantInfo */
+  normalizeTenantInfo(sources: TenantInfoSources): import('@/types/tenant').TenantInfo;
 }

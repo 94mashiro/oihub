@@ -3,7 +3,9 @@ import { tenantStore } from '@/lib/state/tenant-store';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { settingStore } from '@/lib/state/setting-store';
 import { quotaToCurrency } from '@/lib/utils/quota-converter';
-import { PlatformAPIService } from '@/lib/api';
+import { getRawService } from '@/lib/api/services';
+import { getAdapterV2 } from '@/lib/api/adapters';
+import { TenantInfoOrchestrator, CostOrchestrator } from '@/lib/api/orchestrators';
 import { CostPeriod } from '@/types/api';
 import type { TenantId, TenantInfo } from '@/types/tenant';
 import { messageRouter, type BackgroundModule } from '@/lib/background';
@@ -98,27 +100,31 @@ async function pollDailyUsageAndAlert(): Promise<void> {
   await Promise.allSettled(
     targets.map(async (tenant) => {
       try {
-        const api = new PlatformAPIService(tenant);
+        const service = getRawService(tenant);
+        const adapter = getAdapterV2(tenant.platformType ?? 'newapi');
+
+        const infoOrchestrator = new TenantInfoOrchestrator(tenant, service, adapter);
+        const costOrchestrator = new CostOrchestrator(tenant, service, adapter, CostPeriod.DAY_1);
+
         const [infoResult, costResult] = await Promise.allSettled([
-          api.getTenantInfo(),
-          api.getCostData(CostPeriod.DAY_1),
+          infoOrchestrator.refresh(),
+          costOrchestrator.refresh(),
         ]);
 
-        if (infoResult.status === 'fulfilled') {
-          await tenantInfoStore.getState().setTenantInfo(tenant.id, infoResult.value);
-        }
-
         const tenantInfo: TenantInfo | undefined =
-          infoResult.status === 'fulfilled'
-            ? infoResult.value
+          infoResult.status === 'fulfilled' && infoResult.value.data
+            ? infoResult.value.data
             : tenantInfoStore.getState().getTenantInfo(tenant.id);
         if (!tenantInfo) return;
 
-        if (costResult.status === 'fulfilled') {
-          const todayUsage = costResult.value.reduce((sum, item) => sum + item.creditCost, 0);
+        if (costResult.status === 'fulfilled' && costResult.value.data) {
+          const todayUsage = costResult.value.data.costs.reduce(
+            (sum, item) => sum + item.creditCost,
+            0,
+          );
           await checkAndTriggerAlert(tenant.id, tenant.name, tenantInfo, todayUsage);
         } else {
-          console.warn('Failed to fetch cost data for tenant', tenant.id, costResult.reason);
+          console.warn('Failed to fetch cost data for tenant', tenant.id);
         }
       } catch (error) {
         console.error('Error polling daily usage for tenant', tenant.id, error);

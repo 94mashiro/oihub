@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { costStore } from '@/lib/state/cost-store';
 import { useTenantStore } from '@/lib/state/tenant-store';
-import { PlatformAPIService } from '@/lib/api';
+import { getRawService } from '@/lib/api/services';
+import { getAdapterV2 } from '@/lib/api/adapters';
+import { CostOrchestrator } from '@/lib/api/orchestrators';
 import { CostPeriod } from '@/types/api';
 
 export function useCostLoader(tenantId: string, period: CostPeriod) {
@@ -12,14 +13,11 @@ export function useCostLoader(tenantId: string, period: CostPeriod) {
     if (!tenant) return;
 
     setLoading(true);
-    const api = new PlatformAPIService(tenant);
+    const service = getRawService(tenant);
+    const adapter = getAdapterV2(tenant.platformType ?? 'newapi');
+    const orchestrator = new CostOrchestrator(tenant, service, adapter, period);
 
-    api
-      .getCostData(period)
-      .then(async (data) => {
-        await costStore.getState().setCost(tenantId, period, data);
-      })
-      .finally(() => setLoading(false));
+    orchestrator.refresh().finally(() => setLoading(false));
   }, [tenant, tenantId, period]);
 
   return { loading };

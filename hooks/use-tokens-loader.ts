@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { tokenStore } from '@/lib/state/token-store';
 import { useTenantStore } from '@/lib/state/tenant-store';
-import { PlatformAPIService } from '@/lib/api';
+import { getRawService } from '@/lib/api/services';
+import { getAdapterV2 } from '@/lib/api/adapters';
+import { TokenOrchestrator } from '@/lib/api/orchestrators';
 
 export function useTokensLoader(tenantId: string) {
   const [loading, setLoading] = useState(false);
@@ -11,14 +12,11 @@ export function useTokensLoader(tenantId: string) {
     if (!tenant) return;
 
     setLoading(true);
-    const api = new PlatformAPIService(tenant);
+    const service = getRawService(tenant);
+    const adapter = getAdapterV2(tenant.platformType ?? 'newapi');
+    const orchestrator = new TokenOrchestrator(tenant, service, adapter);
 
-    Promise.all([api.getTokens(), api.getTokenGroups()])
-      .then(async ([tokens, groups]) => {
-        await tokenStore.getState().setTokens(tenantId, tokens.items);
-        await tokenStore.getState().setTokenGroups(tenantId, groups);
-      })
-      .finally(() => setLoading(false));
+    orchestrator.refresh().finally(() => setLoading(false));
   }, [tenant, tenantId]);
 
   return { loading };

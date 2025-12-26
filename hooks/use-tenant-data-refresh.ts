@@ -1,39 +1,39 @@
 import { useCallback, useState } from 'react';
 import { tenantStore } from '@/lib/state/tenant-store';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
-import { balanceStore } from '@/lib/state/balance-store';
-import { costStore } from '@/lib/state/cost-store';
-import { PlatformAPIService } from '@/lib/api';
+import { getRawService } from '@/lib/api/services';
+import { getAdapterV2 } from '@/lib/api/adapters';
+import {
+  BalanceOrchestrator,
+  CostOrchestrator,
+  TenantInfoOrchestrator,
+} from '@/lib/api/orchestrators';
 import type { Cost } from '@/lib/api/adapters';
 import type { Tenant, TenantInfo } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
 
 async function refreshTenantData(tenant: Tenant) {
-  const api = new PlatformAPIService(tenant);
+  const service = getRawService(tenant);
+  const adapter = getAdapterV2(tenant.platformType ?? 'newapi');
+
+  const infoOrchestrator = new TenantInfoOrchestrator(tenant, service, adapter);
+  const balanceOrchestrator = new BalanceOrchestrator(tenant, service, adapter);
+  const costOrchestrator = new CostOrchestrator(tenant, service, adapter, CostPeriod.DAY_1);
 
   const [infoResult, balanceResult, costResult] = await Promise.allSettled([
-    api.getTenantInfo(),
-    api.getBalance(),
-    api.getCostData(CostPeriod.DAY_1),
+    infoOrchestrator.refresh(),
+    balanceOrchestrator.refresh(),
+    costOrchestrator.refresh(),
   ]);
 
-  if (infoResult.status === 'fulfilled') {
-    console.log('infoResult', infoResult.value);
-    tenantInfoStore.getState().setTenantInfo(tenant.id, infoResult.value);
-  }
-  if (balanceResult.status === 'fulfilled') {
-    await balanceStore.getState().setBalance(tenant.id, balanceResult.value);
-  }
-  if (costResult.status === 'fulfilled') {
-    await costStore.getState().setCost(tenant.id, CostPeriod.DAY_1, costResult.value);
-
-    // Trigger usage alert check in background
+  // Trigger usage alert check if cost data was fetched
+  if (costResult.status === 'fulfilled' && costResult.value.data) {
     const tenantInfo =
-      infoResult.status === 'fulfilled'
-        ? infoResult.value
+      infoResult.status === 'fulfilled' && infoResult.value.data
+        ? infoResult.value.data
         : tenantInfoStore.getState().getTenantInfo(tenant.id);
     if (tenantInfo) {
-      const todayUsage = calculateTodayUsage(costResult.value);
+      const todayUsage = calculateTodayUsage(costResult.value.data.costs);
       triggerUsageAlertCheck(tenant.id, tenant.name, tenantInfo, todayUsage);
     }
   }

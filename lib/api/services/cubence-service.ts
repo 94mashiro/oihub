@@ -3,7 +3,8 @@ import type { Tenant, TenantInfo } from '@/types/tenant';
 import type { Balance, Cost, Token, TokenGroup } from '@/lib/api/adapters';
 import { getAdapter } from '@/lib/api/adapters';
 import { CostPeriod, COST_PERIOD_DAYS, type PaginationResult } from '@/types/api';
-import type { IPlatformService } from './types';
+import type { IPlatformService, IRawPlatformService } from './types';
+import type { RawAPIResponse } from '@/lib/api/orchestrators/types';
 import { PlatformAPIError } from '../errors';
 
 function getTimestampRange(period: CostPeriod): [number, number] {
@@ -16,34 +17,71 @@ function getTimestampRange(period: CostPeriod): [number, number] {
   return [start, end];
 }
 
+function createCubenceClient(tenant: Tenant): APIClient {
+  return new APIClient({
+    baseURL: tenant.url,
+    headers: {
+      Cookie: `token=${tenant.token}`,
+    },
+    timeout: 30000,
+    enableLogging: false,
+  });
+}
+
 /**
- * Cubence Platform Service
- *
- * Implements API calls for Cubence platform.
- * TODO: Update endpoint paths based on actual Cubence API documentation.
+ * Raw Cubence service - fetches raw data without transformation.
+ */
+export class CubenceRawService implements IRawPlatformService {
+  private readonly client: APIClient;
+
+  constructor(tenant: Tenant) {
+    this.client = createCubenceClient(tenant);
+  }
+
+  async fetchBalance(): Promise<RawAPIResponse> {
+    const data = await this.client.get('/api/user/self');
+    return { data, status: 200 };
+  }
+
+  async fetchCosts(period: CostPeriod): Promise<RawAPIResponse> {
+    const [start, end] = getTimestampRange(period);
+    const data = await this.client.get<unknown[]>(
+      `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
+    );
+    return { data, status: 200 };
+  }
+
+  async fetchTokens(page = 1, size = 100): Promise<RawAPIResponse> {
+    const data = await this.client.get(`/api/token/?p=${page}&size=${size}`);
+    return { data, status: 200 };
+  }
+
+  async fetchTokenGroups(): Promise<RawAPIResponse> {
+    const data = await this.client.get('/api/user/self/groups');
+    return { data, status: 200 };
+  }
+
+  async fetchTenantInfo(): Promise<RawAPIResponse> {
+    const data = await this.client.get('/api/v1/dashboard/overview');
+    return { data, status: 200 };
+  }
+}
+
+/**
+ * Legacy Cubence service - maintains backward compatibility.
  */
 export class CubenceService implements IPlatformService {
   private readonly client: APIClient;
   private readonly adapter;
 
   constructor(tenant: Tenant) {
-    this.client = new APIClient({
-      baseURL: tenant.url,
-      headers: {
-        Cookie: `token=${tenant.token}`,
-      },
-      timeout: 30000,
-      enableLogging: false,
-    });
-
+    this.client = createCubenceClient(tenant);
     this.adapter = getAdapter('cubence');
   }
 
   async getTenantInfo(): Promise<TenantInfo> {
     try {
-      // TODO: Update endpoint path based on Cubence API
       const raw = await this.client.get('/api/v1/dashboard/overview');
-      console.log('raw', raw, this.adapter.normalizeTenantInfo(raw));
       return this.adapter.normalizeTenantInfo(raw);
     } catch (error) {
       throw new PlatformAPIError('cubence', 'getTenantInfo', error as Error);
@@ -52,7 +90,6 @@ export class CubenceService implements IPlatformService {
 
   async getBalance(): Promise<Balance> {
     try {
-      // TODO: Update endpoint path based on Cubence API
       const raw = await this.client.get('/api/user/self');
       return this.adapter.normalizeBalance(raw);
     } catch (error) {
@@ -62,7 +99,6 @@ export class CubenceService implements IPlatformService {
 
   async getTokens(page = 1, size = 100): Promise<PaginationResult<Token>> {
     try {
-      // TODO: Update endpoint path based on Cubence API
       const result = await this.client.get<PaginationResult<unknown>>(
         `/api/token/?p=${page}&size=${size}`,
       );
@@ -77,7 +113,6 @@ export class CubenceService implements IPlatformService {
 
   async getTokenGroups(): Promise<Record<string, TokenGroup>> {
     try {
-      // TODO: Update endpoint path based on Cubence API
       const raw = await this.client.get('/api/user/self/groups');
       return this.adapter.normalizeTokenGroups(raw);
     } catch (error) {
@@ -87,7 +122,6 @@ export class CubenceService implements IPlatformService {
 
   async getCostData(period: CostPeriod): Promise<Cost[]> {
     try {
-      // TODO: Update endpoint path based on Cubence API
       const [start, end] = getTimestampRange(period);
       const raw = await this.client.get<unknown[]>(
         `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,

@@ -3,7 +3,8 @@ import type { Tenant, TenantInfo } from '@/types/tenant';
 import type { Balance, Cost, Token, TokenGroup } from '@/lib/api/adapters';
 import { getAdapter } from '@/lib/api/adapters';
 import { CostPeriod, COST_PERIOD_DAYS, type PaginationResult } from '@/types/api';
-import type { IPlatformService } from './types';
+import type { IPlatformService, IRawPlatformService } from './types';
+import type { RawAPIResponse } from '@/lib/api/orchestrators/types';
 import { PlatformAPIError } from '../errors';
 
 export function getTimestampRange(period: CostPeriod): [number, number] {
@@ -16,21 +17,66 @@ export function getTimestampRange(period: CostPeriod): [number, number] {
   return [start, end];
 }
 
+function createNewAPIClient(tenant: Tenant): APIClient {
+  return new APIClient({
+    baseURL: tenant.url,
+    headers: {
+      Authorization: `Bearer ${tenant.token}`,
+      'New-Api-User': tenant.userId || '',
+    },
+    timeout: 30000,
+    enableLogging: false,
+  });
+}
+
+/**
+ * Raw NewAPI service - fetches raw data without transformation.
+ */
+export class NewAPIRawService implements IRawPlatformService {
+  private readonly client: APIClient;
+
+  constructor(tenant: Tenant) {
+    this.client = createNewAPIClient(tenant);
+  }
+
+  async fetchBalance(): Promise<RawAPIResponse> {
+    const data = await this.client.get('/api/user/self');
+    return { data, status: 200 };
+  }
+
+  async fetchCosts(period: CostPeriod): Promise<RawAPIResponse> {
+    const [start, end] = getTimestampRange(period);
+    const data = await this.client.get<unknown[]>(
+      `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
+    );
+    return { data, status: 200 };
+  }
+
+  async fetchTokens(page = 1, size = 100): Promise<RawAPIResponse> {
+    const data = await this.client.get(`/api/token/?p=${page}&size=${size}`);
+    return { data, status: 200 };
+  }
+
+  async fetchTokenGroups(): Promise<RawAPIResponse> {
+    const data = await this.client.get('/api/user/self/groups');
+    return { data, status: 200 };
+  }
+
+  async fetchTenantInfo(): Promise<RawAPIResponse> {
+    const data = await this.client.get('/api/status');
+    return { data, status: 200 };
+  }
+}
+
+/**
+ * Legacy NewAPI service - maintains backward compatibility.
+ */
 export class NewAPIService implements IPlatformService {
   private readonly client: APIClient;
   private readonly adapter;
 
   constructor(tenant: Tenant) {
-    this.client = new APIClient({
-      baseURL: tenant.url,
-      headers: {
-        Authorization: `Bearer ${tenant.token}`,
-        'New-Api-User': tenant.userId || '',
-      },
-      timeout: 30000,
-      enableLogging: false,
-    });
-
+    this.client = createNewAPIClient(tenant);
     this.adapter = getAdapter('newapi');
   }
 
