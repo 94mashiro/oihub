@@ -20,7 +20,7 @@ export interface TenantFormData {
   name: string;
   url: string;
   token: string;
-  userId: string;
+  userId?: string;
   platformType: PlatformType;
 }
 
@@ -95,7 +95,7 @@ export const TenantForm = ({
       name: formData.name.trim(),
       url: formData.url.trim(),
       token: formData.token.trim(),
-      userId: formData.userId.trim(),
+      userId: formData.platformType === 'newapi' ? formData.userId?.trim() : undefined,
       platformType: formData.platformType,
     });
   };
@@ -224,26 +224,28 @@ export const TenantForm = ({
           <FieldError match="valueMissing">请输入访问令牌</FieldError>
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="tenant-userId" className="text-xs">
-            用户 ID
-          </FieldLabel>
-          <FieldControl
-            render={() => (
-              <Input
-                id="tenant-userId"
-                name="userId"
-                value={formData.userId}
-                onChange={(e) => setFormData((prev) => ({ ...prev, userId: e.target.value }))}
-                required
-                disabled={isSubmitting}
-                size="sm"
-                className="text-sm"
-              />
-            )}
-          />
-          <FieldError match="valueMissing">请输入用户 ID</FieldError>
-        </Field>
+        {formData.platformType === 'newapi' && (
+          <Field>
+            <FieldLabel htmlFor="tenant-userId" className="text-xs">
+              用户 ID
+            </FieldLabel>
+            <FieldControl
+              render={() => (
+                <Input
+                  id="tenant-userId"
+                  name="userId"
+                  value={formData.userId}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, userId: e.target.value }))}
+                  required
+                  disabled={isSubmitting}
+                  size="sm"
+                  className="text-sm"
+                />
+              )}
+            />
+            <FieldError match="valueMissing">请输入用户 ID</FieldError>
+          </Field>
+        )}
       </Form>
     </>
   );

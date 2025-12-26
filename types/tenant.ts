@@ -4,7 +4,8 @@ export interface Tenant {
   id: TenantId;
   name: string;
   token: string;
-  userId: string;
+  /** NewAPI 专属字段 */
+  userId?: string;
   url: string;
   platformType?: PlatformType;
 }

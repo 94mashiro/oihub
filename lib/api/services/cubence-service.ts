@@ -6,7 +6,7 @@ import { CostPeriod, COST_PERIOD_DAYS, type PaginationResult } from '@/types/api
 import type { IPlatformService } from './types';
 import { PlatformAPIError } from '../errors';
 
-export function getTimestampRange(period: CostPeriod): [number, number] {
+function getTimestampRange(period: CostPeriod): [number, number] {
   const now = new Date();
   const end = Math.floor(now.setHours(23, 59, 59, 999) / 1000);
   const days = COST_PERIOD_DAYS[period];
@@ -16,7 +16,13 @@ export function getTimestampRange(period: CostPeriod): [number, number] {
   return [start, end];
 }
 
-export class NewAPIService implements IPlatformService {
+/**
+ * Cubence Platform Service
+ *
+ * Implements API calls for Cubence platform.
+ * TODO: Update endpoint paths based on actual Cubence API documentation.
+ */
+export class CubenceService implements IPlatformService {
   private readonly client: APIClient;
   private readonly adapter;
 
@@ -25,35 +31,38 @@ export class NewAPIService implements IPlatformService {
       baseURL: tenant.url,
       headers: {
         Authorization: `Bearer ${tenant.token}`,
-        'New-Api-User': tenant.userId || '',
+        // Cubence 不需要 userId
       },
       timeout: 30000,
       enableLogging: false,
     });
 
-    this.adapter = getAdapter('newapi');
+    this.adapter = getAdapter('cubence');
   }
 
   async getTenantInfo(): Promise<TenantInfo> {
     try {
+      // TODO: Update endpoint path based on Cubence API
       const raw = await this.client.get('/api/status');
       return this.adapter.normalizeTenantInfo(raw);
     } catch (error) {
-      throw new PlatformAPIError('newapi', 'getTenantInfo', error as Error);
+      throw new PlatformAPIError('cubence', 'getTenantInfo', error as Error);
     }
   }
 
   async getBalance(): Promise<Balance> {
     try {
+      // TODO: Update endpoint path based on Cubence API
       const raw = await this.client.get('/api/user/self');
       return this.adapter.normalizeBalance(raw);
     } catch (error) {
-      throw new PlatformAPIError('newapi', 'getBalance', error as Error);
+      throw new PlatformAPIError('cubence', 'getBalance', error as Error);
     }
   }
 
   async getTokens(page = 1, size = 100): Promise<PaginationResult<Token>> {
     try {
+      // TODO: Update endpoint path based on Cubence API
       const result = await this.client.get<PaginationResult<unknown>>(
         `/api/token/?p=${page}&size=${size}`,
       );
@@ -62,28 +71,30 @@ export class NewAPIService implements IPlatformService {
         items: this.adapter.normalizeTokens(result.items),
       };
     } catch (error) {
-      throw new PlatformAPIError('newapi', 'getTokens', error as Error);
+      throw new PlatformAPIError('cubence', 'getTokens', error as Error);
     }
   }
 
   async getTokenGroups(): Promise<Record<string, TokenGroup>> {
     try {
+      // TODO: Update endpoint path based on Cubence API
       const raw = await this.client.get('/api/user/self/groups');
       return this.adapter.normalizeTokenGroups(raw);
     } catch (error) {
-      throw new PlatformAPIError('newapi', 'getTokenGroups', error as Error);
+      throw new PlatformAPIError('cubence', 'getTokenGroups', error as Error);
     }
   }
 
   async getCostData(period: CostPeriod): Promise<Cost[]> {
     try {
+      // TODO: Update endpoint path based on Cubence API
       const [start, end] = getTimestampRange(period);
       const raw = await this.client.get<unknown[]>(
         `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
       );
       return this.adapter.normalizeCosts(raw);
     } catch (error) {
-      throw new PlatformAPIError('newapi', 'getCostData', error as Error);
+      throw new PlatformAPIError('cubence', 'getCostData', error as Error);
     }
   }
 }

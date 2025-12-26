@@ -6,12 +6,18 @@
 
 export type { Balance, Cost, Token, TokenGroup, PlatformType, PlatformAdapter } from './types';
 export { newAPIAdapter } from './newapi-adapter';
+export { packyCodeCodexAdapter } from './packycode-codex-adapter';
+export { cubenceAdapter } from './cubence-adapter';
 
 import type { PlatformType, PlatformAdapter } from './types';
 import { newAPIAdapter } from './newapi-adapter';
+import { packyCodeCodexAdapter } from './packycode-codex-adapter';
+import { cubenceAdapter } from './cubence-adapter';
 
 const adapters: Record<PlatformType, PlatformAdapter> = {
   newapi: newAPIAdapter,
+  packycode_codex: packyCodeCodexAdapter,
+  cubence: cubenceAdapter,
 };
 
 export function getAdapter(platformType: PlatformType): PlatformAdapter {

@@ -1,15 +1,9 @@
 // Types
 export { APIError, RateLimitError } from './types';
-export type {
-  ClientConfig,
-  TenantConfig,
-  RateLimitConfig,
-  RetryConfig,
-  APIResponse,
-} from './types';
+export type { APIClientConfig, RateLimitConfig, RetryConfig, APIResponse } from './types';
 
 // Client
-export { APIClient, apiClient } from './client/api-client';
+export { APIClient } from './client/api-client';
 export { defaultErrorHandler, showApiError } from './client/error-handler';
 
 // Services

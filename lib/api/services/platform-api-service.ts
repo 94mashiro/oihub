@@ -3,12 +3,16 @@ import type { Balance, Cost, Token, TokenGroup, PlatformType } from '@/lib/api/a
 import type { PaginationResult, CostPeriod } from '@/types/api';
 import type { IPlatformService } from './types';
 import { NewAPIService } from './newapi-service';
+import { PackyCodeCodexService } from './packycode-codex-service';
+import { CubenceService } from './cubence-service';
 import { PlatformNotSupportedError } from '../errors';
 
 type ServiceFactory = (tenant: Tenant) => IPlatformService;
 
 const serviceRegistry: Record<PlatformType, ServiceFactory> = {
   newapi: (tenant) => new NewAPIService(tenant),
+  packycode_codex: (tenant) => new PackyCodeCodexService(tenant),
+  cubence: (tenant) => new CubenceService(tenant),
 };
 
 export class PlatformAPIService implements IPlatformService {

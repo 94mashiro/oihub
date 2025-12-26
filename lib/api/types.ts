@@ -1,13 +1,32 @@
 /**
- * 租户配置 - 用于请求时传入的认证信息
+ * API 客户端实例配置 - 类似 Axios.create()
+ * 用于创建预配置的 APIClient 实例
  */
-export interface TenantConfig {
+export interface APIClientConfig {
   /** API 基础 URL */
   baseURL: string;
-  /** 认证 token */
-  token: string;
-  /** 用户 ID */
-  userId: string;
+  /** 默认请求头（如认证信息） */
+  headers?: Record<string, string>;
+  /** 请求超时时间(ms)，默认 30000 */
+  timeout?: number;
+  /** 是否启用日志，默认 false */
+  enableLogging?: boolean;
+  /** 错误处理回调 */
+  onError?: (error: APIError) => void;
+  /** 限流配置，默认启用。设为 false 禁用 */
+  rateLimit?: boolean | RateLimitConfig;
+  /** 重试配置，默认启用 */
+  retry?: RetryConfig | false;
+}
+
+/**
+ * 单次请求选项 - 用于覆盖实例默认配置
+ */
+export interface RequestOptions {
+  /** 额外请求头（与实例 headers 合并） */
+  headers?: Record<string, string>;
+  /** 覆盖实例的超时时间 */
+  timeout?: number;
 }
 
 /**
@@ -32,22 +51,6 @@ export interface RetryConfig {
   maxDelayMs?: number;
   /** 自定义重试判断 */
   retryOn?: (error: APIError) => boolean;
-}
-
-/**
- * API 客户端配置 - 仅包含通用配置，不包含租户特定信息
- */
-export interface ClientConfig {
-  /** 请求超时时间(ms)，默认 30000 */
-  timeout?: number;
-  /** 是否启用日志，默认 false */
-  enableLogging?: boolean;
-  /** 错误处理回调 */
-  onError?: (error: APIError) => void;
-  /** 限流配置，默认启用。设为 false 禁用 */
-  rateLimit?: boolean | RateLimitConfig;
-  /** 重试配置，默认启用 */
-  retry?: RetryConfig | false;
 }
 
 /**

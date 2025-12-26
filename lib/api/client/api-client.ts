@@ -1,20 +1,21 @@
 import { backgroundFetch } from '../transport/background-transport';
 import { getRateLimiter } from './rate-limiter-registry';
 import { withRetry } from './retry';
-import { defaultErrorHandler } from './error-handler';
 import {
   APIError,
   RateLimitError,
-  type ClientConfig,
-  type TenantConfig,
+  type APIClientConfig,
+  type RequestOptions,
   type APIResponse,
 } from '../types';
 
 /**
  * API 客户端 - 使用 background fetch 绕过 CORS
- * 全局单例，配置通过请求参数传入
+ * 支持实例化配置（类似 Axios.create），每个平台可创建自己的客户端实例
  */
 export class APIClient {
+  private readonly baseURL: string;
+  private readonly headers: Record<string, string>;
   private readonly timeout: number;
   private readonly enableLogging: boolean;
   private readonly onError?: (error: APIError) => void;
@@ -22,7 +23,9 @@ export class APIClient {
   private readonly rateLimitEnabled: boolean;
   private readonly rateLimitConfig?: { qps?: number; cooldownMs?: number };
 
-  constructor(config: ClientConfig = {}) {
+  constructor(config: APIClientConfig) {
+    this.baseURL = config.baseURL;
+    this.headers = config.headers || {};
     this.timeout = config.timeout || 30000;
     this.enableLogging = config.enableLogging || false;
     this.onError = config.onError;
@@ -42,45 +45,49 @@ export class APIClient {
     }
   }
 
-  async get<T = unknown>(url: string, config: TenantConfig): Promise<T> {
-    return this.request<T>('GET', url, undefined, config);
+  async get<T = unknown>(url: string, options?: RequestOptions): Promise<T> {
+    return this.request<T>('GET', url, undefined, options);
   }
 
-  async post<T = unknown, D = unknown>(url: string, data: D, config: TenantConfig): Promise<T> {
-    return this.request<T>('POST', url, data, config);
+  async post<T = unknown, D = unknown>(url: string, data: D, options?: RequestOptions): Promise<T> {
+    return this.request<T>('POST', url, data, options);
   }
 
-  async put<T = unknown, D = unknown>(url: string, data: D, config: TenantConfig): Promise<T> {
-    return this.request<T>('PUT', url, data, config);
+  async put<T = unknown, D = unknown>(url: string, data: D, options?: RequestOptions): Promise<T> {
+    return this.request<T>('PUT', url, data, options);
   }
 
-  async patch<T = unknown, D = unknown>(url: string, data: D, config: TenantConfig): Promise<T> {
-    return this.request<T>('PATCH', url, data, config);
+  async patch<T = unknown, D = unknown>(
+    url: string,
+    data: D,
+    options?: RequestOptions,
+  ): Promise<T> {
+    return this.request<T>('PATCH', url, data, options);
   }
 
-  async delete<T = unknown>(url: string, config: TenantConfig): Promise<T> {
-    return this.request<T>('DELETE', url, undefined, config);
+  async delete<T = unknown>(url: string, options?: RequestOptions): Promise<T> {
+    return this.request<T>('DELETE', url, undefined, options);
   }
 
   private async request<T>(
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
     data: unknown | undefined,
-    config: TenantConfig,
+    options?: RequestOptions,
   ): Promise<T> {
     // 获取该 baseURL 对应的限流器（即便关闭限流也用于 429 冷却）
-    const rateLimiter = getRateLimiter(config.baseURL, this.rateLimitConfig);
+    const rateLimiter = getRateLimiter(this.baseURL, this.rateLimitConfig);
 
     const doRequest = () => {
       if (this.rateLimitEnabled) {
-        return rateLimiter.execute(() => this.doRequest<T>(method, url, data, config));
+        return rateLimiter.execute(() => this.doRequest<T>(method, url, data, options));
       }
 
       if (rateLimiter.isCoolingDown()) {
         throw new RateLimitError('Rate limited - cooling down', rateLimiter.getCooldownUntil());
       }
 
-      return this.doRequest<T>(method, url, data, config);
+      return this.doRequest<T>(method, url, data, options);
     };
 
     if (this.retryConfig) {
@@ -97,23 +104,28 @@ export class APIClient {
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
     data: unknown | undefined,
-    config: TenantConfig,
+    options?: RequestOptions,
   ): Promise<T> {
-    const fullURL = `${config.baseURL}${url}`;
+    const fullURL = `${this.baseURL}${url}`;
+
+    // 合并实例 headers 和请求特定 headers
+    const headers = {
+      ...this.headers,
+      ...(options?.headers || {}),
+    };
+
+    const timeout = options?.timeout || this.timeout;
 
     if (this.enableLogging) {
-      console.log('[API Request]', method, fullURL);
+      console.log('[API Request]', method, fullURL, { headers });
     }
 
     try {
       const response = await backgroundFetch<APIResponse<T>>(fullURL, {
         method,
-        headers: {
-          Authorization: `Bearer ${config.token}`,
-          'New-Api-User': config.userId,
-        },
+        headers,
         body: data,
-        timeout: this.timeout,
+        timeout,
       });
 
       if (this.enableLogging) {
@@ -128,7 +140,7 @@ export class APIClient {
 
       // 检测 429 并触发冷却
       if (error instanceof APIError && error.status === 429) {
-        const rateLimiter = getRateLimiter(config.baseURL, this.rateLimitConfig);
+        const rateLimiter = getRateLimiter(this.baseURL, this.rateLimitConfig);
         rateLimiter.triggerCooldown();
         const rateLimitError = new RateLimitError(
           'Rate limited by server',
@@ -153,12 +165,3 @@ export class APIClient {
     return response.data;
   }
 }
-
-/**
- * 全局 API 客户端单例
- */
-export const apiClient = new APIClient({
-  timeout: 30000,
-  enableLogging: false,
-  onError: defaultErrorHandler,
-});
