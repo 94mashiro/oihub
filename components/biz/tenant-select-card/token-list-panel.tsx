@@ -34,9 +34,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
   const tokenList = useTokenStore((state) => state.tokenList[tenantId]);
   const tokenGroups = useTokenStore((state) => state.tokenGroups[tenantId]);
   const { loading } = useTokensLoader(tenantId);
-  const tokenExportEnabled = useSettingStore(
-    (state) => state.experimentalFeatures.tokenExport,
-  );
+  const tokenExportEnabled = useSettingStore((state) => state.experimentalFeatures.tokenExport);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>('time');
 

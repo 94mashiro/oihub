@@ -7,13 +7,13 @@ import type { Cost } from '@/lib/api/adapters';
 
 // Define persisted data structure
 type CostPersistedState = {
-  costList: Record<TenantId, Partial<Record<CostPeriod, Cost[]>>>;
+  costMap: Record<TenantId, Partial<Record<CostPeriod, Cost[]>>>;
 };
 
 // Define complete store state
 export type CostStoreState = {
   // Persisted fields
-  costList: Record<TenantId, Partial<Record<CostPeriod, Cost[]>>>;
+  costMap: Record<TenantId, Partial<Record<CostPeriod, Cost[]>>>;
 
   // Runtime fields
   ready: boolean;
@@ -29,33 +29,33 @@ export type CostStoreState = {
 // Define storage item
 const costStorageItem = storage.defineItem<CostPersistedState>('local:cost', {
   fallback: {
-    costList: {},
+    costMap: {},
   },
 });
 
 // Create store using factory function
-export const costStore = createStore<CostStoreState, CostPersistedState, 'costList'>({
+export const costStore = createStore<CostStoreState, CostPersistedState, 'costMap'>({
   storageItem: costStorageItem,
 
   persistConfig: {
-    keys: ['costList'],
+    keys: ['costMap'],
   },
 
   createState: (set, get, persist) => ({
     ready: false,
-    costList: {},
+    costMap: {},
 
     setCost: async (tenantId, period, costs) => {
       set((state) => {
-        if (!state.costList[tenantId]) {
-          state.costList[tenantId] = {};
+        if (!state.costMap[tenantId]) {
+          state.costMap[tenantId] = {};
         }
-        state.costList[tenantId][period] = costs;
+        state.costMap[tenantId][period] = costs;
       });
       await persist({});
     },
 
-    getCost: (tenantId, period) => get().costList[tenantId]?.[period],
+    getCost: (tenantId, period) => get().costMap[tenantId]?.[period],
 
     hydrate: async () => {
       // Implemented by factory function

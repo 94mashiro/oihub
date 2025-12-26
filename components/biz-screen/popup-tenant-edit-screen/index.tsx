@@ -3,10 +3,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import { useTenantStore } from '@/lib/state/tenant-store';
+import type { PlatformType } from '@/lib/api/adapters';
+import { DEFAULT_PLATFORM_TYPE } from '@/lib/constants/tenants';
 import { Form } from '@/components/ui/form';
 import { Field, FieldControl, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectPopup,
+  SelectItem,
+} from '@/components/ui/select';
 import {
   Frame,
   FrameDescription,
@@ -30,6 +39,7 @@ const PopupTenantEditScreen = () => {
     url: tenant?.url ?? '',
     token: tenant?.token ?? '',
     userId: tenant?.userId ?? '',
+    platformType: (tenant?.platformType ?? DEFAULT_PLATFORM_TYPE) as PlatformType,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,6 +59,7 @@ const PopupTenantEditScreen = () => {
         url: formData.url.trim(),
         token: formData.token.trim(),
         userId: formData.userId.trim(),
+        platformType: formData.platformType,
       });
       navigate(-1);
     } catch (error) {
@@ -198,6 +209,26 @@ const PopupTenantEditScreen = () => {
               )}
             />
             <FieldError match="valueMissing">请输入用户 ID</FieldError>
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="tenant-platformType" className="text-xs">
+              平台类型
+            </FieldLabel>
+            <Select
+              value={formData.platformType}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, platformType: value as PlatformType }))
+              }
+              disabled={isSubmitting}
+            >
+              <SelectTrigger id="tenant-platformType" size="sm" className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectPopup>
+                <SelectItem value="newapi">NewAPI</SelectItem>
+              </SelectPopup>
+            </Select>
           </Field>
         </Form>
       </FramePanel>

@@ -1,8 +1,9 @@
 import { apiClient } from '../client/api-client';
 import type { TenantConfig } from '../types';
 import type { Tenant, TenantInfo } from '@/types/tenant';
-import type { Balance, Cost, Token, TokenGroup, PlatformType } from '@/lib/api/adapters';
+import type { Balance, Cost, Token, TokenGroup } from '@/lib/api/adapters';
 import { getAdapter } from '@/lib/api/adapters';
+import { DEFAULT_PLATFORM_TYPE } from '@/lib/constants/tenants';
 import { CostPeriod, COST_PERIOD_DAYS, type PaginationResult } from '@/types/api';
 
 export function getTimestampRange(period: CostPeriod): [number, number] {
@@ -22,12 +23,13 @@ export class TenantAPIService {
   private readonly config: TenantConfig;
   private readonly adapter;
 
-  constructor(tenant: Tenant, platformType: PlatformType = 'newapi') {
+  constructor(tenant: Tenant) {
     this.config = {
       baseURL: tenant.url,
       token: tenant.token,
       userId: tenant.userId,
     };
+    const platformType = tenant.platformType ?? DEFAULT_PLATFORM_TYPE;
     this.adapter = getAdapter(platformType);
   }
 

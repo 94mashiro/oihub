@@ -12,7 +12,7 @@ export function useCostLoader(tenantId: string, period: CostPeriod) {
     if (!tenant) return;
 
     setLoading(true);
-    const api = new TenantAPIService(tenant, tenant.platformType ?? 'newapi');
+    const api = new TenantAPIService(tenant);
 
     api
       .getCostData(period)

@@ -3,7 +3,7 @@ import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createStore } from './create-store';
 import { tenantInfoStore } from './tenant-info-store';
 
-import type { Tenant, TenantId, TenantInfo } from '@/types/tenant';
+import type { Tenant, TenantId } from '@/types/tenant';
 
 export { getSelectedTenant } from './selectors';
 

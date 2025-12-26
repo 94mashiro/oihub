@@ -98,7 +98,7 @@ async function pollDailyUsageAndAlert(): Promise<void> {
   await Promise.allSettled(
     targets.map(async (tenant) => {
       try {
-        const api = new TenantAPIService(tenant, tenant.platformType ?? 'newapi');
+        const api = new TenantAPIService(tenant);
         const [infoResult, costResult] = await Promise.allSettled([
           api.getStatus(),
           api.getCostData(CostPeriod.DAY_1),
@@ -109,7 +109,9 @@ async function pollDailyUsageAndAlert(): Promise<void> {
         }
 
         const tenantInfo: TenantInfo | undefined =
-          infoResult.status === 'fulfilled' ? infoResult.value : tenantInfoStore.getState().getTenantInfo(tenant.id);
+          infoResult.status === 'fulfilled'
+            ? infoResult.value
+            : tenantInfoStore.getState().getTenantInfo(tenant.id);
         if (!tenantInfo) return;
 
         if (costResult.status === 'fulfilled') {

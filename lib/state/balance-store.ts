@@ -6,13 +6,13 @@ import type { Balance } from '@/lib/api/adapters';
 
 // Define persisted data structure
 type BalancePersistedState = {
-  balanceList: Record<TenantId, Balance>;
+  balanceMap: Record<TenantId, Balance>;
 };
 
 // Define complete store state
 export type BalanceStoreState = {
   // Persisted fields
-  balanceList: Record<TenantId, Balance>;
+  balanceMap: Record<TenantId, Balance>;
 
   // Runtime fields
   ready: boolean;
@@ -30,43 +30,43 @@ export type BalanceStoreState = {
 // Define storage item
 const balanceStorageItem = storage.defineItem<BalancePersistedState>('local:balance', {
   fallback: {
-    balanceList: {},
+    balanceMap: {},
   },
 });
 
 // Create store using factory function
-export const balanceStore = createStore<BalanceStoreState, BalancePersistedState, 'balanceList'>({
+export const balanceStore = createStore<BalanceStoreState, BalancePersistedState, 'balanceMap'>({
   storageItem: balanceStorageItem,
 
   persistConfig: {
-    keys: ['balanceList'],
+    keys: ['balanceMap'],
   },
 
   createState: (set, get, persist) => ({
     ready: false,
-    balanceList: {},
+    balanceMap: {},
 
     setBalance: async (tenantId, balance) => {
       set((state) => {
-        state.balanceList[tenantId] = balance;
+        state.balanceMap[tenantId] = balance;
       });
       await persist({});
     },
 
-    getBalance: (tenantId) => get().balanceList[tenantId],
+    getBalance: (tenantId) => get().balanceMap[tenantId],
 
     removeBalance: async (tenantId) => {
       set((state) => {
-        delete state.balanceList[tenantId];
+        delete state.balanceMap[tenantId];
       });
       await persist({});
     },
 
     clearAllBalances: async () => {
       set((state) => {
-        state.balanceList = {};
+        state.balanceMap = {};
       });
-      await persist({ balanceList: {} });
+      await persist({ balanceMap: {} });
     },
 
     hydrate: async () => {

@@ -9,7 +9,7 @@ import type { Tenant, TenantInfo } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
 
 async function refreshTenantData(tenant: Tenant) {
-  const api = new TenantAPIService(tenant, tenant.platformType ?? 'newapi');
+  const api = new TenantAPIService(tenant);
 
   const [infoResult, balanceResult, costResult] = await Promise.allSettled([
     api.getStatus(),
@@ -27,7 +27,10 @@ async function refreshTenantData(tenant: Tenant) {
     await costStore.getState().setCost(tenant.id, CostPeriod.DAY_1, costResult.value);
 
     // Trigger usage alert check in background
-    const tenantInfo = infoResult.status === 'fulfilled' ? infoResult.value : tenantInfoStore.getState().getTenantInfo(tenant.id);
+    const tenantInfo =
+      infoResult.status === 'fulfilled'
+        ? infoResult.value
+        : tenantInfoStore.getState().getTenantInfo(tenant.id);
     if (tenantInfo) {
       const todayUsage = calculateTodayUsage(costResult.value);
       triggerUsageAlertCheck(tenant.id, tenant.name, tenantInfo, todayUsage);

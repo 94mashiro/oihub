@@ -1,4 +1,7 @@
 import { Tenant } from '@/types/tenant';
+import type { PlatformType } from '@/lib/api/adapters';
+
+export const DEFAULT_PLATFORM_TYPE: PlatformType = 'newapi';
 
 export const tenantOptions: Tenant[] = [
   {

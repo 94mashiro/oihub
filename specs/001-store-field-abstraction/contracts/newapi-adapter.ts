@@ -5,13 +5,7 @@
  * Defines the raw types from the newapi platform and the adapter implementation.
  */
 
-import type {
-  Balance,
-  Cost,
-  Token,
-  TokenGroup,
-  PlatformAdapter,
-} from './types';
+import type { Balance, Cost, Token, TokenGroup, PlatformAdapter } from './types';
 
 // =============================================================================
 // Raw NewAPI Types (platform-specific)
@@ -130,7 +124,7 @@ export const newAPIAdapter: PlatformAdapter = {
           description: value.desc,
           multiplier: value.ratio,
         },
-      ])
+      ]),
     );
   },
 };

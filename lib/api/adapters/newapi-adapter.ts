@@ -4,13 +4,7 @@
  * Normalizes newapi-specific API responses to common types.
  */
 
-import type {
-  Balance,
-  Cost,
-  Token,
-  TokenGroup,
-  PlatformAdapter,
-} from './types';
+import type { Balance, Cost, Token, TokenGroup, PlatformAdapter } from './types';
 import type { TenantInfo } from '@/types/tenant';
 
 // =============================================================================
@@ -95,21 +89,12 @@ export const newAPIAdapter: PlatformAdapter = {
     const data = raw as Record<string, unknown>;
 
     return {
-      creditUnit: typeof data.quota_per_unit === 'number'
-        ? data.quota_per_unit
-        : undefined,
-      exchangeRate: typeof data.usd_exchange_rate === 'number'
-        ? data.usd_exchange_rate
-        : undefined,
-      displayFormat: typeof data.quota_display_type === 'string'
-        ? data.quota_display_type
-        : undefined,
-      endpoints: Array.isArray(data.api_info)
-        ? data.api_info
-        : undefined,
-      notices: Array.isArray(data.announcements)
-        ? data.announcements
-        : undefined,
+      creditUnit: typeof data.quota_per_unit === 'number' ? data.quota_per_unit : undefined,
+      exchangeRate: typeof data.usd_exchange_rate === 'number' ? data.usd_exchange_rate : undefined,
+      displayFormat:
+        typeof data.quota_display_type === 'string' ? data.quota_display_type : undefined,
+      endpoints: Array.isArray(data.api_info) ? data.api_info : undefined,
+      notices: Array.isArray(data.announcements) ? data.announcements : undefined,
     };
   },
 };

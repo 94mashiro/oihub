@@ -117,14 +117,14 @@ export interface PlatformAdapter {
  * Balance store persisted state.
  */
 export type BalancePersistedState = {
-  balanceList: Record<string, Balance>;
+  balanceMap: Record<string, Balance>;
 };
 
 /**
  * Cost store persisted state.
  */
 export type CostPersistedState = {
-  costList: Record<string, Partial<Record<string, Cost[]>>>;
+  costMap: Record<string, Partial<Record<string, Cost[]>>>;
 };
 
 /**

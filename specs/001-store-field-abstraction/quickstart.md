@@ -37,7 +37,7 @@ Stores now use normalized types:
 
 ```typescript
 // balance-store.ts
-const balance = useBalanceStore((s) => s.balanceList[tenantId]);
+const balance = useBalanceStore((s) => s.balanceMap[tenantId]);
 // balance.remainingCredit, balance.consumedCredit
 ```
 

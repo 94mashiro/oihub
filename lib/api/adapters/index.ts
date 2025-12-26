@@ -15,5 +15,9 @@ const adapters: Record<PlatformType, PlatformAdapter> = {
 };
 
 export function getAdapter(platformType: PlatformType): PlatformAdapter {
-  return adapters[platformType];
+  const adapter = adapters[platformType];
+  if (!adapter) {
+    throw new Error(`不支持的平台类型: ${platformType}`);
+  }
+  return adapter;
 }

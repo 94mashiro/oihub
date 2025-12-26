@@ -25,7 +25,7 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
   const [period, setPeriod] = useState<CostPeriod>(CostPeriod.DAY_1);
   const [sortBy, setSortBy] = useState<SortBy>('cost');
   const tenantInfoData = useTenantInfoStore((state) => state.tenantInfoMap[tenantId]);
-  const costList = useCostStore((state) => state.costList[tenantId]?.[period]);
+  const costList = useCostStore((state) => state.costMap[tenantId]?.[period]);
   const { loading } = useCostLoader(tenantId, period);
 
   const quotaUnit = tenantInfoData?.creditUnit;

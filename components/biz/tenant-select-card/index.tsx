@@ -43,8 +43,8 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
     state.tenantList.find((tenant) => tenant.id === tenantId),
   );
   const tenantInfoData = useTenantInfoStore((state) => state.tenantInfoMap[tenantId]);
-  const balanceInfo = useBalanceStore((state) => state.balanceList[tenantId]);
-  const todayCostInfo = useCostStore((state) => state.costList[tenantId]?.[CostPeriod.DAY_1]);
+  const balanceInfo = useBalanceStore((state) => state.balanceMap[tenantId]);
+  const todayCostInfo = useCostStore((state) => state.costMap[tenantId]?.[CostPeriod.DAY_1]);
 
   if (!tenantInfo) {
     return (
