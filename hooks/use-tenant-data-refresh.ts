@@ -1,8 +1,6 @@
 import { useCallback, useState } from 'react';
 import { tenantStore } from '@/lib/state/tenant-store';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
-import { getRawService } from '@/lib/api/services';
-import { getAdapter } from '@/lib/api/adapters';
 import {
   BalanceOrchestrator,
   CostOrchestrator,
@@ -13,12 +11,9 @@ import type { Tenant, TenantInfo } from '@/types/tenant';
 import { CostPeriod } from '@/types/api';
 
 async function refreshTenantData(tenant: Tenant) {
-  const service = getRawService(tenant);
-  const adapter = getAdapter(tenant.platformType ?? 'newapi');
-
-  const infoOrchestrator = new TenantInfoOrchestrator(tenant, service, adapter);
-  const balanceOrchestrator = new BalanceOrchestrator(tenant, service, adapter);
-  const costOrchestrator = new CostOrchestrator(tenant, service, adapter, CostPeriod.DAY_1);
+  const infoOrchestrator = new TenantInfoOrchestrator(tenant);
+  const balanceOrchestrator = new BalanceOrchestrator(tenant);
+  const costOrchestrator = new CostOrchestrator(tenant, CostPeriod.DAY_1);
 
   const [infoResult, _balanceResult, costResult] = await Promise.allSettled([
     infoOrchestrator.refresh(),

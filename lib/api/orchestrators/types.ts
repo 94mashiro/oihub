@@ -1,12 +1,3 @@
-// NOTE: Response Aggregates are now imported from platform types
-// These replace the generic unknown types previously used for adapter sources
-export type {
-  BalanceSources,
-  CostSources,
-  TokenSources,
-  TenantInfoSources,
-} from '@/lib/api/types/platforms';
-
 // =============================================================================
 // Raw API Response
 // =============================================================================
@@ -32,7 +23,3 @@ export interface DomainOrchestrator<T> {
   /** Refresh data for the tenant and update store. Throws on error. */
   refresh(): Promise<T>;
 }
-
-// NOTE: Source Bags (BalanceSources, CostSources, TokenSources, TenantInfoSources)
-// are now defined in @/lib/api/types/platforms/response-aggregates.ts with platform-specific types.
-// They are re-exported at the top of this file.

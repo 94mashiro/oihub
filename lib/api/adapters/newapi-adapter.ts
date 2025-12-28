@@ -7,12 +7,15 @@
 import type { Balance, Cost, Token, TokenGroup, NewAPIPlatformAdapter } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
-  NewAPIBalanceSources,
-  NewAPICostSources,
-  NewAPITokenSources,
-  NewAPITenantInfoSources,
+  NewAPIBalanceResponse,
+  NewAPICostsResponse,
+  NewAPITokensResponse,
+  NewAPITokenGroupsResponse,
+  NewAPITenantInfoResponse,
+  NewAPIToken,
+  NewAPITokenGroup,
+  NewAPICostData,
 } from '@/lib/api/types/platforms';
-import type { NewAPIToken, NewAPITokenGroup, NewAPICostData } from '@/lib/api/types/platforms';
 
 // =============================================================================
 // NewAPI Adapter Implementation
@@ -21,26 +24,24 @@ import type { NewAPIToken, NewAPITokenGroup, NewAPICostData } from '@/lib/api/ty
 export const newAPIAdapter: NewAPIPlatformAdapter = {
   platformType: 'newapi',
 
-  normalizeBalance(sources: NewAPIBalanceSources): Balance {
-    const data = sources.primary;
+  normalizeBalance(response: NewAPIBalanceResponse): Balance {
     return {
-      remainingCredit: data.quota ?? 0,
-      consumedCredit: data.used_quota ?? 0,
+      remainingCredit: response.quota ?? 0,
+      consumedCredit: response.used_quota ?? 0,
     };
   },
 
-  normalizeCosts(sources: NewAPICostSources): Cost[] {
-    return sources.costs.map((item: NewAPICostData) => ({
+  normalizeCosts(response: NewAPICostsResponse): Cost[] {
+    return response.map((item: NewAPICostData) => ({
       modelId: item.model_name ?? 'unknown',
       creditCost: item.quota ?? 0,
       tokenUsage: item.token_used ?? 0,
     }));
   },
 
-  normalizeTokens(sources: NewAPITokenSources): Token[] {
-    const tokensData = sources.tokens;
+  normalizeTokens(response: NewAPITokensResponse): Token[] {
     // Handle both array and NewAPITokensResponse structure
-    const items: NewAPIToken[] = Array.isArray(tokensData) ? tokensData : tokensData.items || [];
+    const items: NewAPIToken[] = Array.isArray(response) ? response : response.items || [];
 
     return items.map((item) => ({
       secretKey: item.key,
@@ -51,9 +52,9 @@ export const newAPIAdapter: NewAPIPlatformAdapter = {
     }));
   },
 
-  normalizeTokenGroups(sources: NewAPITokenSources): Record<string, TokenGroup> {
-    if (!sources.groups) return {};
-    const data: Record<string, NewAPITokenGroup> = sources.groups;
+  normalizeTokenGroups(response: NewAPITokenGroupsResponse): Record<string, TokenGroup> {
+    if (!response) return {};
+    const data: Record<string, NewAPITokenGroup> = response;
     return Object.fromEntries(
       Object.entries(data).map(([key, value]: [string, NewAPITokenGroup]) => [
         key,
@@ -65,15 +66,13 @@ export const newAPIAdapter: NewAPIPlatformAdapter = {
     );
   },
 
-  normalizeTenantInfo(sources: NewAPITenantInfoSources): TenantInfo {
-    const data = sources.status;
-
+  normalizeTenantInfo(response: NewAPITenantInfoResponse): TenantInfo {
     return {
-      creditUnit: data.quota_per_unit,
-      exchangeRate: data.usd_exchange_rate,
-      displayFormat: data.quota_display_type,
-      endpoints: data.api_info,
-      notices: data.announcements,
+      creditUnit: response.quota_per_unit,
+      exchangeRate: response.usd_exchange_rate,
+      displayFormat: response.quota_display_type,
+      endpoints: response.api_info,
+      notices: response.announcements,
     };
   },
 };

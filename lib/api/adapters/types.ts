@@ -6,24 +6,21 @@
  */
 
 import type {
-  BalanceSources,
-  CostSources,
-  TokenSources,
-  TenantInfoSources,
-} from '@/lib/api/orchestrators/types';
-import type {
-  NewAPIBalanceSources,
-  CubenceBalanceSources,
-  PackyCodeCodexBalanceSources,
-  NewAPICostSources,
-  CubenceCostSources,
-  PackyCodeCodexCostSources,
-  NewAPITokenSources,
-  CubenceTokenSources,
-  PackyCodeCodexTokenSources,
-  NewAPITenantInfoSources,
-  CubenceTenantInfoSources,
-  PackyCodeCodexTenantInfoSources,
+  NewAPIBalanceResponse,
+  NewAPICostsResponse,
+  NewAPITokensResponse,
+  NewAPITokenGroupsResponse,
+  NewAPITenantInfoResponse,
+  CubenceBalanceResponse,
+  CubenceCostsResponse,
+  CubenceTokensResponse,
+  CubenceTokenGroupsResponse,
+  CubenceTenantInfoResponse,
+  PackyCodeCodexBalanceResponse,
+  PackyCodeCodexCostsResponse,
+  PackyCodeCodexTokensResponse,
+  PackyCodeCodexTokenGroupsResponse,
+  PackyCodeCodexTenantInfoResponse,
 } from '@/lib/api/types/platforms';
 
 // =============================================================================
@@ -83,63 +80,68 @@ export type PlatformType = 'newapi' | 'packycode_codex' | 'cubence';
 
 /**
  * Platform adapter interface.
- * Adapters accept source bags for multi-API merge support.
+ * Adapters transform raw API responses directly into normalized types.
  *
  * Generic type parameters enable platform-specific type safety:
- * - TBalanceSources: Platform balance sources type
- * - TCostSources: Platform cost sources type
- * - TTokenSources: Platform token sources type
- * - TTenantInfoSources: Platform tenant info sources type
+ * - TBalanceResponse: Platform balance response type
+ * - TCostsResponse: Platform costs response type
+ * - TTokensResponse: Platform tokens response type
+ * - TTokenGroupsResponse: Platform token groups response type
+ * - TTenantInfoResponse: Platform tenant info response type
  */
 export interface PlatformAdapter<
-  TBalanceSources extends BalanceSources = BalanceSources,
-  TCostSources extends CostSources = CostSources,
-  TTokenSources extends TokenSources = TokenSources,
-  TTenantInfoSources extends TenantInfoSources = TenantInfoSources,
+  TBalanceResponse = unknown,
+  TCostsResponse = unknown,
+  TTokensResponse = unknown,
+  TTokenGroupsResponse = unknown,
+  TTenantInfoResponse = unknown,
 > {
   readonly platformType: PlatformType;
-  /** Transform balance sources into normalized Balance */
-  normalizeBalance(sources: TBalanceSources): Balance;
-  /** Transform cost sources into normalized Cost array */
-  normalizeCosts(sources: TCostSources): Cost[];
-  /** Transform token sources into normalized Token array */
-  normalizeTokens(sources: TTokenSources): Token[];
-  /** Transform token sources into TokenGroup map */
-  normalizeTokenGroups(sources: TTokenSources): Record<string, TokenGroup>;
-  /** Transform tenant info sources into TenantInfo */
-  normalizeTenantInfo(sources: TTenantInfoSources): import('@/types/tenant').TenantInfo;
+  /** Transform raw balance response into normalized Balance */
+  normalizeBalance(response: TBalanceResponse): Balance;
+  /** Transform raw costs response into normalized Cost array */
+  normalizeCosts(response: TCostsResponse): Cost[];
+  /** Transform raw tokens response into normalized Token array */
+  normalizeTokens(response: TTokensResponse): Token[];
+  /** Transform raw token groups response into TokenGroup map */
+  normalizeTokenGroups(response: TTokenGroupsResponse): Record<string, TokenGroup>;
+  /** Transform raw tenant info response into TenantInfo */
+  normalizeTenantInfo(response: TTenantInfoResponse): import('@/types/tenant').TenantInfo;
 }
 
 // =============================================================================
 // Platform-Specific Adapter Interfaces
 // =============================================================================
 
-/** NewAPI adapter with typed source parameters */
+/** NewAPI adapter with typed response parameters */
 export interface NewAPIPlatformAdapter extends PlatformAdapter<
-  NewAPIBalanceSources,
-  NewAPICostSources,
-  NewAPITokenSources,
-  NewAPITenantInfoSources
+  NewAPIBalanceResponse,
+  NewAPICostsResponse,
+  NewAPITokensResponse,
+  NewAPITokenGroupsResponse,
+  NewAPITenantInfoResponse
 > {
   readonly platformType: 'newapi';
 }
 
-/** Cubence adapter with typed source parameters */
+/** Cubence adapter with typed response parameters */
 export interface CubencePlatformAdapter extends PlatformAdapter<
-  CubenceBalanceSources,
-  CubenceCostSources,
-  CubenceTokenSources,
-  CubenceTenantInfoSources
+  CubenceBalanceResponse,
+  CubenceCostsResponse,
+  CubenceTokensResponse,
+  CubenceTokenGroupsResponse,
+  CubenceTenantInfoResponse
 > {
   readonly platformType: 'cubence';
 }
 
-/** PackyCode Codex adapter with typed source parameters */
+/** PackyCode Codex adapter with typed response parameters */
 export interface PackyCodeCodexPlatformAdapter extends PlatformAdapter<
-  PackyCodeCodexBalanceSources,
-  PackyCodeCodexCostSources,
-  PackyCodeCodexTokenSources,
-  PackyCodeCodexTenantInfoSources
+  PackyCodeCodexBalanceResponse,
+  PackyCodeCodexCostsResponse,
+  PackyCodeCodexTokensResponse,
+  PackyCodeCodexTokenGroupsResponse,
+  PackyCodeCodexTenantInfoResponse
 > {
   readonly platformType: 'packycode_codex';
 }
