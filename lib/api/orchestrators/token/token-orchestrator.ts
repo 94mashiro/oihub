@@ -35,13 +35,10 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensResult> {
     switch (platformType) {
       case 'cubence': {
         const service = new CubenceRawService(this.tenant);
-        const [tokensData, groupsData] = await Promise.all([
-          service.fetchTokens(),
-          service.fetchTokenGroups(),
-        ]);
+        const data = await service.fetchTokens();
         return {
-          tokens: cubenceAdapter.normalizeTokens(tokensData),
-          groups: cubenceAdapter.normalizeTokenGroups(groupsData),
+          tokens: cubenceAdapter.normalizeTokens(data),
+          groups: cubenceAdapter.normalizeTokenGroups(data),
         };
       }
       case 'newapi': {

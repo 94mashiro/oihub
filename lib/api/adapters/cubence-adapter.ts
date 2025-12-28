@@ -4,7 +4,7 @@
  * Normalizes Cubence-specific API responses to common types.
  */
 
-import type { Balance, Cost, Token, TokenGroup, CubenceAdapter } from './types';
+import type { Balance, Cost, Token, TokenGroup } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
   CubenceCostsResponse,
@@ -21,7 +21,7 @@ import type {
 // Cubence Adapter Implementation
 // =============================================================================
 
-export const cubenceAdapter: CubenceAdapter = {
+export const cubenceAdapter = {
   platformType: 'cubence',
 
   normalizeBalance(response: CubenceOverviewResponse): Balance {
@@ -41,28 +41,28 @@ export const cubenceAdapter: CubenceAdapter = {
   },
 
   normalizeTokens(response: CubenceTokensResponse): Token[] {
-    const items: CubenceToken[] = Array.isArray(response) ? response : response.items || [];
-
-    return items.map((item) => ({
+    return response.map((item) => ({
       secretKey: item.key ?? '',
       label: item.name ?? 'Unnamed Token',
-      lastUsedAt: item.last_used ?? 0,
-      creditConsumed: item.usage ?? 0,
-      group: item.category ?? 'default',
+      lastUsedAt: new Date(item.last_used_at).getTime() / 1000,
+      creditConsumed: item.quota_used ?? 0,
+      group: item.service_groups.map((it) => it.group.id.toString()),
     }));
   },
 
-  normalizeTokenGroups(response: CubenceTokenGroupsResponse): Record<string, TokenGroup> {
-    if (!response) return {};
-    const data: Record<string, CubenceTokenGroup> = response;
-    return Object.fromEntries(
-      Object.entries(data).map(([key, value]: [string, CubenceTokenGroup]) => [
-        key,
-        {
-          description: value.description ?? '',
-          multiplier: value.rate ?? 1.0,
-        },
-      ]),
+  normalizeTokenGroups(response: CubenceTokensResponse): Record<string, TokenGroup> {
+    const groups = response.flatMap((it) => it.service_groups.map((it) => it.group));
+    console.log(groups);
+    return groups.reduce(
+      (acc, group) => {
+        acc[group.id] = {
+          name: group.name ?? '',
+          description: group.description ?? '',
+          multiplier: group.multiplier ?? 1.0,
+        };
+        return acc;
+      },
+      {} as Record<string, TokenGroup>,
     );
   },
 

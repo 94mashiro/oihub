@@ -49,37 +49,42 @@ export interface CubenceCostsResponse {
   page_size?: number;
 }
 
-/** Returned by `/api/token/?p=1&size=100` endpoint (paginated) */
+/** Returned by `/api/token/?p=1&size=100` endpoint */
 export interface CubenceToken {
-  /** API key secret (maps to secretKey, defaults to '' if missing) */
-  key?: string;
-
-  /** Token display name (maps to label, defaults to 'Unnamed Token' if missing) */
-  name?: string;
-
-  /** Unix timestamp (seconds) when token was last used - maps to `lastUsedAt` in normalized Token type, defaults to 0 if missing */
-  last_used?: number;
-
-  /** Credits consumed by this token - maps to `creditConsumed` in normalized Token type, defaults to 0 if missing */
-  usage?: number;
-
-  /** Token category/group identifier - maps to `group` in normalized Token type, defaults to 'default' if missing */
-  category?: string;
+  id: number;
+  user_id: number;
+  name: string;
+  key: string;
+  status: string;
+  share_type: string;
+  quota_limit: number;
+  quota_used: number;
+  usage_count: number;
+  last_used_at: string;
+  created_at: string;
+  updated_at: string;
+  service_groups: {
+    id: number;
+    apikey_id: number;
+    service_type: string;
+    group_id: number;
+    created_at: string;
+    updated_at: string;
+    group: {
+      id: number;
+      name: string;
+      service_type: string;
+      description: string;
+      is_active: boolean;
+      priority: number;
+      multiplier: number;
+      created_at: string;
+      updated_at: string;
+    };
+  }[];
 }
 
-export interface CubenceTokensResponse {
-  /** Array of tokens (may be undefined) */
-  items?: CubenceToken[];
-
-  /** Total token count (optional, for pagination) */
-  total?: number;
-
-  /** Current page number (optional, for pagination) */
-  page?: number;
-
-  /** Page size (optional, for pagination) */
-  page_size?: number;
-}
+export type CubenceTokensResponse = CubenceToken[];
 
 /** Returned by `/api/user/self/groups` endpoint - maps group name to group metadata */
 export interface CubenceTokenGroup {

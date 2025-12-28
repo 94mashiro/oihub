@@ -71,7 +71,7 @@ import type {
   CubenceCostsResponse,
   CubenceTokensResponse,
   CubenceTokenGroupsResponse,
-  CubenceTenantInfoResponse,
+  CubenceOverviewResponse,
 } from './cubence-response-types';
 
 import type {
@@ -101,7 +101,7 @@ export interface PlatformResponseTypeMap {
     costs: CubenceCostsResponse;
     tokens: CubenceTokensResponse;
     tokenGroups: CubenceTokenGroupsResponse;
-    tenantInfo: CubenceTenantInfoResponse;
+    tenantInfo: CubenceOverviewResponse;
   };
   packycode_codex: {
     balance: PackyCodeCodexBalanceResponse;

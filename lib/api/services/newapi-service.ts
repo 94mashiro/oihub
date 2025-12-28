@@ -1,7 +1,6 @@
 import { APIClient } from '../client/api-client';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
-import type { INewAPIRawService } from './types';
 import type {
   NewAPIBalanceResponse,
   NewAPICostsResponse,
@@ -35,7 +34,7 @@ function createNewAPIClient(tenant: Tenant): APIClient {
 /**
  * Raw NewAPI service - fetches raw data without transformation.
  */
-export class NewAPIRawService implements INewAPIRawService {
+export class NewAPIRawService {
   private readonly client: APIClient;
 
   constructor(tenant: Tenant) {

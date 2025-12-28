@@ -2,7 +2,6 @@ import { APIClient } from '../client/api-client';
 import { fetchAllCubenceCostsPages } from './cubence-service-utils';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
-import type { ICubenceRawService } from './types';
 import type {
   CubenceBalanceResponse,
   CubenceCostsResponse,
@@ -37,7 +36,7 @@ function createCubenceClient(tenant: Tenant): APIClient {
 /**
  * Raw Cubence service - fetches raw data without transformation.
  */
-export class CubenceRawService implements ICubenceRawService {
+export class CubenceRawService {
   private readonly client: APIClient;
 
   constructor(tenant: Tenant) {
@@ -60,12 +59,8 @@ export class CubenceRawService implements ICubenceRawService {
     );
   }
 
-  async fetchTokens(page = 1, size = 100): Promise<CubenceTokensResponse> {
-    return this.client.get<CubenceTokensResponse>(`/api/token/?p=${page}&size=${size}`);
-  }
-
-  async fetchTokenGroups(): Promise<CubenceTokenGroupsResponse> {
-    return this.client.get<CubenceTokenGroupsResponse>('/api/user/self/groups');
+  async fetchTokens(): Promise<CubenceTokensResponse> {
+    return this.client.get<CubenceTokensResponse>('/api/v1/user/apikeys');
   }
 
   async fetchOverview(): Promise<CubenceOverviewResponse> {

@@ -21,6 +21,8 @@ import { Copy, Check, Info, Loader2, ExternalLink } from 'lucide-react';
 import { ClaudeIcon, OpenAIIcon, GeminiIcon } from '@/components/ui/icons/provider-icons';
 import { buildCCSwitchDeeplink, type CCSwitchApp } from '@/lib/utils/ccswitch-deeplink';
 import { useSettingStore } from '@/lib/state/setting-store';
+import { Token } from '@/types/token';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type SortBy = 'time' | 'cost';
 
@@ -40,6 +42,13 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
 
   const quotaUnit = tenantInfoData?.creditUnit;
   const displayType = tenantInfoData?.displayFormat;
+
+  const getTokenGroups = useCallback((token: Token) => {
+    if (typeof token.group === 'string') {
+      return [token.group];
+    }
+    return token.group;
+  }, []);
 
   const handleCopy = (e: React.MouseEvent, id: string, text: string) => {
     e.stopPropagation();
@@ -89,29 +98,55 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
         .map((token) => (
           <div
             key={token.secretKey}
-            className="group/token border-border flex items-center gap-2 border-b pb-2 last:border-b-0 last:pb-0"
+            className="group/token border-border flex items-center gap-0 border-b pb-2 last:border-b-0 last:pb-0"
           >
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-foreground truncate text-xs font-medium">{token.label}</span>
-                {token.group && tokenGroups?.[token.group] && (
-                  <Badge variant="outline" size="sm" className="shrink-0 gap-0.5">
-                    {token.group}
-                    {tokenGroups[token.group].multiplier !== 1 && (
-                      <span className="text-muted-foreground">
-                        ×{tokenGroups[token.group].multiplier}
-                      </span>
-                    )}
-                    <Tooltip>
-                      <TooltipTrigger render={<span />}>
-                        <Info className="text-muted-foreground size-2.5" />
-                      </TooltipTrigger>
-                      <TooltipPopup className="max-w-64">
-                        {tokenGroups[token.group].description || token.group}
-                      </TooltipPopup>
-                    </Tooltip>
-                  </Badge>
-                )}
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-foreground shrink-0 truncate text-xs font-medium">
+                  {token.label}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <ScrollArea orientation="horizontal">
+                    <div className="flex w-max gap-1">
+                      {getTokenGroups(token).map((groupId) => {
+                        const groupInfo = tokenGroups?.[groupId];
+                        if (!groupInfo) {
+                          return (
+                            <Badge
+                              key={groupId}
+                              size="sm"
+                              className="shrink-0 gap-0.5 rounded"
+                              variant="error"
+                            >
+                              分组已失效
+                            </Badge>
+                          );
+                        }
+                        return (
+                          <Badge
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0 gap-0.5 rounded"
+                            key={groupId}
+                          >
+                            {groupInfo?.name}
+                            <span className="text-muted-foreground">×{groupInfo.multiplier}</span>
+                            {groupInfo.description && (
+                              <Tooltip>
+                                <TooltipTrigger render={<span />}>
+                                  <Info className="text-muted-foreground size-2.5" />
+                                </TooltipTrigger>
+                                <TooltipPopup className="max-w-64">
+                                  {groupInfo.description}
+                                </TooltipPopup>
+                              </Tooltip>
+                            )}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
               </div>
               <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-[10px]">
                 <span>
@@ -130,63 +165,67 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                 </span>
               </div>
             </div>
-            <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover/token:opacity-100">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 gap-1 px-2 text-[10px]"
-                onClick={(e) => handleCopy(e, `token-${token.secretKey}`, `sk-${token.secretKey}`)}
-              >
-                {copiedId === `token-${token.secretKey}` ? (
-                  <>
-                    <Check className="size-3" />
-                    已复制
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3" />
-                    复制
-                  </>
+            <div className="grid shrink-0 grid-cols-[0fr] overflow-hidden transition-[grid-template-columns] duration-200 ease-out group-hover/token:grid-cols-[1fr]">
+              <div className="flex min-w-0 gap-1 overflow-hidden pl-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 gap-1 px-2 text-[10px]"
+                  onClick={(e) =>
+                    handleCopy(e, `token-${token.secretKey}`, `sk-${token.secretKey}`)
+                  }
+                >
+                  {copiedId === `token-${token.secretKey}` ? (
+                    <>
+                      <Check className="size-3" />
+                      已复制
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="size-3" />
+                      复制
+                    </>
+                  )}
+                </Button>
+                {tokenExportEnabled && (
+                  <Menu>
+                    <MenuTrigger
+                      render={
+                        <Button size="sm" variant="ghost" className="h-6 gap-1 px-2 text-[10px]">
+                          <ExternalLink className="size-3" />
+                          导出
+                        </Button>
+                      }
+                    />
+                    <MenuPopup className="min-w-28">
+                      <MenuGroup>
+                        <MenuGroupLabel className="text-[10px]">导出到 CC Switch</MenuGroupLabel>
+                        <MenuItem
+                          className="text-xs"
+                          onClick={() => handleExport(token.secretKey, token.label, 'claude')}
+                        >
+                          <ClaudeIcon className="size-3.5" />
+                          Claude
+                        </MenuItem>
+                        <MenuItem
+                          className="text-xs"
+                          onClick={() => handleExport(token.secretKey, token.label, 'codex')}
+                        >
+                          <OpenAIIcon className="size-3.5" />
+                          Codex
+                        </MenuItem>
+                        <MenuItem
+                          className="text-xs"
+                          onClick={() => handleExport(token.secretKey, token.label, 'gemini')}
+                        >
+                          <GeminiIcon className="size-3.5" />
+                          Gemini
+                        </MenuItem>
+                      </MenuGroup>
+                    </MenuPopup>
+                  </Menu>
                 )}
-              </Button>
-              {tokenExportEnabled && (
-                <Menu>
-                  <MenuTrigger
-                    render={
-                      <Button size="sm" variant="ghost" className="h-6 gap-1 px-2 text-[10px]">
-                        <ExternalLink className="size-3" />
-                        导出
-                      </Button>
-                    }
-                  />
-                  <MenuPopup className="min-w-28">
-                    <MenuGroup>
-                      <MenuGroupLabel className="text-[10px]">导出到 CC Switch</MenuGroupLabel>
-                      <MenuItem
-                        className="text-xs"
-                        onClick={() => handleExport(token.secretKey, token.label, 'claude')}
-                      >
-                        <ClaudeIcon className="size-3.5" />
-                        Claude
-                      </MenuItem>
-                      <MenuItem
-                        className="text-xs"
-                        onClick={() => handleExport(token.secretKey, token.label, 'codex')}
-                      >
-                        <OpenAIIcon className="size-3.5" />
-                        Codex
-                      </MenuItem>
-                      <MenuItem
-                        className="text-xs"
-                        onClick={() => handleExport(token.secretKey, token.label, 'gemini')}
-                      >
-                        <GeminiIcon className="size-3.5" />
-                        Gemini
-                      </MenuItem>
-                    </MenuGroup>
-                  </MenuPopup>
-                </Menu>
-              )}
+              </div>
             </div>
           </div>
         ))}

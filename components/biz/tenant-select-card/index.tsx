@@ -46,6 +46,24 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
   const balanceInfo = useBalanceStore((state) => state.balanceMap[tenantId]);
   const todayCostInfo = useCostStore((state) => state.costMap[tenantId]?.[CostPeriod.DAY_1]);
 
+  const quotaUnit = tenantInfoData?.creditUnit;
+  const displayType = tenantInfoData?.displayFormat;
+
+  const tokenManageUrl = useMemo(() => {
+    if (!tenantInfo) return null;
+    try {
+      if (tenantInfo.platformType === 'newapi') {
+        const baseUrl = new URL(tenantInfo.url);
+        return `${baseUrl.origin}/console/token`;
+      } else if (tenantInfo.platformType === 'cubence') {
+        return `https://cubence.com/dashboard/keys`;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, [tenantInfo]);
+
   if (!tenantInfo) {
     return (
       <div className="space-y-3">
@@ -57,17 +75,6 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
         </div>
       </div>
     );
-  }
-
-  const quotaUnit = tenantInfoData?.creditUnit;
-  const displayType = tenantInfoData?.displayFormat;
-
-  let tokenManageUrl: string | null = null;
-  try {
-    const baseUrl = new URL(tenantInfo.url);
-    tokenManageUrl = `${baseUrl.origin}/console/token`;
-  } catch {
-    tokenManageUrl = null;
   }
 
   const todayCostRaw = todayCostInfo?.reduce((t, c) => t + c.creditCost, 0) ?? null;

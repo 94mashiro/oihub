@@ -1,7 +1,6 @@
 import { APIClient } from '../client/api-client';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
-import type { IPackyCodeCodexRawService } from './types';
 import type {
   PackyCodeCodexBalanceResponse,
   PackyCodeCodexCostsResponse,
@@ -35,7 +34,7 @@ function createPackyCodeCodexClient(tenant: Tenant): APIClient {
 /**
  * Raw PackyCode Codex service - fetches raw data without transformation.
  */
-export class PackyCodeCodexRawService implements IPackyCodeCodexRawService {
+export class PackyCodeCodexRawService {
   private readonly client: APIClient;
 
   constructor(tenant: Tenant) {
@@ -54,9 +53,7 @@ export class PackyCodeCodexRawService implements IPackyCodeCodexRawService {
   }
 
   async fetchTokens(page = 1, size = 100): Promise<PackyCodeCodexTokensResponse> {
-    return this.client.get<PackyCodeCodexTokensResponse>(
-      `/api/token/?p=${page}&size=${size}`,
-    );
+    return this.client.get<PackyCodeCodexTokensResponse>(`/api/token/?p=${page}&size=${size}`);
   }
 
   async fetchTokenGroups(): Promise<PackyCodeCodexTokenGroupsResponse> {

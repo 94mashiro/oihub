@@ -4,7 +4,7 @@
  * Normalizes newapi-specific API responses to common types.
  */
 
-import type { Balance, Cost, Token, TokenGroup, NewAPIAdapter } from './types';
+import type { Balance, Cost, Token, TokenGroup } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
   NewAPIBalanceResponse,
@@ -21,7 +21,7 @@ import type {
 // NewAPI Adapter Implementation
 // =============================================================================
 
-export const newAPIAdapter: NewAPIAdapter = {
+export const newAPIAdapter = {
   platformType: 'newapi',
 
   normalizeBalance(response: NewAPIBalanceResponse): Balance {
@@ -61,6 +61,7 @@ export const newAPIAdapter: NewAPIAdapter = {
         {
           description: value.desc,
           multiplier: value.ratio,
+          name: key,
         },
       ]),
     );
