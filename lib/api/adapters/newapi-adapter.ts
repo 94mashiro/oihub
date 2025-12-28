@@ -12,13 +12,7 @@ import type {
   NewAPITokenSources,
   NewAPITenantInfoSources,
 } from '@/lib/api/types/platforms';
-import type {
-  NewAPIBalanceResponse,
-  NewAPIToken,
-  NewAPITokenGroup,
-  NewAPITokensResponse,
-  NewAPICostData,
-} from '@/lib/api/types/platforms';
+import type { NewAPIToken, NewAPITokenGroup, NewAPICostData } from '@/lib/api/types/platforms';
 
 // =============================================================================
 // NewAPI Adapter Implementation

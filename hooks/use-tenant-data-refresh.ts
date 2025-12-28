@@ -20,20 +20,20 @@ async function refreshTenantData(tenant: Tenant) {
   const balanceOrchestrator = new BalanceOrchestrator(tenant, service, adapter);
   const costOrchestrator = new CostOrchestrator(tenant, service, adapter, CostPeriod.DAY_1);
 
-  const [infoResult, balanceResult, costResult] = await Promise.allSettled([
+  const [infoResult, _balanceResult, costResult] = await Promise.allSettled([
     infoOrchestrator.refresh(),
     balanceOrchestrator.refresh(),
     costOrchestrator.refresh(),
   ]);
 
   // Trigger usage alert check if cost data was fetched
-  if (costResult.status === 'fulfilled' && costResult.value.data) {
+  if (costResult.status === 'fulfilled') {
     const tenantInfo =
-      infoResult.status === 'fulfilled' && infoResult.value.data
-        ? infoResult.value.data
+      infoResult.status === 'fulfilled'
+        ? infoResult.value
         : tenantInfoStore.getState().getTenantInfo(tenant.id);
     if (tenantInfo) {
-      const todayUsage = calculateTodayUsage(costResult.value.data.costs);
+      const todayUsage = calculateTodayUsage(costResult.value);
       triggerUsageAlertCheck(tenant.id, tenant.name, tenantInfo, todayUsage);
     }
   }

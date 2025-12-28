@@ -1,18 +1,10 @@
 export type {
   RawAPIResponse,
-  EntityMeta,
-  CompletenessStatus,
-  OrchestratorError,
-  OrchestratorResult,
   DomainOrchestrator,
   BalanceSources,
   CostSources,
   TokenSources,
   TenantInfoSources,
-  BalanceWithMeta,
-  CostsWithMeta,
-  TokensWithMeta,
-  TenantInfoWithMeta,
 } from './types';
 
 export { BalanceOrchestrator } from './balance-orchestrator';

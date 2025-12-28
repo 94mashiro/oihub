@@ -112,16 +112,13 @@ async function pollDailyUsageAndAlert(): Promise<void> {
         ]);
 
         const tenantInfo: TenantInfo | undefined =
-          infoResult.status === 'fulfilled' && infoResult.value.data
-            ? infoResult.value.data
+          infoResult.status === 'fulfilled'
+            ? infoResult.value
             : tenantInfoStore.getState().getTenantInfo(tenant.id);
         if (!tenantInfo) return;
 
-        if (costResult.status === 'fulfilled' && costResult.value.data) {
-          const todayUsage = costResult.value.data.costs.reduce(
-            (sum, item) => sum + item.creditCost,
-            0,
-          );
+        if (costResult.status === 'fulfilled') {
+          const todayUsage = costResult.value.reduce((sum, item) => sum + item.creditCost, 0);
           await checkAndTriggerAlert(tenant.id, tenant.name, tenantInfo, todayUsage);
         } else {
           console.warn('Failed to fetch cost data for tenant', tenant.id);

@@ -1,18 +1,15 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 0.0.0 → 1.0.0 (initial ratification)
-Modified principles: N/A (initial version)
+Version change: 1.0.0 → 1.1.0
+Modified principles: N/A
 Added sections:
-  - Core Principles (5 principles)
-  - Performance Standards
-  - Development Workflow
-  - Governance
+  - Principle VI: Implementation ROI & Pragmatism
 Removed sections: N/A
 Templates requiring updates:
-  - .specify/templates/plan-template.md ✅ (Constitution Check section compatible)
-  - .specify/templates/spec-template.md ✅ (Requirements/Success Criteria aligned)
-  - .specify/templates/tasks-template.md ✅ (Phase structure compatible)
+  - .specify/templates/plan-template.md ✅ (Complexity Tracking section already supports justification model)
+  - .specify/templates/spec-template.md ✅ (Requirements section compatible with ROI-driven prioritization)
+  - .specify/templates/tasks-template.md ✅ (User story priority structure aligns with ROI focus)
 Follow-up TODOs: None
 -->
 
@@ -75,6 +72,38 @@ Security practices protect user data and extension integrity:
 - User data MUST NOT be logged or transmitted without explicit consent
 - Input validation MUST occur at system boundaries (user input, API responses)
 
+### VI. Implementation ROI & Pragmatism
+
+Implementation solutions MUST optimize for return on investment, maintainability, and extensibility, in that priority order:
+
+**Priority hierarchy**: ROI >> Maintainability > Extensibility
+
+- **ROI (Return on Investment)**: Solutions MUST deliver maximum value with minimum effort
+  - Choose the simplest approach that solves the immediate problem
+  - Prefer built-in platform features over custom abstractions
+  - Avoid premature optimization and over-engineering
+  - Question whether a feature is needed before implementing it
+  - Reject solutions that add complexity without proportional value
+- **Maintainability**: Code MUST be understandable and modifiable
+  - Prioritize code clarity over cleverness
+  - Prefer explicit, verbose code over terse, implicit patterns when clarity improves
+  - Keep functions small and focused on single responsibilities
+  - Document non-obvious decisions with rationale comments
+  - Avoid tight coupling between unrelated modules
+- **Extensibility**: Design SHOULD accommodate growth without rewrite
+  - Use interfaces and dependency injection only when variation is certain
+  - Defer abstraction until duplication proves the need
+  - Prefer composition over inheritance
+  - Keep extension points explicit and documented
+  - Accept that refactoring is cheaper than wrong abstractions
+
+**Trade-off Guidance**:
+- When ROI conflicts with maintainability: Choose ROI if code will rarely change; choose maintainability if code is frequently modified
+- When maintainability conflicts with extensibility: Choose maintainability; refactor when extension is actually needed
+- When in doubt, solve today's problem well rather than tomorrow's problem poorly
+
+**Rationale**: This principle prevents gold-plating, over-abstraction, and speculative features that burden the codebase without delivering user value. It enforces pragmatic engineering that ships working software quickly while remaining adaptable to real requirements as they emerge.
+
 ## Performance Standards
 
 | Metric | Target | Measurement |
@@ -121,4 +150,4 @@ This constitution supersedes all other development practices for this repository
 - Violations MUST be justified in PR description with complexity tracking
 - Use `CLAUDE.md` for runtime development guidance
 
-**Version**: 1.0.0 | **Ratified**: 2025-12-25 | **Last Amended**: 2025-12-25
+**Version**: 1.1.0 | **Ratified**: 2025-12-25 | **Last Amended**: 2025-12-28
