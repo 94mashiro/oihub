@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NewAPI Balance Response",
+  "description": "Response schema for NewAPI /api/user/self endpoint",
+  "type": "object",
+  "required": [
+    "id", "username", "display_name", "email", "role", "status", "group",
+    "quota", "used_quota", "request_count", "aff_code", "aff_count",
+    "aff_quota", "aff_history_quota", "inviter_id", "github_id",
+    "telegram_id", "wechat_id", "linux_do_id", "oidc_id",
+    "stripe_customer", "setting", "sidebar_modules", "permissions"
+  ],
+  "properties": {
+    "id": { "type": "number", "description": "User ID" },
+    "username": { "type": "string", "description": "Username" },
+    "display_name": { "type": "string", "description": "Display name" },
+    "email": { "type": "string", "description": "User email address" },
+    "role": { "type": "number", "description": "User role identifier" },
+    "status": { "type": "number", "description": "Account status code" },
+    "group": { "type": "string", "description": "User group identifier" },
+    "quota": { "type": "number", "description": "Remaining account credits" },
+    "used_quota": { "type": "number", "description": "Credits consumed since account creation" },
+    "request_count": { "type": "number", "description": "Total API request count" },
+    "aff_code": { "type": "string", "description": "Affiliate code" },
+    "aff_count": { "type": "number", "description": "Affiliate count" },
+    "aff_quota": { "type": "number", "description": "Affiliate quota" },
+    "aff_history_quota": { "type": "number", "description": "Affiliate history quota" },
+    "inviter_id": { "type": "number", "description": "Inviter user ID" },
+    "github_id": { "type": "string", "description": "GitHub OAuth ID" },
+    "telegram_id": { "type": "string", "description": "Telegram OAuth ID" },
+    "wechat_id": { "type": "string", "description": "WeChat OAuth ID" },
+    "linux_do_id": { "type": "string", "description": "Linux.do OAuth ID" },
+    "oidc_id": { "type": "string", "description": "OIDC provider ID" },
+    "stripe_customer": { "type": "string", "description": "Stripe customer ID" },
+    "setting": { "type": "string", "description": "User settings JSON string" },
+    "sidebar_modules": { "type": "string", "description": "Sidebar modules configuration" },
+    "permissions": {
+      "type": "object",
+      "description": "User permissions",
+      "required": ["sidebar_modules", "sidebar_settings"],
+      "properties": {
+        "sidebar_modules": {
+          "type": "object",
+          "required": ["admin"],
+          "properties": {
+            "admin": { "type": "boolean" }
+          }
+        },
+        "sidebar_settings": { "type": "boolean" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,14 +1,23 @@
 import type { Balance, Cost, Token, TokenGroup } from '@/lib/api/adapters/types';
 import type { TenantInfo } from '@/types/tenant';
 
+// NOTE: Response Aggregates are now imported from platform types
+// These replace the generic unknown types previously used for adapter sources
+export type {
+  BalanceSources,
+  CostSources,
+  TokenSources,
+  TenantInfoSources,
+} from '@/lib/api/types/platforms';
+
 // =============================================================================
 // Raw API Response
 // =============================================================================
 
 /** Wrapper for unprocessed API responses from services. */
-export interface RawAPIResponse {
+export interface RawAPIResponse<T = unknown> {
   /** Raw response body */
-  data: unknown;
+  data: T;
   /** HTTP status code */
   status: number;
   /** Response headers if needed */
@@ -68,39 +77,9 @@ export interface DomainOrchestrator<T> {
   refresh(): Promise<OrchestratorResult<T>>;
 }
 
-// =============================================================================
-// Source Bags (Adapter Input Types)
-// =============================================================================
-
-/** Sources for balance normalization. */
-export interface BalanceSources {
-  /** Main balance endpoint response (required) */
-  primary: unknown;
-  /** Usage data for merge (platform-specific) */
-  usage?: unknown;
-  /** Credits data for merge (platform-specific) */
-  credits?: unknown;
-}
-
-/** Sources for cost normalization. */
-export interface CostSources {
-  /** Cost records from API */
-  costs: unknown[];
-}
-
-/** Sources for token normalization. */
-export interface TokenSources {
-  /** Token list from API */
-  tokens: unknown[];
-  /** Token group metadata */
-  groups?: unknown;
-}
-
-/** Sources for tenant info normalization. */
-export interface TenantInfoSources {
-  /** Platform status endpoint response */
-  status: unknown;
-}
+// NOTE: Source Bags (BalanceSources, CostSources, TokenSources, TenantInfoSources)
+// are now defined in @/lib/api/types/platforms/response-aggregates.ts with platform-specific types.
+// They are re-exported at the top of this file.
 
 // =============================================================================
 // Extended Normalized Types (with metadata)

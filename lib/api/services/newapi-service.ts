@@ -1,8 +1,15 @@
 import { APIClient } from '../client/api-client';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
-import type { IRawPlatformService } from './types';
+import type { INewAPIRawService } from './types';
 import type { RawAPIResponse } from '@/lib/api/orchestrators/types';
+import type {
+  NewAPIBalanceResponse,
+  NewAPICostsResponse,
+  NewAPITokensResponse,
+  NewAPITokenGroupsResponse,
+  NewAPITenantInfoResponse,
+} from '@/lib/api/types/platforms';
 
 export function getTimestampRange(period: CostPeriod): [number, number] {
   const now = new Date();
@@ -29,38 +36,38 @@ function createNewAPIClient(tenant: Tenant): APIClient {
 /**
  * Raw NewAPI service - fetches raw data without transformation.
  */
-export class NewAPIRawService implements IRawPlatformService {
+export class NewAPIRawService implements INewAPIRawService {
   private readonly client: APIClient;
 
   constructor(tenant: Tenant) {
     this.client = createNewAPIClient(tenant);
   }
 
-  async fetchBalance(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/user/self');
+  async fetchBalance(): Promise<RawAPIResponse<NewAPIBalanceResponse>> {
+    const data = await this.client.get<NewAPIBalanceResponse>('/api/user/self');
     return { data, status: 200 };
   }
 
-  async fetchCosts(period: CostPeriod): Promise<RawAPIResponse> {
+  async fetchCosts(period: CostPeriod): Promise<RawAPIResponse<NewAPICostsResponse>> {
     const [start, end] = getTimestampRange(period);
-    const data = await this.client.get<unknown[]>(
+    const data = await this.client.get<NewAPICostsResponse>(
       `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
     );
     return { data, status: 200 };
   }
 
-  async fetchTokens(page = 1, size = 100): Promise<RawAPIResponse> {
-    const data = await this.client.get(`/api/token/?p=${page}&size=${size}`);
+  async fetchTokens(page = 1, size = 100): Promise<RawAPIResponse<NewAPITokensResponse>> {
+    const data = await this.client.get<NewAPITokensResponse>(`/api/token/?p=${page}&size=${size}`);
     return { data, status: 200 };
   }
 
-  async fetchTokenGroups(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/user/self/groups');
+  async fetchTokenGroups(): Promise<RawAPIResponse<NewAPITokenGroupsResponse>> {
+    const data = await this.client.get<NewAPITokenGroupsResponse>('/api/user/self/groups');
     return { data, status: 200 };
   }
 
-  async fetchTenantInfo(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/status');
+  async fetchTenantInfo(): Promise<RawAPIResponse<NewAPITenantInfoResponse>> {
+    const data = await this.client.get<NewAPITenantInfoResponse>('/api/status');
     return { data, status: 200 };
   }
 }

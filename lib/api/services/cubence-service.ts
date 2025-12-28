@@ -1,8 +1,15 @@
 import { APIClient } from '../client/api-client';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
-import type { IRawPlatformService } from './types';
+import type { ICubenceRawService } from './types';
 import type { RawAPIResponse } from '@/lib/api/orchestrators/types';
+import type {
+  CubenceBalanceResponse,
+  CubenceCostsResponse,
+  CubenceTokensResponse,
+  CubenceTokenGroupsResponse,
+  CubenceTenantInfoResponse,
+} from '@/lib/api/types/platforms';
 
 function getTimestampRange(period: CostPeriod): [number, number] {
   const now = new Date();
@@ -28,46 +35,46 @@ function createCubenceClient(tenant: Tenant): APIClient {
 /**
  * Raw Cubence service - fetches raw data without transformation.
  */
-export class CubenceRawService implements IRawPlatformService {
+export class CubenceRawService implements ICubenceRawService {
   private readonly client: APIClient;
 
   constructor(tenant: Tenant) {
     this.client = createCubenceClient(tenant);
   }
 
-  async fetchBalance(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/user/self');
+  async fetchBalance(): Promise<RawAPIResponse<CubenceBalanceResponse>> {
+    const data = await this.client.get<CubenceBalanceResponse>('/api/user/self');
     return { data, status: 200 };
   }
 
-  async fetchCosts(period: CostPeriod): Promise<RawAPIResponse> {
+  async fetchCosts(period: CostPeriod): Promise<RawAPIResponse<CubenceCostsResponse>> {
     const [start, end] = getTimestampRange(period);
-    const data = await this.client.get<unknown[]>(
+    const data = await this.client.get<CubenceCostsResponse>(
       `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
     );
     return { data, status: 200 };
   }
 
-  async fetchTokens(page = 1, size = 100): Promise<RawAPIResponse> {
-    const data = await this.client.get(`/api/token/?p=${page}&size=${size}`);
+  async fetchTokens(page = 1, size = 100): Promise<RawAPIResponse<CubenceTokensResponse>> {
+    const data = await this.client.get<CubenceTokensResponse>(`/api/token/?p=${page}&size=${size}`);
     return { data, status: 200 };
   }
 
-  async fetchTokenGroups(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/user/self/groups');
+  async fetchTokenGroups(): Promise<RawAPIResponse<CubenceTokenGroupsResponse>> {
+    const data = await this.client.get<CubenceTokenGroupsResponse>('/api/user/self/groups');
     return { data, status: 200 };
   }
 
-  async fetchTenantInfo(): Promise<RawAPIResponse> {
+  async fetchTenantInfo(): Promise<RawAPIResponse<CubenceTenantInfoResponse>> {
     const [overviewData, announcementsData] = await Promise.all([
       this.client.get('/api/v1/dashboard/overview'),
       this.client.get('/api/v1/announcements?page=1&page_size=10'),
     ]);
     return {
       data: {
-        overview: overviewData,
+        ...overviewData,
         announcements: announcementsData,
-      },
+      } as CubenceTenantInfoResponse,
       status: 200,
     };
   }

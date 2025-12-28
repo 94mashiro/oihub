@@ -1,8 +1,15 @@
 import { APIClient } from '../client/api-client';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
-import type { IRawPlatformService } from './types';
+import type { IPackyCodeCodexRawService } from './types';
 import type { RawAPIResponse } from '@/lib/api/orchestrators/types';
+import type {
+  PackyCodeCodexBalanceResponse,
+  PackyCodeCodexCostsResponse,
+  PackyCodeCodexTokensResponse,
+  PackyCodeCodexTokenGroupsResponse,
+  PackyCodeCodexTenantInfoResponse,
+} from '@/lib/api/types/platforms';
 
 function getTimestampRange(period: CostPeriod): [number, number] {
   const now = new Date();
@@ -29,38 +36,40 @@ function createPackyCodeCodexClient(tenant: Tenant): APIClient {
 /**
  * Raw PackyCode Codex service - fetches raw data without transformation.
  */
-export class PackyCodeCodexRawService implements IRawPlatformService {
+export class PackyCodeCodexRawService implements IPackyCodeCodexRawService {
   private readonly client: APIClient;
 
   constructor(tenant: Tenant) {
     this.client = createPackyCodeCodexClient(tenant);
   }
 
-  async fetchBalance(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/user/self');
+  async fetchBalance(): Promise<RawAPIResponse<PackyCodeCodexBalanceResponse>> {
+    const data = await this.client.get<PackyCodeCodexBalanceResponse>('/api/user/self');
     return { data, status: 200 };
   }
 
-  async fetchCosts(period: CostPeriod): Promise<RawAPIResponse> {
+  async fetchCosts(period: CostPeriod): Promise<RawAPIResponse<PackyCodeCodexCostsResponse>> {
     const [start, end] = getTimestampRange(period);
-    const data = await this.client.get<unknown[]>(
+    const data = await this.client.get<PackyCodeCodexCostsResponse>(
       `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
     );
     return { data, status: 200 };
   }
 
-  async fetchTokens(page = 1, size = 100): Promise<RawAPIResponse> {
-    const data = await this.client.get(`/api/token/?p=${page}&size=${size}`);
+  async fetchTokens(page = 1, size = 100): Promise<RawAPIResponse<PackyCodeCodexTokensResponse>> {
+    const data = await this.client.get<PackyCodeCodexTokensResponse>(
+      `/api/token/?p=${page}&size=${size}`,
+    );
     return { data, status: 200 };
   }
 
-  async fetchTokenGroups(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/user/self/groups');
+  async fetchTokenGroups(): Promise<RawAPIResponse<PackyCodeCodexTokenGroupsResponse>> {
+    const data = await this.client.get<PackyCodeCodexTokenGroupsResponse>('/api/user/self/groups');
     return { data, status: 200 };
   }
 
-  async fetchTenantInfo(): Promise<RawAPIResponse> {
-    const data = await this.client.get('/api/status');
+  async fetchTenantInfo(): Promise<RawAPIResponse<PackyCodeCodexTenantInfoResponse>> {
+    const data = await this.client.get<PackyCodeCodexTenantInfoResponse>('/api/status');
     return { data, status: 200 };
   }
 }

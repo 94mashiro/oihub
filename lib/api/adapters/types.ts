@@ -11,6 +11,20 @@ import type {
   TokenSources,
   TenantInfoSources,
 } from '@/lib/api/orchestrators/types';
+import type {
+  NewAPIBalanceSources,
+  CubenceBalanceSources,
+  PackyCodeCodexBalanceSources,
+  NewAPICostSources,
+  CubenceCostSources,
+  PackyCodeCodexCostSources,
+  NewAPITokenSources,
+  CubenceTokenSources,
+  PackyCodeCodexTokenSources,
+  NewAPITenantInfoSources,
+  CubenceTenantInfoSources,
+  PackyCodeCodexTenantInfoSources,
+} from '@/lib/api/types/platforms';
 
 // =============================================================================
 // Core Normalized Types
@@ -70,17 +84,62 @@ export type PlatformType = 'newapi' | 'packycode_codex' | 'cubence';
 /**
  * Platform adapter interface.
  * Adapters accept source bags for multi-API merge support.
+ *
+ * Generic type parameters enable platform-specific type safety:
+ * - TBalanceSources: Platform balance sources type
+ * - TCostSources: Platform cost sources type
+ * - TTokenSources: Platform token sources type
+ * - TTenantInfoSources: Platform tenant info sources type
  */
-export interface PlatformAdapter {
+export interface PlatformAdapter<
+  TBalanceSources extends BalanceSources = BalanceSources,
+  TCostSources extends CostSources = CostSources,
+  TTokenSources extends TokenSources = TokenSources,
+  TTenantInfoSources extends TenantInfoSources = TenantInfoSources,
+> {
   readonly platformType: PlatformType;
   /** Transform balance sources into normalized Balance */
-  normalizeBalance(sources: BalanceSources): Balance;
+  normalizeBalance(sources: TBalanceSources): Balance;
   /** Transform cost sources into normalized Cost array */
-  normalizeCosts(sources: CostSources): Cost[];
+  normalizeCosts(sources: TCostSources): Cost[];
   /** Transform token sources into normalized Token array */
-  normalizeTokens(sources: TokenSources): Token[];
+  normalizeTokens(sources: TTokenSources): Token[];
   /** Transform token sources into TokenGroup map */
-  normalizeTokenGroups(sources: TokenSources): Record<string, TokenGroup>;
+  normalizeTokenGroups(sources: TTokenSources): Record<string, TokenGroup>;
   /** Transform tenant info sources into TenantInfo */
-  normalizeTenantInfo(sources: TenantInfoSources): import('@/types/tenant').TenantInfo;
+  normalizeTenantInfo(sources: TTenantInfoSources): import('@/types/tenant').TenantInfo;
+}
+
+// =============================================================================
+// Platform-Specific Adapter Interfaces
+// =============================================================================
+
+/** NewAPI adapter with typed source parameters */
+export interface NewAPIPlatformAdapter extends PlatformAdapter<
+  NewAPIBalanceSources,
+  NewAPICostSources,
+  NewAPITokenSources,
+  NewAPITenantInfoSources
+> {
+  readonly platformType: 'newapi';
+}
+
+/** Cubence adapter with typed source parameters */
+export interface CubencePlatformAdapter extends PlatformAdapter<
+  CubenceBalanceSources,
+  CubenceCostSources,
+  CubenceTokenSources,
+  CubenceTenantInfoSources
+> {
+  readonly platformType: 'cubence';
+}
+
+/** PackyCode Codex adapter with typed source parameters */
+export interface PackyCodeCodexPlatformAdapter extends PlatformAdapter<
+  PackyCodeCodexBalanceSources,
+  PackyCodeCodexCostSources,
+  PackyCodeCodexTokenSources,
+  PackyCodeCodexTenantInfoSources
+> {
+  readonly platformType: 'packycode_codex';
 }
