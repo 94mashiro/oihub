@@ -165,7 +165,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                 </span>
               </div>
             </div>
-            <div className="grid shrink-0 grid-cols-[0fr] overflow-hidden transition-[grid-template-columns] duration-200 ease-out group-hover/token:grid-cols-[1fr]">
+            <div className="grid shrink-0 grid-cols-[0fr] opacity-0 transition-[grid-template-columns,opacity] duration-[300ms,200ms] ease-out group-hover/token:grid-cols-[1fr] group-hover/token:opacity-100">
               <div className="flex min-w-0 gap-1 overflow-hidden pl-2">
                 <Button
                   size="sm"
