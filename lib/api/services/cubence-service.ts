@@ -10,6 +10,7 @@ import type {
   CubenceTokenGroupsResponse,
   CubenceTenantInfoResponse,
 } from '@/lib/api/types/platforms';
+import { CubenceAnnouncementsResponse } from '../types/platforms/cubence-response-types';
 
 function getTimestampRange(period: CostPeriod): [number, number] {
   const now = new Date();
@@ -66,16 +67,17 @@ export class CubenceRawService implements ICubenceRawService {
   }
 
   async fetchTenantInfo(): Promise<RawAPIResponse<CubenceTenantInfoResponse>> {
-    const [overviewData, announcementsData] = await Promise.all([
-      this.client.get('/api/v1/dashboard/overview'),
-      this.client.get('/api/v1/announcements?page=1&page_size=10'),
-    ]);
+    const data = await this.client.get<CubenceTenantInfoResponse>('/api/v1/dashboard/overview');
     return {
-      data: {
-        ...overviewData,
-        announcements: announcementsData,
-      } as CubenceTenantInfoResponse,
+      data,
       status: 200,
     };
+  }
+
+  async fetchAnnouncements(): Promise<RawAPIResponse<CubenceAnnouncementsResponse>> {
+    const data = await this.client.get<CubenceAnnouncementsResponse>(
+      '/api/v1/announcements?page=1&page_size=10',
+    );
+    return { data, status: 200 };
   }
 }
