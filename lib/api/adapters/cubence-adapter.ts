@@ -4,38 +4,39 @@
  * Normalizes Cubence-specific API responses to common types.
  */
 
-import type { Balance, Cost, Token, TokenGroup, CubencePlatformAdapter } from './types';
+import type { Balance, Cost, Token, TokenGroup, CubenceAdapter } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
-  CubenceBalanceResponse,
   CubenceCostsResponse,
   CubenceTokensResponse,
   CubenceTokenGroupsResponse,
-  CubenceTenantInfoResponse,
   CubenceToken,
   CubenceTokenGroup,
   CubenceCostData,
+  CubenceAnnouncementsResponse,
+  CubenceOverviewResponse,
 } from '@/lib/api/types/platforms';
 
 // =============================================================================
 // Cubence Adapter Implementation
 // =============================================================================
 
-export const cubenceAdapter: CubencePlatformAdapter = {
+export const cubenceAdapter: CubenceAdapter = {
   platformType: 'cubence',
 
-  normalizeBalance(response: CubenceBalanceResponse): Balance {
+  normalizeBalance(response: CubenceOverviewResponse): Balance {
     return {
-      remainingCredit: response.available_credit ?? response.total_credit ?? 0,
-      consumedCredit: response.used_credit ?? 0,
+      remainingCredit: response.balance.total_balance ?? 0,
+      consumedCredit: response.apikey_stats.quota_used ?? 0,
     };
   },
 
   normalizeCosts(response: CubenceCostsResponse): Cost[] {
-    return response.map((item: CubenceCostData) => ({
+    const logs: CubenceCostData[] = response.logs || [];
+    return logs.map((item: CubenceCostData) => ({
       modelId: item.model ?? 'unknown',
       creditCost: item.cost ?? 0,
-      tokenUsage: item.tokens ?? 0,
+      tokenUsage: item.total_tokens ?? 0,
     }));
   },
 
@@ -65,25 +66,44 @@ export const cubenceAdapter: CubencePlatformAdapter = {
     );
   },
 
-  normalizeTenantInfo(response: CubenceTenantInfoResponse): TenantInfo {
-    if (!response || typeof response !== 'object') {
-      return {};
-    }
-
+  normalizeTenantInfo(announcements: CubenceAnnouncementsResponse): TenantInfo {
     return {
-      creditUnit: undefined,
-      exchangeRate: undefined,
-      displayFormat: undefined,
-      endpoints: undefined,
-      notices: Array.isArray(response.announcements)
-        ? response.announcements.map((it) => ({
-            id: it.id,
-            content: it.content,
-            extra: it.title,
-            publishDate: it.published_at,
-            type: it.priority ?? '',
-          }))
-        : undefined,
+      creditUnit: 1000000,
+      exchangeRate: 1,
+      displayFormat: 'USD',
+      endpoints: [
+        {
+          id: 1,
+          route: 'Cubence API',
+          description: '',
+          url: 'https://api.cubence.com',
+        },
+        {
+          id: 2,
+          route: 'Cubence DMIT API',
+          description: '',
+          url: 'https://api-dmit.cubence.com',
+        },
+        {
+          id: 3,
+          route: 'Cubence BWG API',
+          description: '',
+          url: 'https://api-bwg.cubence.com',
+        },
+        {
+          id: 4,
+          route: 'Cubence CF API',
+          description: '',
+          url: 'https://api-cf.cubence.com',
+        },
+      ],
+      notices: announcements?.announcements?.map((it) => ({
+        id: it.id,
+        content: it.content,
+        extra: it.title,
+        publishDate: it.published_at,
+        type: it.priority ?? '',
+      })),
     };
   },
 };

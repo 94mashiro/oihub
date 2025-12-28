@@ -5,26 +5,27 @@
  * Platform adapters transform raw API responses into these types.
  */
 
+import type { TenantInfo } from '@/types/tenant';
 import type {
   NewAPIBalanceResponse,
   NewAPICostsResponse,
   NewAPITokensResponse,
   NewAPITokenGroupsResponse,
   NewAPITenantInfoResponse,
-  CubenceBalanceResponse,
   CubenceCostsResponse,
   CubenceTokensResponse,
   CubenceTokenGroupsResponse,
-  CubenceTenantInfoResponse,
+  CubenceAnnouncementsResponse,
   PackyCodeCodexBalanceResponse,
   PackyCodeCodexCostsResponse,
   PackyCodeCodexTokensResponse,
   PackyCodeCodexTokenGroupsResponse,
   PackyCodeCodexTenantInfoResponse,
+  CubenceOverviewResponse,
 } from '@/lib/api/types/platforms';
 
 // =============================================================================
-// Core Normalized Types
+// Core Normalized Types (Store Data Structures)
 // =============================================================================
 
 /** Normalized balance data representing user's credit status. */
@@ -75,73 +76,36 @@ export interface TokenGroup {
 export type PlatformType = 'newapi' | 'packycode_codex' | 'cubence';
 
 // =============================================================================
-// Platform Adapter Interface
-// =============================================================================
-
-/**
- * Platform adapter interface.
- * Adapters transform raw API responses directly into normalized types.
- *
- * Generic type parameters enable platform-specific type safety:
- * - TBalanceResponse: Platform balance response type
- * - TCostsResponse: Platform costs response type
- * - TTokensResponse: Platform tokens response type
- * - TTokenGroupsResponse: Platform token groups response type
- * - TTenantInfoResponse: Platform tenant info response type
- */
-export interface PlatformAdapter<
-  TBalanceResponse = unknown,
-  TCostsResponse = unknown,
-  TTokensResponse = unknown,
-  TTokenGroupsResponse = unknown,
-  TTenantInfoResponse = unknown,
-> {
-  readonly platformType: PlatformType;
-  /** Transform raw balance response into normalized Balance */
-  normalizeBalance(response: TBalanceResponse): Balance;
-  /** Transform raw costs response into normalized Cost array */
-  normalizeCosts(response: TCostsResponse): Cost[];
-  /** Transform raw tokens response into normalized Token array */
-  normalizeTokens(response: TTokensResponse): Token[];
-  /** Transform raw token groups response into TokenGroup map */
-  normalizeTokenGroups(response: TTokenGroupsResponse): Record<string, TokenGroup>;
-  /** Transform raw tenant info response into TenantInfo */
-  normalizeTenantInfo(response: TTenantInfoResponse): import('@/types/tenant').TenantInfo;
-}
-
-// =============================================================================
 // Platform-Specific Adapter Interfaces
 // =============================================================================
 
-/** NewAPI adapter with typed response parameters */
-export interface NewAPIPlatformAdapter extends PlatformAdapter<
-  NewAPIBalanceResponse,
-  NewAPICostsResponse,
-  NewAPITokensResponse,
-  NewAPITokenGroupsResponse,
-  NewAPITenantInfoResponse
-> {
+/** NewAPI adapter - standard normalize methods */
+export interface NewAPIAdapter {
   readonly platformType: 'newapi';
+  normalizeBalance(response: NewAPIBalanceResponse): Balance;
+  normalizeCosts(response: NewAPICostsResponse): Cost[];
+  normalizeTokens(response: NewAPITokensResponse): Token[];
+  normalizeTokenGroups(response: NewAPITokenGroupsResponse): Record<string, TokenGroup>;
+  normalizeTenantInfo(response: NewAPITenantInfoResponse): TenantInfo;
 }
 
-/** Cubence adapter with typed response parameters */
-export interface CubencePlatformAdapter extends PlatformAdapter<
-  CubenceBalanceResponse,
-  CubenceCostsResponse,
-  CubenceTokensResponse,
-  CubenceTokenGroupsResponse,
-  CubenceTenantInfoResponse
-> {
+/** Cubence adapter - normalizeTenantInfo requires announcements */
+export interface CubenceAdapter {
   readonly platformType: 'cubence';
+  normalizeBalance(response: CubenceOverviewResponse): Balance;
+  normalizeCosts(response: CubenceCostsResponse): Cost[];
+  normalizeTokens(response: CubenceTokensResponse): Token[];
+  normalizeTokenGroups(response: CubenceTokenGroupsResponse): Record<string, TokenGroup>;
+  /** Cubence requires both tenant info and announcements */
+  normalizeTenantInfo(announcements: CubenceAnnouncementsResponse): TenantInfo;
 }
 
-/** PackyCode Codex adapter with typed response parameters */
-export interface PackyCodeCodexPlatformAdapter extends PlatformAdapter<
-  PackyCodeCodexBalanceResponse,
-  PackyCodeCodexCostsResponse,
-  PackyCodeCodexTokensResponse,
-  PackyCodeCodexTokenGroupsResponse,
-  PackyCodeCodexTenantInfoResponse
-> {
+/** PackyCode Codex adapter - standard normalize methods */
+export interface PackyCodeCodexAdapter {
   readonly platformType: 'packycode_codex';
+  normalizeBalance(response: PackyCodeCodexBalanceResponse): Balance;
+  normalizeCosts(response: PackyCodeCodexCostsResponse): Cost[];
+  normalizeTokens(response: PackyCodeCodexTokensResponse): Token[];
+  normalizeTokenGroups(response: PackyCodeCodexTokenGroupsResponse): Record<string, TokenGroup>;
+  normalizeTenantInfo(response: PackyCodeCodexTenantInfoResponse): TenantInfo;
 }

@@ -159,7 +159,7 @@ export class APIClient {
   }
 
   private unwrap<T>(response: APIResponse<T>): T {
-    if (!response.success) {
+    if (!response.success && ![0, 200].includes(response.code || 0)) {
       throw new APIError(response.message || 'Request failed', undefined, response);
     }
     return response.data;

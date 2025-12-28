@@ -1,18 +1,4 @@
 // =============================================================================
-// Raw API Response
-// =============================================================================
-
-/** Wrapper for unprocessed API responses from services. */
-export interface RawAPIResponse<T = unknown> {
-  /** Raw response body */
-  data: T;
-  /** HTTP status code */
-  status: number;
-  /** Response headers if needed */
-  headers?: Record<string, string>;
-}
-
-// =============================================================================
 // Orchestrator Types
 // =============================================================================
 

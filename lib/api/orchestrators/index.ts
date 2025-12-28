@@ -1,6 +1,23 @@
-export type { RawAPIResponse, DomainOrchestrator } from './types';
+// =============================================================================
+// Types
+// =============================================================================
 
-export { BalanceOrchestrator } from './balance-orchestrator';
-export { CostOrchestrator } from './cost-orchestrator';
-export { TokenOrchestrator, type TokensResult } from './token-orchestrator';
-export { TenantInfoOrchestrator } from './tenant-info-orchestrator';
+export type { DomainOrchestrator } from './types';
+
+// =============================================================================
+// Factory Functions
+// =============================================================================
+
+export { createBalanceOrchestrator } from './balance';
+export { createCostOrchestrator } from './cost';
+export { createTokenOrchestrator, type TokensResult } from './token';
+export { createTenantInfoOrchestrator } from './tenant-info';
+
+// =============================================================================
+// Orchestrator Classes
+// =============================================================================
+
+export { BalanceOrchestrator } from './balance';
+export { CostOrchestrator } from './cost';
+export { TokenOrchestrator } from './token';
+export { TenantInfoOrchestrator } from './tenant-info';

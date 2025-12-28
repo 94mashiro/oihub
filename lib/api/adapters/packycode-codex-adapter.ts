@@ -4,7 +4,7 @@
  * Normalizes PackyCode Codex-specific API responses to common types.
  */
 
-import type { Balance, Cost, Token, TokenGroup, PackyCodeCodexPlatformAdapter } from './types';
+import type { Balance, Cost, Token, TokenGroup, PackyCodeCodexAdapter } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
   PackyCodeCodexBalanceResponse,
@@ -21,7 +21,7 @@ import type {
 // PackyCode Codex Adapter Implementation
 // =============================================================================
 
-export const packyCodeCodexAdapter: PackyCodeCodexPlatformAdapter = {
+export const packyCodeCodexAdapter: PackyCodeCodexAdapter = {
   platformType: 'packycode_codex',
 
   normalizeBalance(response: PackyCodeCodexBalanceResponse): Balance {

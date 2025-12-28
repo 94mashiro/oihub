@@ -18,19 +18,36 @@ export interface CubenceBalanceResponse {
   used_credit?: number;
 }
 
-/** Returned by `/api/data/self?start_timestamp=X&end_timestamp=Y` endpoint (array of items) */
+/** Returned by `/api/v1/analytics/apikeys/logs` endpoint (paginated) */
 export interface CubenceCostData {
-  /** AI model identifier (maps to modelId, defaults to 'unknown' if missing) */
-  model?: string;
-
-  /** Credit cost for this usage (maps to creditCost, defaults to 0 if missing) */
-  cost?: number;
-
-  /** Tokens consumed (maps to tokenUsage, defaults to 0 if missing) */
-  tokens?: number;
+  id: number;
+  user_api_key_id: number;
+  share_id: number;
+  share_name: string;
+  group_name: string;
+  api_key_name: string;
+  method: string;
+  path: string;
+  status_code: number;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens: number;
+  cache_read_input_tokens: number;
+  total_tokens: number;
+  cost: number;
+  latency: number;
+  client_ip: string;
+  created_at: string;
 }
 
-export type CubenceCostsResponse = CubenceCostData[];
+export interface CubenceCostsResponse {
+  logs?: CubenceCostData[];
+  total?: number;
+  total_pages?: number;
+  page?: number;
+  page_size?: number;
+}
 
 /** Returned by `/api/token/?p=1&size=100` endpoint (paginated) */
 export interface CubenceToken {
@@ -76,7 +93,7 @@ export interface CubenceTokenGroup {
 export type CubenceTokenGroupsResponse = Record<string, CubenceTokenGroup>;
 
 /** Returned by `/api/v1/dashboard/overview` endpoint */
-export interface CubenceTenantInfoResponse {
+export interface CubenceOverviewResponse {
   announcements?: Array<{
     id: number;
     priority: string;

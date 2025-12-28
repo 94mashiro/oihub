@@ -57,8 +57,9 @@ export interface RetryConfig {
  * API 标准业务响应格式
  */
 export interface APIResponse<T = unknown> {
-  success: boolean;
+  success?: boolean;
   message: string;
+  code?: number;
   data: T;
 }
 

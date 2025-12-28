@@ -35,7 +35,8 @@ export type {
   CubenceTokensResponse,
   CubenceTokenGroup,
   CubenceTokenGroupsResponse,
-  CubenceTenantInfoResponse,
+  CubenceAnnouncementsResponse,
+  CubenceOverviewResponse,
 } from './cubence-response-types';
 
 // ============================================================================

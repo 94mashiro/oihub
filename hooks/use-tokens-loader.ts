@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTenantStore } from '@/lib/state/tenant-store';
-import { TokenOrchestrator } from '@/lib/api/orchestrators';
+import { createTokenOrchestrator } from '@/lib/api/orchestrators';
 
 export function useTokensLoader(tenantId: string) {
   const [loading, setLoading] = useState(false);
@@ -10,7 +10,7 @@ export function useTokensLoader(tenantId: string) {
     if (!tenant) return;
 
     setLoading(true);
-    const orchestrator = new TokenOrchestrator(tenant);
+    const orchestrator = createTokenOrchestrator(tenant);
 
     orchestrator.refresh().finally(() => setLoading(false));
   }, [tenant, tenantId]);

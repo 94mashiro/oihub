@@ -1,7 +1,6 @@
 import type { Balance, Cost, Token, TokenGroup } from '@/lib/api/adapters/types';
 import type { TenantInfo } from '@/types/tenant';
 import type { PaginationResult, CostPeriod } from '@/types/api';
-import type { RawAPIResponse } from '@/lib/api/orchestrators/types';
 
 // Platform-specific response types
 import type {
@@ -14,12 +13,13 @@ import type {
   CubenceCostsResponse,
   CubenceTokensResponse,
   CubenceTokenGroupsResponse,
-  CubenceTenantInfoResponse,
+  CubenceOverviewResponse,
   PackyCodeCodexBalanceResponse,
   PackyCodeCodexCostsResponse,
   PackyCodeCodexTokensResponse,
   PackyCodeCodexTokenGroupsResponse,
   PackyCodeCodexTenantInfoResponse,
+  CubenceAnnouncementsResponse,
 } from '@/lib/api/types/platforms';
 
 export interface IPlatformService {
@@ -46,18 +46,20 @@ export interface IRawPlatformService<
   TCosts = unknown,
   TTokens = unknown,
   TTokenGroups = unknown,
-  TTenantInfo = unknown,
+  TOverview = unknown,
+  TAnnouncements = unknown,
 > {
   /** Fetch raw balance data */
-  fetchBalance(): Promise<RawAPIResponse<TBalance>>;
+  fetchBalance(): Promise<TBalance>;
   /** Fetch raw cost data for a period */
-  fetchCosts(period: CostPeriod): Promise<RawAPIResponse<TCosts>>;
+  fetchCosts(period: CostPeriod): Promise<TCosts>;
   /** Fetch raw token list */
-  fetchTokens(page?: number, size?: number): Promise<RawAPIResponse<TTokens>>;
+  fetchTokens(page?: number, size?: number): Promise<TTokens>;
   /** Fetch raw token groups */
-  fetchTokenGroups(): Promise<RawAPIResponse<TTokenGroups>>;
+  fetchTokenGroups(): Promise<TTokenGroups>;
   /** Fetch raw tenant/platform info */
-  fetchTenantInfo(): Promise<RawAPIResponse<TTenantInfo>>;
+  fetchOverview(): Promise<TOverview>;
+  fetchAnnouncements(): Promise<TAnnouncements>;
 }
 
 // =============================================================================
@@ -79,7 +81,8 @@ export interface ICubenceRawService extends IRawPlatformService<
   CubenceCostsResponse,
   CubenceTokensResponse,
   CubenceTokenGroupsResponse,
-  CubenceTenantInfoResponse
+  CubenceOverviewResponse,
+  CubenceAnnouncementsResponse
 > {}
 
 /** PackyCode Codex raw service with typed responses */

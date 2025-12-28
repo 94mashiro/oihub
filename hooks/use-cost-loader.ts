@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTenantStore } from '@/lib/state/tenant-store';
-import { CostOrchestrator } from '@/lib/api/orchestrators';
+import { createCostOrchestrator } from '@/lib/api/orchestrators';
 import { CostPeriod } from '@/types/api';
 
 export function useCostLoader(tenantId: string, period: CostPeriod) {
@@ -11,7 +11,7 @@ export function useCostLoader(tenantId: string, period: CostPeriod) {
     if (!tenant) return;
 
     setLoading(true);
-    const orchestrator = new CostOrchestrator(tenant, period);
+    const orchestrator = createCostOrchestrator(tenant, period);
 
     orchestrator.refresh().finally(() => setLoading(false));
   }, [tenant, tenantId, period]);

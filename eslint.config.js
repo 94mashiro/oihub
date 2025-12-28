@@ -59,7 +59,7 @@ export default [
       'lib/api/transport/**/*',
     ],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ];

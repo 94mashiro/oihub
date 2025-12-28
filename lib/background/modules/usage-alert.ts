@@ -3,7 +3,7 @@ import { tenantStore } from '@/lib/state/tenant-store';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { settingStore } from '@/lib/state/setting-store';
 import { quotaToCurrency } from '@/lib/utils/quota-converter';
-import { TenantInfoOrchestrator, CostOrchestrator } from '@/lib/api/orchestrators';
+import { createTenantInfoOrchestrator, createCostOrchestrator } from '@/lib/api/orchestrators';
 import { CostPeriod } from '@/types/api';
 import type { TenantId, TenantInfo } from '@/types/tenant';
 import { messageRouter, type BackgroundModule } from '@/lib/background';
@@ -98,8 +98,8 @@ async function pollDailyUsageAndAlert(): Promise<void> {
   await Promise.allSettled(
     targets.map(async (tenant) => {
       try {
-        const infoOrchestrator = new TenantInfoOrchestrator(tenant);
-        const costOrchestrator = new CostOrchestrator(tenant, CostPeriod.DAY_1);
+        const infoOrchestrator = createTenantInfoOrchestrator(tenant);
+        const costOrchestrator = createCostOrchestrator(tenant, CostPeriod.DAY_1);
 
         const [infoResult, costResult] = await Promise.allSettled([
           infoOrchestrator.refresh(),
