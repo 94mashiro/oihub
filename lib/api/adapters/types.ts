@@ -56,4 +56,4 @@ export interface TokenGroup {
 // =============================================================================
 
 /** Supported platform types. */
-export type PlatformType = 'newapi' | 'packycode_codex' | 'cubence';
+export type PlatformType = 'newapi' | 'packycode_codex' | 'cubence' | 'i7relay';

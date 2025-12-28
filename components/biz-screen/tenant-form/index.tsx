@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import packyLogo from '@/assets/packy-logo.svg';
 import cubenceLogo from '@/assets/cubence.svg';
+import i7RelayLogo from '@/assets/i7relay-logo.svg';
 
 export interface TenantFormData {
   name: string;
@@ -54,12 +55,20 @@ const PROVIDER_PRESETS = [
     icon: packyLogo,
     platformType: 'packycode_codex' as PlatformType,
   },
+  {
+    id: 'i7relay',
+    name: 'i7Relay',
+    url: 'https://i7dc.com',
+    icon: i7RelayLogo,
+    platformType: 'i7relay' as PlatformType,
+  },
 ];
 
 const PLATFORM_TYPE_OPTIONS = [
   { value: 'newapi', label: 'NewAPI' },
   { value: 'packycode_codex', label: 'PackyCode(Codex)' },
   { value: 'cubence', label: 'Cubence' },
+  { value: 'i7relay', label: 'i7Relay' },
 ] as const;
 
 export const TenantForm = ({
