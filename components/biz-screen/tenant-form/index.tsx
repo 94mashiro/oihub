@@ -41,18 +41,18 @@ const PROVIDER_PRESETS = [
     platformType: 'newapi' as PlatformType,
   },
   {
-    id: 'packycode_codex',
-    name: 'PackyCode(Codex)',
-    url: 'https://codex.packycode.com',
-    icon: packyLogo,
-    platformType: 'packycode_codex' as PlatformType,
-  },
-  {
     id: 'cubence',
     name: 'Cubence',
     url: 'https://cubence.com',
     icon: cubenceLogo,
     platformType: 'cubence' as PlatformType,
+  },
+  {
+    id: 'packycode_codex',
+    name: 'PackyCode(Codex)',
+    url: 'https://codex.packycode.com',
+    icon: packyLogo,
+    platformType: 'packycode_codex' as PlatformType,
   },
 ];
 
