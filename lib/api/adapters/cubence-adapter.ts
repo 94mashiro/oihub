@@ -9,9 +9,6 @@ import type { TenantInfo } from '@/types/tenant';
 import type {
   CubenceCostsResponse,
   CubenceTokensResponse,
-  CubenceTokenGroupsResponse,
-  CubenceToken,
-  CubenceTokenGroup,
   CubenceCostData,
   CubenceAnnouncementsResponse,
   CubenceOverviewResponse,

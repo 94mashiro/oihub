@@ -9,3 +9,4 @@ export type { Balance, Cost, Token, TokenGroup, PlatformType } from './types';
 export { newAPIAdapter } from './newapi-adapter';
 export { packyCodeCodexAdapter } from './packycode-codex-adapter';
 export { cubenceAdapter } from './cubence-adapter';
+export { i7relayAdapter } from './i7relay-adapter';

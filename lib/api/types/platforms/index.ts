@@ -55,6 +55,18 @@ export type {
 } from './packycode-codex-response-types';
 
 // ============================================================================
+// i7Relay Platform Types
+// ============================================================================
+
+export type {
+  I7RelayBalanceResponse,
+  I7RelayCostsResponse,
+  I7RelayTokensResponse,
+  I7RelayTokenGroupsResponse,
+  I7RelayTenantInfoResponse,
+} from './i7relay-response-types';
+
+// ============================================================================
 // Platform Type Mapping Utility
 // ============================================================================
 
@@ -81,6 +93,14 @@ import type {
   PackyCodeCodexTokenGroupsResponse,
   PackyCodeCodexTenantInfoResponse,
 } from './packycode-codex-response-types';
+
+import type {
+  I7RelayBalanceResponse,
+  I7RelayCostsResponse,
+  I7RelayTokensResponse,
+  I7RelayTokenGroupsResponse,
+  I7RelayTenantInfoResponse,
+} from './i7relay-response-types';
 
 /**
  * Platform Response Type Map
@@ -109,6 +129,13 @@ export interface PlatformResponseTypeMap {
     tokens: PackyCodeCodexTokensResponse;
     tokenGroups: PackyCodeCodexTokenGroupsResponse;
     tenantInfo: PackyCodeCodexTenantInfoResponse;
+  };
+  i7relay: {
+    balance: I7RelayBalanceResponse;
+    costs: I7RelayCostsResponse;
+    tokens: I7RelayTokensResponse;
+    tokenGroups: I7RelayTokenGroupsResponse;
+    tenantInfo: I7RelayTenantInfoResponse;
   };
 }
 

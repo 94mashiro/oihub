@@ -4,7 +4,13 @@ import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { NewAPIRawService } from '@/lib/api/services/newapi-service';
 import { CubenceRawService } from '@/lib/api/services/cubence-service';
 import { PackyCodeCodexRawService } from '@/lib/api/services/packycode-codex-service';
-import { newAPIAdapter, cubenceAdapter, packyCodeCodexAdapter } from '@/lib/api/adapters';
+import { I7RelayRawService } from '@/lib/api/services/i7relay-service';
+import {
+  newAPIAdapter,
+  cubenceAdapter,
+  packyCodeCodexAdapter,
+  i7relayAdapter,
+} from '@/lib/api/adapters';
 
 /**
  * Tenant info orchestrator - handles fetch-normalize-store flow.
@@ -38,6 +44,10 @@ export class TenantInfoOrchestrator implements DomainOrchestrator<TenantInfo> {
       case 'packycode_codex': {
         const data = await new PackyCodeCodexRawService(this.tenant).fetchTenantInfo();
         return packyCodeCodexAdapter.normalizeTenantInfo(data);
+      }
+      case 'i7relay': {
+        const data = await new I7RelayRawService(this.tenant).fetchTenantInfo();
+        return i7relayAdapter.normalizeTenantInfo(data);
       }
     }
   }

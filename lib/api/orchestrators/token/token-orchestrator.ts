@@ -5,7 +5,13 @@ import { tokenStore } from '@/lib/state/token-store';
 import { NewAPIRawService } from '@/lib/api/services/newapi-service';
 import { CubenceRawService } from '@/lib/api/services/cubence-service';
 import { PackyCodeCodexRawService } from '@/lib/api/services/packycode-codex-service';
-import { newAPIAdapter, cubenceAdapter, packyCodeCodexAdapter } from '@/lib/api/adapters';
+import { I7RelayRawService } from '@/lib/api/services/i7relay-service';
+import {
+  newAPIAdapter,
+  cubenceAdapter,
+  packyCodeCodexAdapter,
+  i7relayAdapter,
+} from '@/lib/api/adapters';
 
 /** Result type for token orchestrator */
 export interface TokensResult {
@@ -61,6 +67,17 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensResult> {
         return {
           tokens: packyCodeCodexAdapter.normalizeTokens(tokensData),
           groups: packyCodeCodexAdapter.normalizeTokenGroups(groupsData),
+        };
+      }
+      case 'i7relay': {
+        const service = new I7RelayRawService(this.tenant);
+        const [tokensData, groupsData] = await Promise.all([
+          service.fetchTokens(),
+          service.fetchTokenGroups(),
+        ]);
+        return {
+          tokens: i7relayAdapter.normalizeTokens(tokensData),
+          groups: i7relayAdapter.normalizeTokenGroups(groupsData),
         };
       }
     }

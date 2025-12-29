@@ -5,7 +5,13 @@ import { balanceStore } from '@/lib/state/balance-store';
 import { NewAPIRawService } from '@/lib/api/services/newapi-service';
 import { CubenceRawService } from '@/lib/api/services/cubence-service';
 import { PackyCodeCodexRawService } from '@/lib/api/services/packycode-codex-service';
-import { newAPIAdapter, cubenceAdapter, packyCodeCodexAdapter } from '@/lib/api/adapters';
+import { I7RelayRawService } from '@/lib/api/services/i7relay-service';
+import {
+  newAPIAdapter,
+  cubenceAdapter,
+  packyCodeCodexAdapter,
+  i7relayAdapter,
+} from '@/lib/api/adapters';
 
 /**
  * Balance orchestrator - handles fetch-normalize-store flow.
@@ -37,6 +43,10 @@ export class BalanceOrchestrator implements DomainOrchestrator<Balance> {
       case 'packycode_codex': {
         const data = await new PackyCodeCodexRawService(this.tenant).fetchBalance();
         return packyCodeCodexAdapter.normalizeBalance(data);
+      }
+      case 'i7relay': {
+        const data = await new I7RelayRawService(this.tenant).fetchBalance();
+        return i7relayAdapter.normalizeBalance(data);
       }
     }
   }

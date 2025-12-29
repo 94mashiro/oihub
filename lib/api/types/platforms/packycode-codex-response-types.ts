@@ -87,7 +87,12 @@ export interface PackyCodeCodexTenantInfoResponse {
   display_type?: string;
 
   /** API endpoints list (maps to endpoints) */
-  api_endpoints?: any[];
+  api_endpoints?: Array<{
+    id: number;
+    route: string;
+    description: string;
+    url: string;
+  }>;
 
   /** Platform announcements (maps to notices) */
   announcements?: Array<{

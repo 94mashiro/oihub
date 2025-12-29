@@ -60,6 +60,7 @@ export const packyCodeCodexAdapter = {
         {
           description: value.group_desc ?? '',
           multiplier: value.credit_ratio ?? 1.0,
+          name: key,
         },
       ]),
     );

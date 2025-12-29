@@ -6,7 +6,6 @@ import type {
   CubenceBalanceResponse,
   CubenceCostsResponse,
   CubenceTokensResponse,
-  CubenceTokenGroupsResponse,
   CubenceOverviewResponse,
   CubenceAnnouncementsResponse,
 } from '@/lib/api/types/platforms';
