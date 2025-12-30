@@ -115,7 +115,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                             <Badge
                               key={groupId}
                               size="sm"
-                              className="shrink-0 gap-0.5 rounded"
+                              className="shrink-0 gap-0.5 rounded select-none"
                               variant="error"
                             >
                               分组已失效
@@ -126,7 +126,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                           <Badge
                             variant="outline"
                             size="sm"
-                            className="shrink-0 gap-0.5 rounded"
+                            className="shrink-0 gap-0.5 rounded select-none"
                             key={groupId}
                           >
                             {groupInfo?.name}
