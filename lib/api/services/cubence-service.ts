@@ -6,19 +6,25 @@ import type {
   CubenceBalanceResponse,
   CubenceCostsResponse,
   CubenceTokensResponse,
-  CubenceTokenGroupsResponse,
   CubenceOverviewResponse,
   CubenceAnnouncementsResponse,
 } from '@/lib/api/types/platforms';
 
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// TODO: Cubence 似乎当天的查询会出现问题，logs接口不会返回内容
 function getDateRange(period: CostPeriod): [string, string] {
   const now = new Date();
-  now.setHours(23, 59, 59, 999);
-  const end = now.toISOString().split('T')[0];
+  const end = formatLocalDate(now);
   const days = COST_PERIOD_DAYS[period];
-  const startDate = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000);
-  startDate.setHours(0, 0, 0, 0);
-  const start = startDate.toISOString().split('T')[0];
+  const startDate = new Date(now);
+  startDate.setDate(now.getDate() - (days - 1));
+  const start = formatLocalDate(startDate);
   return [start, end];
 }
 

@@ -6,7 +6,13 @@ import { CostPeriod } from '@/types/api';
 import { NewAPIRawService } from '@/lib/api/services/newapi-service';
 import { CubenceRawService } from '@/lib/api/services/cubence-service';
 import { PackyCodeCodexRawService } from '@/lib/api/services/packycode-codex-service';
-import { newAPIAdapter, cubenceAdapter, packyCodeCodexAdapter } from '@/lib/api/adapters';
+import { I7RelayRawService } from '@/lib/api/services/i7relay-service';
+import {
+  newAPIAdapter,
+  cubenceAdapter,
+  packyCodeCodexAdapter,
+  i7relayAdapter,
+} from '@/lib/api/adapters';
 
 /**
  * Cost orchestrator - handles fetch-normalize-store flow.
@@ -33,6 +39,13 @@ export class CostOrchestrator implements DomainOrchestrator<Cost[]> {
       case 'cubence': {
         const data = await new CubenceRawService(this.tenant).fetchCosts(this.period);
         return cubenceAdapter.normalizeCosts(data);
+      }
+      case 'i7relay': {
+        const costData = await new I7RelayRawService(this.tenant).fetchCosts(this.period);
+        const tokenData = await new I7RelayRawService(this.tenant).fetchModelTokenUsage(
+          this.period,
+        );
+        return i7relayAdapter.normalizeCosts(costData, tokenData);
       }
       case 'newapi': {
         const data = await new NewAPIRawService(this.tenant).fetchCosts(this.period);

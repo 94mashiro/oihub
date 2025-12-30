@@ -7,6 +7,7 @@ import { UsageDisplay } from '@/components/ui/usage-display';
 import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs';
 import { CostPeriod } from '@/types/api';
 import { Loader2 } from 'lucide-react';
+import { useTenantStore } from '@/lib/state/tenant-store';
 
 type SortBy = 'cost' | 'tokens';
 
@@ -25,6 +26,9 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
   const [period, setPeriod] = useState<CostPeriod>(CostPeriod.DAY_1);
   const [sortBy, setSortBy] = useState<SortBy>('cost');
   const tenantInfoData = useTenantInfoStore((state) => state.tenantInfoMap[tenantId]);
+  const platformType = useTenantStore(
+    (state) => state.tenantList.find((t) => t.id === tenantId)?.platformType,
+  );
   const costList = useCostStore((state) => state.costMap[tenantId]?.[period]);
   const { loading } = useCostLoader(tenantId, period);
 
@@ -62,12 +66,21 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
     return { modelUsage, totalCost, totalTokens };
   }, [costList, sortBy]);
 
+  const displayPeriod = useMemo(() => {
+    const allPeriods = Object.values(CostPeriod);
+    // TODO: i7relay 不支持 14 天
+    if (platformType === 'i7relay') {
+      return allPeriods.filter((p) => p !== CostPeriod.DAY_14);
+    }
+    return allPeriods;
+  }, [platformType]);
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <Tabs value={period} onValueChange={(v) => setPeriod(v as CostPeriod)}>
           <TabsList className="h-6 gap-0 p-0.5 text-xs">
-            {Object.values(CostPeriod).map((p) => (
+            {displayPeriod.map((p) => (
               <TabsTab key={p} value={p} className="h-5 px-2 py-0 text-xs">
                 {PERIOD_LABELS[p]}
               </TabsTab>
