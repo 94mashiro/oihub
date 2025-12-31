@@ -1,8 +1,8 @@
 {
-  "name": "wxt-react-starter",
-  "description": "manifest.json description",
+  "name": "OiHub",
+  "description": "OiHub Extension",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0-beta.1",
   "type": "module",
   "scripts": {
     "dev": "wxt",

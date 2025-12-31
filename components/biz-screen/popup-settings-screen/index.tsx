@@ -71,7 +71,7 @@ const PopupSettingsScreen = () => {
             当账号今日用量达到设定阈值时，发送浏览器通知提醒
           </p>
           {tenantList.length === 0 ? (
-            <p className="text-muted-foreground mt-3 text-xs">暂无账号，请先添加账号</p>
+            <p className="text-muted-foreground mt-3 text-center text-xs">暂无账号，请先添加账号</p>
           ) : (
             <div className="divide-border/50 mt-3 divide-y">
               {tenantList.map((tenant) => (
