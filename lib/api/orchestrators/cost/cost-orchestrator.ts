@@ -1,6 +1,7 @@
 import type { Tenant } from '@/types/tenant';
 import type { DomainOrchestrator } from '../types';
 import type { Cost } from '@/lib/api/adapters/types';
+import { PlatformType } from '@/lib/api/adapters/types';
 import { costStore } from '@/lib/state/cost-store';
 import { CostPeriod } from '@/types/api';
 import { NewAPIRawService } from '@/lib/api/services/newapi-service';
@@ -33,25 +34,25 @@ export class CostOrchestrator implements DomainOrchestrator<Cost[]> {
   }
 
   private async fetchAndNormalize(): Promise<Cost[]> {
-    const platformType = this.tenant.platformType ?? 'newapi';
+    const platformType = this.tenant.platformType ?? PlatformType.NewAPI;
 
     switch (platformType) {
-      case 'cubence': {
+      case PlatformType.Cubence: {
         const data = await new CubenceRawService(this.tenant).fetchCosts(this.period);
         return cubenceAdapter.normalizeCosts(data);
       }
-      case 'i7relay': {
+      case PlatformType.I7Relay: {
         const costData = await new I7RelayRawService(this.tenant).fetchCosts(this.period);
         const tokenData = await new I7RelayRawService(this.tenant).fetchModelTokenUsage(
           this.period,
         );
         return i7relayAdapter.normalizeCosts(costData, tokenData);
       }
-      case 'newapi': {
+      case PlatformType.NewAPI: {
         const data = await new NewAPIRawService(this.tenant).fetchCosts(this.period);
         return newAPIAdapter.normalizeCosts(data);
       }
-      case 'packycode_codex': {
+      case PlatformType.PackyCodeCodex: {
         const data = await new PackyCodeCodexRawService(this.tenant).fetchCosts(this.period);
         return packyCodeCodexAdapter.normalizeCosts(data);
       }

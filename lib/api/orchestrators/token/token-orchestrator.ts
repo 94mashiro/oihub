@@ -1,6 +1,7 @@
 import type { Tenant } from '@/types/tenant';
 import type { DomainOrchestrator } from '../types';
 import type { Token, TokenGroup } from '@/lib/api/adapters/types';
+import { PlatformType } from '@/lib/api/adapters/types';
 import { tokenStore } from '@/lib/state/token-store';
 import { NewAPIRawService } from '@/lib/api/services/newapi-service';
 import { CubenceRawService } from '@/lib/api/services/cubence-service';
@@ -36,10 +37,10 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensResult> {
   }
 
   private async fetchAndNormalize(): Promise<TokensResult> {
-    const platformType = this.tenant.platformType ?? 'newapi';
+    const platformType = this.tenant.platformType ?? PlatformType.NewAPI;
 
     switch (platformType) {
-      case 'cubence': {
+      case PlatformType.Cubence: {
         const service = new CubenceRawService(this.tenant);
         const data = await service.fetchTokens();
         return {
@@ -47,7 +48,7 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensResult> {
           groups: cubenceAdapter.normalizeTokenGroups(data),
         };
       }
-      case 'i7relay': {
+      case PlatformType.I7Relay: {
         const service = new I7RelayRawService(this.tenant);
         const tokenData = await service.fetchTokens();
         const groupData = await service.fetchTokenGroups();
@@ -56,7 +57,7 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensResult> {
           groups: i7relayAdapter.normalizeTokenGroups(groupData),
         };
       }
-      case 'newapi': {
+      case PlatformType.NewAPI: {
         const service = new NewAPIRawService(this.tenant);
         const [tokensData, groupsData] = await Promise.all([
           service.fetchTokens(),
@@ -67,7 +68,7 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensResult> {
           groups: newAPIAdapter.normalizeTokenGroups(groupsData),
         };
       }
-      case 'packycode_codex': {
+      case PlatformType.PackyCodeCodex: {
         const service = new PackyCodeCodexRawService(this.tenant);
         const [tokensData, groupsData] = await Promise.all([
           service.fetchTokens(),

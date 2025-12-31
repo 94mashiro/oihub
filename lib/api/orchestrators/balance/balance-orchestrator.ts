@@ -1,6 +1,7 @@
 import type { Tenant } from '@/types/tenant';
 import type { DomainOrchestrator } from '../types';
 import type { Balance } from '@/lib/api/adapters/types';
+import { PlatformType } from '@/lib/api/adapters/types';
 import { balanceStore } from '@/lib/state/balance-store';
 import { NewAPIRawService } from '@/lib/api/services/newapi-service';
 import { CubenceRawService } from '@/lib/api/services/cubence-service';
@@ -29,23 +30,23 @@ export class BalanceOrchestrator implements DomainOrchestrator<Balance> {
   }
 
   private async fetchAndNormalize(): Promise<Balance> {
-    const platformType = this.tenant.platformType ?? 'newapi';
+    const platformType = this.tenant.platformType ?? PlatformType.NewAPI;
 
     switch (platformType) {
-      case 'cubence': {
+      case PlatformType.Cubence: {
         const data = await new CubenceRawService(this.tenant).fetchOverview();
         return cubenceAdapter.normalizeBalance(data);
       }
-      case 'i7relay': {
+      case PlatformType.I7Relay: {
         const walletData = await new I7RelayRawService(this.tenant).fetchWallet();
         const summaryData = await new I7RelayRawService(this.tenant).fetchSummary();
         return i7relayAdapter.normalizeBalance(walletData, summaryData);
       }
-      case 'newapi': {
+      case PlatformType.NewAPI: {
         const data = await new NewAPIRawService(this.tenant).fetchBalance();
         return newAPIAdapter.normalizeBalance(data);
       }
-      case 'packycode_codex': {
+      case PlatformType.PackyCodeCodex: {
         const data = await new PackyCodeCodexRawService(this.tenant).fetchBalance();
         return packyCodeCodexAdapter.normalizeBalance(data);
       }

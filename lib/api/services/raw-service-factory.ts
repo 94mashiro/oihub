@@ -1,5 +1,5 @@
 import type { Tenant } from '@/types/tenant';
-import type { PlatformType } from '@/lib/api/adapters/types';
+import { PlatformType } from '@/lib/api/adapters/types';
 import { NewAPIRawService } from './newapi-service';
 import { CubenceRawService } from './cubence-service';
 import { PackyCodeCodexRawService } from './packycode-codex-service';
@@ -14,14 +14,14 @@ type RawService =
 type RawServiceFactory = (tenant: Tenant) => RawService;
 
 const rawServiceRegistry: Record<PlatformType, RawServiceFactory> = {
-  newapi: (tenant) => new NewAPIRawService(tenant),
-  packycode_codex: (tenant) => new PackyCodeCodexRawService(tenant),
-  cubence: (tenant) => new CubenceRawService(tenant),
-  i7relay: (tenant) => new I7RelayRawService(tenant),
+  [PlatformType.NewAPI]: (tenant) => new NewAPIRawService(tenant),
+  [PlatformType.PackyCodeCodex]: (tenant) => new PackyCodeCodexRawService(tenant),
+  [PlatformType.Cubence]: (tenant) => new CubenceRawService(tenant),
+  [PlatformType.I7Relay]: (tenant) => new I7RelayRawService(tenant),
 };
 
 export function getRawService(tenant: Tenant): RawService {
-  const platformType = tenant.platformType ?? 'newapi';
+  const platformType = tenant.platformType ?? PlatformType.NewAPI;
   const factory = rawServiceRegistry[platformType];
   if (!factory) {
     throw new PlatformNotSupportedError(platformType);

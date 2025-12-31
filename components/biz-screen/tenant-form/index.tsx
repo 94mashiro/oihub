@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { PlatformType } from '@/lib/api/adapters';
+import { PlatformType } from '@/lib/api/adapters';
 import { DEFAULT_PLATFORM_TYPE } from '@/lib/constants/tenants';
 import { Form } from '@/components/ui/form';
 import { Field, FieldControl, FieldError, FieldLabel } from '@/components/ui/field';
@@ -39,7 +39,7 @@ const PROVIDER_PRESETS = [
     name: 'PackyAPI',
     url: 'https://www.packyapi.com',
     icon: packyLogo,
-    platformType: 'newapi' as PlatformType,
+    platformType: PlatformType.NewAPI,
     variant: 'premium',
   },
   {
@@ -47,7 +47,7 @@ const PROVIDER_PRESETS = [
     name: 'Cubence',
     url: 'https://cubence.com',
     icon: cubenceLogo,
-    platformType: 'cubence' as PlatformType,
+    platformType: PlatformType.Cubence,
     variant: 'default',
   },
   {
@@ -55,7 +55,7 @@ const PROVIDER_PRESETS = [
     name: 'PackyCode(Codex)',
     url: 'https://codex.packycode.com',
     icon: packyLogo,
-    platformType: 'packycode_codex' as PlatformType,
+    platformType: PlatformType.PackyCodeCodex,
     variant: 'default',
   },
   {
@@ -63,16 +63,16 @@ const PROVIDER_PRESETS = [
     name: 'i7Relay',
     url: 'https://i7dc.com',
     icon: i7RelayLogo,
-    platformType: 'i7relay' as PlatformType,
+    platformType: PlatformType.I7Relay,
     variant: 'default',
   },
 ];
 
 const PLATFORM_TYPE_OPTIONS = [
-  { value: 'newapi', label: 'NewAPI' },
-  { value: 'packycode_codex', label: 'PackyCode(Codex)' },
-  { value: 'cubence', label: 'Cubence' },
-  { value: 'i7relay', label: 'i7Relay' },
+  { value: PlatformType.NewAPI, label: 'NewAPI' },
+  { value: PlatformType.PackyCodeCodex, label: 'PackyCode(Codex)' },
+  { value: PlatformType.Cubence, label: 'Cubence' },
+  { value: PlatformType.I7Relay, label: 'i7Relay' },
 ] as const;
 
 export const TenantForm = ({
@@ -108,7 +108,7 @@ export const TenantForm = ({
       name: formData.name.trim(),
       url: formData.url.trim(),
       token: formData.token.trim(),
-      userId: formData.platformType === 'newapi' ? formData.userId?.trim() : undefined,
+      userId: formData.platformType === PlatformType.NewAPI ? formData.userId?.trim() : undefined,
       platformType: formData.platformType,
     });
   };
@@ -237,7 +237,7 @@ export const TenantForm = ({
           <FieldError match="valueMissing">请输入访问令牌</FieldError>
         </Field>
 
-        {formData.platformType === 'newapi' && (
+        {formData.platformType === PlatformType.NewAPI && (
           <Field>
             <FieldLabel htmlFor="tenant-userId" className="text-xs">
               用户 ID

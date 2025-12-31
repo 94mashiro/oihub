@@ -5,6 +5,7 @@
  */
 
 import type { Balance, Cost, Token, TokenGroup } from './types';
+import { PlatformType } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
   I7RelayCostsResponse,
@@ -21,7 +22,7 @@ import { I7RelayModelTokenUsageResponse } from '../types/platforms/i7relay-respo
 // =============================================================================
 
 export const i7relayAdapter = {
-  platformType: 'i7relay',
+  platformType: PlatformType.I7Relay,
 
   normalizeBalance(
     walletData: I7RelayWalletResponse,

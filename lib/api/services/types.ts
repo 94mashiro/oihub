@@ -41,4 +41,3 @@ export interface IRawPlatformService<
   fetchOverview(): Promise<TOverview>;
   fetchAnnouncements(): Promise<TAnnouncements>;
 }
-

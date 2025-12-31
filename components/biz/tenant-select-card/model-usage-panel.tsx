@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs';
 import { CostPeriod } from '@/types/api';
 import { Loader2 } from 'lucide-react';
 import { useTenantStore } from '@/lib/state/tenant-store';
+import { PlatformType } from '@/lib/api/adapters/types';
 
 type SortBy = 'cost' | 'tokens';
 
@@ -69,7 +70,7 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
   const displayPeriod = useMemo(() => {
     const allPeriods = Object.values(CostPeriod);
     // TODO: i7relay 不支持 14 天
-    if (platformType === 'i7relay') {
+    if (platformType === PlatformType.I7Relay) {
       return allPeriods.filter((p) => p !== CostPeriod.DAY_14);
     }
     return allPeriods;

@@ -5,6 +5,7 @@
  */
 
 import type { Balance, Cost, Token, TokenGroup } from './types';
+import { PlatformType } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
   NewAPIBalanceResponse,
@@ -22,7 +23,7 @@ import type {
 // =============================================================================
 
 export const newAPIAdapter = {
-  platformType: 'newapi',
+  platformType: PlatformType.NewAPI,
 
   normalizeBalance(response: NewAPIBalanceResponse): Balance {
     return {

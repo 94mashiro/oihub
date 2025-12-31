@@ -5,6 +5,7 @@
  */
 
 import type { Balance, Cost, Token, TokenGroup } from './types';
+import { PlatformType } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
   PackyCodeCodexBalanceResponse,
@@ -22,7 +23,7 @@ import type {
 // =============================================================================
 
 export const packyCodeCodexAdapter = {
-  platformType: 'packycode_codex',
+  platformType: PlatformType.PackyCodeCodex,
 
   normalizeBalance(response: PackyCodeCodexBalanceResponse): Balance {
     return {

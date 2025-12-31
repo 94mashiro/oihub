@@ -1,10 +1,10 @@
 import type { Tenant, TenantInfo } from '@/types/tenant';
 import type { DomainOrchestrator } from '../types';
+import { PlatformType } from '@/lib/api/adapters/types';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { NewAPIRawService } from '@/lib/api/services/newapi-service';
 import { CubenceRawService } from '@/lib/api/services/cubence-service';
 import { PackyCodeCodexRawService } from '@/lib/api/services/packycode-codex-service';
-import { I7RelayRawService } from '@/lib/api/services/i7relay-service';
 import {
   newAPIAdapter,
   cubenceAdapter,
@@ -29,22 +29,22 @@ export class TenantInfoOrchestrator implements DomainOrchestrator<TenantInfo> {
   }
 
   private async fetchAndNormalize(): Promise<TenantInfo> {
-    const platformType = this.tenant.platformType ?? 'newapi';
+    const platformType = this.tenant.platformType ?? PlatformType.NewAPI;
 
     switch (platformType) {
-      case 'cubence': {
+      case PlatformType.Cubence: {
         const service = new CubenceRawService(this.tenant);
         const announcementsData = await service.fetchAnnouncements();
         return cubenceAdapter.normalizeTenantInfo(announcementsData);
       }
-      case 'i7relay': {
+      case PlatformType.I7Relay: {
         return i7relayAdapter.normalizeTenantInfo();
       }
-      case 'newapi': {
+      case PlatformType.NewAPI: {
         const data = await new NewAPIRawService(this.tenant).fetchTenantInfo();
         return newAPIAdapter.normalizeTenantInfo(data);
       }
-      case 'packycode_codex': {
+      case PlatformType.PackyCodeCodex: {
         const data = await new PackyCodeCodexRawService(this.tenant).fetchTenantInfo();
         return packyCodeCodexAdapter.normalizeTenantInfo(data);
       }

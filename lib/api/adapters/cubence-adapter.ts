@@ -5,13 +5,11 @@
  */
 
 import type { Balance, Cost, Token, TokenGroup } from './types';
+import { PlatformType } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
   CubenceCostsResponse,
   CubenceTokensResponse,
-  CubenceTokenGroupsResponse,
-  CubenceToken,
-  CubenceTokenGroup,
   CubenceCostData,
   CubenceAnnouncementsResponse,
   CubenceOverviewResponse,
@@ -22,7 +20,7 @@ import type {
 // =============================================================================
 
 export const cubenceAdapter = {
-  platformType: 'cubence',
+  platformType: PlatformType.Cubence,
 
   normalizeBalance(response: CubenceOverviewResponse): Balance {
     return {

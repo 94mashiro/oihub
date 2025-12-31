@@ -16,6 +16,7 @@ import {
   AccordionTrigger,
   AccordionPanel,
 } from '@/components/ui/accordion';
+import { PlatformType } from '@/lib/api/adapters/types';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -52,10 +53,10 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
   const tokenManageUrl = useMemo(() => {
     if (!tenantInfo) return null;
     try {
-      if (tenantInfo.platformType === 'newapi') {
+      if (tenantInfo.platformType === PlatformType.NewAPI) {
         const baseUrl = new URL(tenantInfo.url);
         return `${baseUrl.origin}/console/token`;
-      } else if (tenantInfo.platformType === 'cubence') {
+      } else if (tenantInfo.platformType === PlatformType.Cubence) {
         return `https://cubence.com/dashboard/keys`;
       }
       return null;

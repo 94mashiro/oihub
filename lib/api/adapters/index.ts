@@ -3,7 +3,8 @@
  */
 
 // Normalized types (for store)
-export type { Balance, Cost, Token, TokenGroup, PlatformType } from './types';
+export type { Balance, Cost, Token, TokenGroup } from './types';
+export { PlatformType } from './types';
 
 // Adapter instances
 export { newAPIAdapter } from './newapi-adapter';
