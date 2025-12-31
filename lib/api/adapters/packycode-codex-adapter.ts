@@ -8,15 +8,15 @@ import type { Balance, Cost, Token, TokenGroup } from './types';
 import { PlatformType } from './types';
 import type { TenantInfo } from '@/types/tenant';
 import type {
-  PackyCodeCodexBalanceResponse,
   PackyCodeCodexCostsResponse,
   PackyCodeCodexTokensResponse,
   PackyCodeCodexTokenGroupsResponse,
-  PackyCodeCodexTenantInfoResponse,
-  PackyCodeCodexToken,
   PackyCodeCodexTokenGroup,
   PackyCodeCodexCostData,
+  PackyCodeCodexUserInfoResponse,
+  PackyCodeCodexRealTokenKeyResponse,
 } from '@/lib/api/types/platforms';
+import { parse } from 'date-fns';
 
 // =============================================================================
 // PackyCode Codex Adapter Implementation
@@ -25,10 +25,10 @@ import type {
 export const packyCodeCodexAdapter = {
   platformType: PlatformType.PackyCodeCodex,
 
-  normalizeBalance(response: PackyCodeCodexBalanceResponse): Balance {
+  normalizeBalance(response: PackyCodeCodexUserInfoResponse): Balance {
     return {
-      remainingCredit: response.remaining_quota ?? response.total_quota ?? 0,
-      consumedCredit: response.consumed_quota ?? 0,
+      remainingCredit: Number(response.daily_budget_usd) - Number(response.daily_spent_usd) || 0,
+      consumedCredit: Number(response.total_spent_usd) || 0,
     };
   },
 
@@ -40,15 +40,16 @@ export const packyCodeCodexAdapter = {
     }));
   },
 
-  normalizeTokens(response: PackyCodeCodexTokensResponse): Token[] {
-    const items: PackyCodeCodexToken[] = Array.isArray(response) ? response : response.items || [];
-
-    return items.map((item) => ({
-      secretKey: item.api_key ?? '',
-      label: item.token_name ?? 'Unnamed Token',
-      lastUsedAt: item.last_access_time ?? 0,
-      creditConsumed: item.total_usage ?? 0,
-      group: item.token_group ?? 'default',
+  normalizeTokens(
+    tokenData: PackyCodeCodexTokensResponse,
+    realTokenKeys: PackyCodeCodexRealTokenKeyResponse[],
+  ): Token[] {
+    return tokenData.api_keys.map((token) => ({
+      secretKey: realTokenKeys.find((key) => key.id === token.id)?.api_key ?? '',
+      label: token.name,
+      lastUsedAt: parse(token.last_used_at, 'yyyy/MM/dd HH:mm', new Date()).getTime() / 1000,
+      creditConsumed: null,
+      group: null,
     }));
   },
 
@@ -67,23 +68,28 @@ export const packyCodeCodexAdapter = {
     );
   },
 
-  normalizeTenantInfo(response: PackyCodeCodexTenantInfoResponse): TenantInfo {
-    if (!response || typeof response !== 'object') {
-      return {};
-    }
-
+  normalizeTenantInfo(): TenantInfo {
     return {
-      creditUnit: response.credit_per_unit,
-      exchangeRate: response.usd_rate,
-      displayFormat: response.display_type,
-      endpoints: response.api_endpoints,
-      notices: response.announcements?.map((it) => ({
-        id: it.id,
-        content: it.content,
-        extra: it.title,
-        publishDate: it.published_at,
-        type: '',
-      })),
+      creditUnit: 1,
+      exchangeRate: 1,
+      displayFormat: 'USD',
+      endpoints: [
+        {
+          id: 1,
+          route: 'Standard Route (Default)',
+          description:
+            '✓ DDoS protection and security defense mechanisms \n ✓ Stable and reliable for production \n ✓ Recommended for most users',
+          url: 'https://codex-api.packycode.com/v1',
+        },
+        {
+          id: 2,
+          route: 'Optimized Route',
+          description:
+            '✓ Network optimized with lower latency \n ✗ No defense mechanisms \n ⚠️ Suitable for latency-sensitive scenarios',
+          url: 'https://codex-api-slb.packycode.com/v1',
+        },
+      ],
+      notices: [],
     };
   },
 };

@@ -47,7 +47,7 @@ export class BalanceOrchestrator implements DomainOrchestrator<Balance> {
         return newAPIAdapter.normalizeBalance(data);
       }
       case PlatformType.PackyCodeCodex: {
-        const data = await new PackyCodeCodexRawService(this.tenant).fetchBalance();
+        const data = await new PackyCodeCodexRawService(this.tenant).fetchUserInfo();
         return packyCodeCodexAdapter.normalizeBalance(data);
       }
     }

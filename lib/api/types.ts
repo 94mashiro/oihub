@@ -2,6 +2,8 @@
  * API 客户端实例配置 - 类似 Axios.create()
  * 用于创建预配置的 APIClient 实例
  */
+export type ResponseUnwrapper = (body: unknown) => unknown;
+
 export interface APIClientConfig {
   /** API 基础 URL */
   baseURL: string;
@@ -13,6 +15,11 @@ export interface APIClientConfig {
   enableLogging?: boolean;
   /** 错误处理回调 */
   onError?: (error: APIError) => void;
+  /**
+   * 自定义 response body 的 unwrap 逻辑。
+   * 默认假设服务端返回标准 `APIResponse<T>`，并返回其中的 `data` 字段。
+   */
+  unwrap?: ResponseUnwrapper;
   /** 限流配置，默认启用。设为 false 禁用 */
   rateLimit?: boolean | RateLimitConfig;
   /** 重试配置，默认启用 */

@@ -7,6 +7,8 @@ import type {
   PackyCodeCodexTokensResponse,
   PackyCodeCodexTokenGroupsResponse,
   PackyCodeCodexTenantInfoResponse,
+  PackyCodeCodexUserInfoResponse,
+  PackyCodeCodexRealTokenKeyResponse,
 } from '@/lib/api/types/platforms';
 
 function getTimestampRange(period: CostPeriod): [number, number] {
@@ -24,8 +26,9 @@ function createPackyCodeCodexClient(tenant: Tenant): APIClient {
     baseURL: tenant.url,
     headers: {
       Authorization: `Bearer ${tenant.token}`,
-      'New-Api-User': tenant.userId || '',
     },
+    // PackyCode Codex 平台返回的 body 为原始数据结构（无标准 APIResponse 包裹）
+    unwrap: (body) => body,
     timeout: 30000,
     enableLogging: false,
   });
@@ -41,19 +44,28 @@ export class PackyCodeCodexRawService {
     this.client = createPackyCodeCodexClient(tenant);
   }
 
+  async fetchUserInfo(): Promise<PackyCodeCodexUserInfoResponse> {
+    return this.client.get<PackyCodeCodexUserInfoResponse>('/api/backend/users/info');
+  }
+
   async fetchBalance(): Promise<PackyCodeCodexBalanceResponse> {
-    return this.client.get<PackyCodeCodexBalanceResponse>('/api/user/self');
+    return {};
   }
 
   async fetchCosts(period: CostPeriod): Promise<PackyCodeCodexCostsResponse> {
-    const [start, end] = getTimestampRange(period);
-    return this.client.get<PackyCodeCodexCostsResponse>(
-      `/api/data/self?start_timestamp=${start}&end_timestamp=${end}&default_time=hour`,
-    );
+    return [];
   }
 
-  async fetchTokens(page = 1, size = 100): Promise<PackyCodeCodexTokensResponse> {
-    return this.client.get<PackyCodeCodexTokensResponse>(`/api/token/?p=${page}&size=${size}`);
+  async fetchTokens(): Promise<PackyCodeCodexTokensResponse> {
+    const userId = (await this.fetchUserInfo()).user_id;
+    return this.client.get<PackyCodeCodexTokensResponse>(`/api/backend/users/${userId}/api-keys`);
+  }
+
+  async fetchRealTokenKey(tokenId: string): Promise<PackyCodeCodexRealTokenKeyResponse> {
+    const userId = (await this.fetchUserInfo()).user_id;
+    return this.client.get<PackyCodeCodexRealTokenKeyResponse>(
+      `/api/backend/users/${userId}/api-keys/${tokenId}`,
+    );
   }
 
   async fetchTokenGroups(): Promise<PackyCodeCodexTokenGroupsResponse> {

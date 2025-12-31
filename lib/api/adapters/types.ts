@@ -38,7 +38,7 @@ export interface Token {
   /** Total credit consumed by this token */
   creditConsumed: number | null;
   /** Token group identifier */
-  group: string | string[];
+  group: string | string[] | null;
 }
 
 /** Token group metadata for display purposes. */

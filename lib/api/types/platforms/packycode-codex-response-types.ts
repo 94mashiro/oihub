@@ -32,36 +32,28 @@ export interface PackyCodeCodexCostData {
 
 export type PackyCodeCodexCostsResponse = PackyCodeCodexCostData[];
 
-/** Returned by `/api/token/?p=1&size=100` endpoint (paginated) */
 export interface PackyCodeCodexToken {
-  /** API key secret (maps to secretKey, defaults to '' if missing) */
-  api_key?: string;
-
-  /** Token display name (maps to label, defaults to 'Unnamed Token' if missing) */
-  token_name?: string;
-
-  /** Unix timestamp (seconds) of last access - maps to `lastUsedAt` in normalized Token type, defaults to 0 if missing */
-  last_access_time?: number;
-
-  /** Total usage credits consumed by this token - maps to `creditConsumed` in normalized Token type, defaults to 0 if missing */
-  total_usage?: number;
-
-  /** Token group name/identifier - maps to `group` in normalized Token type, defaults to 'default' if missing */
-  token_group?: string;
+  // 2025/08/29
+  created_at: string;
+  expires_at: string | null;
+  id: string;
+  key_preview: string;
+  // 2025/12/31 06:02
+  last_used_at: string;
+  name: string;
+  status: string;
 }
 
 export interface PackyCodeCodexTokensResponse {
-  /** Array of tokens (may be undefined) */
-  items?: PackyCodeCodexToken[];
+  total: number;
+  api_keys: PackyCodeCodexToken[];
+}
 
-  /** Total token count (optional, for pagination) */
-  total?: number;
-
-  /** Current page number (optional, for pagination) */
-  page?: number;
-
-  /** Page size (optional, for pagination) */
-  page_size?: number;
+export interface PackyCodeCodexRealTokenKeyResponse {
+  api_key: string;
+  created_at: string;
+  id: string;
+  name: string;
 }
 
 /** Returned by `/api/user/self/groups` endpoint - maps group name to group metadata */
@@ -98,4 +90,28 @@ export interface PackyCodeCodexTenantInfoResponse {
     /** Publication timestamp (maps to publishDate) */
     published_at: string;
   }>;
+}
+
+export interface PackyCodeCodexUserInfoResponse {
+  api_key: string;
+  balance_usd: number;
+  created_at: string;
+  daily_budget_usd: string;
+  daily_spent_usd: string;
+  email: string;
+  monthly_budget_usd: string;
+  monthly_spent_usd: string;
+  plan_expires_at: string;
+  plan_type: string;
+  remaining_quota: number;
+  total_quota: number;
+  total_spent_usd: string;
+  used_quota: number;
+  user_id: string;
+  user_type: string;
+  username: string;
+  weekly_budget_usd: string;
+  weekly_spent_usd: string;
+  weekly_window_end: string;
+  weekly_window_start: string;
 }

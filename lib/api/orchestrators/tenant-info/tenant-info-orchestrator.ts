@@ -45,8 +45,7 @@ export class TenantInfoOrchestrator implements DomainOrchestrator<TenantInfo> {
         return newAPIAdapter.normalizeTenantInfo(data);
       }
       case PlatformType.PackyCodeCodex: {
-        const data = await new PackyCodeCodexRawService(this.tenant).fetchTenantInfo();
-        return packyCodeCodexAdapter.normalizeTenantInfo(data);
+        return packyCodeCodexAdapter.normalizeTenantInfo();
       }
     }
   }

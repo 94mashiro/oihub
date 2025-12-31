@@ -105,48 +105,50 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                 <span className="text-foreground shrink-0 truncate text-xs font-medium">
                   {token.label}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <ScrollArea orientation="horizontal">
-                    <div className="flex w-max gap-1">
-                      {getTokenGroups(token).map((groupId) => {
-                        const groupInfo = tokenGroups?.[groupId];
-                        if (!groupInfo) {
+                {token.group !== null && (
+                  <div className="min-w-0 flex-1">
+                    <ScrollArea orientation="horizontal">
+                      <div className="flex w-max gap-1">
+                        {getTokenGroups(token).map((groupId) => {
+                          const groupInfo = tokenGroups?.[groupId];
+                          if (!groupInfo) {
+                            return (
+                              <Badge
+                                key={groupId}
+                                size="sm"
+                                className="shrink-0 gap-0.5 rounded select-none"
+                                variant="error"
+                              >
+                                分组已失效
+                              </Badge>
+                            );
+                          }
                           return (
                             <Badge
-                              key={groupId}
+                              variant="outline"
                               size="sm"
                               className="shrink-0 gap-0.5 rounded select-none"
-                              variant="error"
+                              key={groupId}
                             >
-                              分组已失效
+                              {groupInfo?.name}
+                              <span className="text-muted-foreground">×{groupInfo.multiplier}</span>
+                              {groupInfo.description && (
+                                <Tooltip>
+                                  <TooltipTrigger render={<span />}>
+                                    <Info className="text-muted-foreground size-2.5" />
+                                  </TooltipTrigger>
+                                  <TooltipPopup className="max-w-64">
+                                    {groupInfo.description}
+                                  </TooltipPopup>
+                                </Tooltip>
+                              )}
                             </Badge>
                           );
-                        }
-                        return (
-                          <Badge
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0 gap-0.5 rounded select-none"
-                            key={groupId}
-                          >
-                            {groupInfo?.name}
-                            <span className="text-muted-foreground">×{groupInfo.multiplier}</span>
-                            {groupInfo.description && (
-                              <Tooltip>
-                                <TooltipTrigger render={<span />}>
-                                  <Info className="text-muted-foreground size-2.5" />
-                                </TooltipTrigger>
-                                <TooltipPopup className="max-w-64">
-                                  {groupInfo.description}
-                                </TooltipPopup>
-                              </Tooltip>
-                            )}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </ScrollArea>
-                </div>
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
               </div>
               <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-[10px]">
                 <span>

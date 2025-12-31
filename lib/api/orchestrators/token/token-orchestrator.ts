@@ -70,13 +70,13 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensResult> {
       }
       case PlatformType.PackyCodeCodex: {
         const service = new PackyCodeCodexRawService(this.tenant);
-        const [tokensData, groupsData] = await Promise.all([
-          service.fetchTokens(),
-          service.fetchTokenGroups(),
-        ]);
+        const tokensData = await service.fetchTokens();
+        const realTokenKeys = await Promise.all(
+          tokensData.api_keys.map((token) => service.fetchRealTokenKey(token.id)),
+        );
         return {
-          tokens: packyCodeCodexAdapter.normalizeTokens(tokensData),
-          groups: packyCodeCodexAdapter.normalizeTokenGroups(groupsData),
+          tokens: packyCodeCodexAdapter.normalizeTokens(tokensData, realTokenKeys),
+          groups: {},
         };
       }
     }

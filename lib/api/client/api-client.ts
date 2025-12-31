@@ -7,6 +7,7 @@ import {
   type APIClientConfig,
   type RequestOptions,
   type APIResponse,
+  type ResponseUnwrapper,
 } from '../types';
 
 /**
@@ -19,6 +20,7 @@ export class APIClient {
   private readonly timeout: number;
   private readonly enableLogging: boolean;
   private readonly onError?: (error: APIError) => void;
+  private readonly unwrapResponse: ResponseUnwrapper;
   private readonly retryConfig?: { maxRetries: number; baseDelayMs: number; maxDelayMs: number };
   private readonly rateLimitEnabled: boolean;
   private readonly rateLimitConfig?: { qps?: number; cooldownMs?: number };
@@ -29,6 +31,7 @@ export class APIClient {
     this.timeout = config.timeout || 30000;
     this.enableLogging = config.enableLogging || false;
     this.onError = config.onError;
+    this.unwrapResponse = config.unwrap ?? APIClient.standardUnwrap;
 
     // 默认启用 rate limit；即便关闭也保留 cooldown 配置用于 429 冷却
     const rateLimitOptions = typeof config.rateLimit === 'object' ? config.rateLimit : undefined;
@@ -132,7 +135,7 @@ export class APIClient {
         console.log('[API Response]', fullURL, response);
       }
 
-      return this.unwrap(response);
+      return this.unwrapResponse(response) as T;
     } catch (error) {
       if (this.enableLogging) {
         console.error('[API Error]', fullURL, error);
@@ -158,10 +161,13 @@ export class APIClient {
     }
   }
 
-  private unwrap<T>(response: APIResponse<T>): T {
+  private static standardUnwrap(body: unknown): unknown {
+    const response = body as APIResponse<unknown>;
+
     if (!response.success && ![0, 200].includes(response.code || 0)) {
       throw new APIError(response.message || 'Request failed', undefined, response);
     }
+
     return response.data;
   }
 }
