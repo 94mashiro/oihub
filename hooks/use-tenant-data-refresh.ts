@@ -5,6 +5,7 @@ import {
   createBalanceOrchestrator,
   createCostOrchestrator,
   createTenantInfoOrchestrator,
+  createTokenOrchestrator,
 } from '@/lib/api/orchestrators';
 import type { Cost } from '@/lib/api/adapters';
 import type { Tenant, TenantInfo } from '@/types/tenant';
@@ -60,6 +61,22 @@ function triggerUsageAlertCheck(
     });
 }
 
+/**
+ * Full refresh for a single tenant (TenantInfo + Balance + Token)
+ * Used when user clicks refresh button
+ */
+async function refreshTenantDataFull(tenant: Tenant) {
+  const infoOrchestrator = createTenantInfoOrchestrator(tenant);
+  const balanceOrchestrator = createBalanceOrchestrator(tenant);
+  const tokenOrchestrator = createTokenOrchestrator(tenant);
+
+  await Promise.allSettled([
+    infoOrchestrator.refresh(),
+    balanceOrchestrator.refresh(),
+    tokenOrchestrator.refresh(),
+  ]);
+}
+
 export function useTenantDataRefresh() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -80,5 +97,15 @@ export function useTenantDataRefresh() {
     }
   }, []);
 
-  return { refresh, refreshAll, isRefreshing };
+  const refreshAllFull = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const { tenantList } = tenantStore.getState();
+      await Promise.allSettled(tenantList.map(refreshTenantDataFull));
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  return { refresh, refreshAll, refreshAllFull, isRefreshing };
 }

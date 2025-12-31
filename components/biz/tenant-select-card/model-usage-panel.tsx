@@ -100,7 +100,7 @@ export const ModelUsagePanel: React.FC<Props> = ({ tenantId }) => {
         </Tabs>
       </div>
 
-      {loading && !costList ? (
+      {loading ? (
         <div className="flex items-center gap-2 py-2">
           <Loader2 className="text-muted-foreground size-3 animate-spin" />
           <span className="text-muted-foreground text-xs">加载中...</span>

@@ -30,7 +30,7 @@ const TenantSelector = () => {
   const selectedTenant = useTenantStore(getSelectedTenant);
   const setSelectedTenantId = useTenantStore((state) => state.setSelectedTenantId);
   const navigate = useNavigate();
-  const { refreshAll, isRefreshing } = useTenantDataRefresh();
+  const { refreshAll, refreshAllFull, isRefreshing } = useTenantDataRefresh();
 
   useEffect(() => {
     if (ready) {
@@ -63,7 +63,7 @@ const TenantSelector = () => {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => refreshAll()}
+              onClick={() => refreshAllFull()}
               disabled={isRefreshing}
             >
               <RefreshCw className={cn(isRefreshing && 'animate-spin', 'size-3')} />

@@ -44,7 +44,9 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
   const displayType = tenantInfoData?.displayFormat;
 
   const getTokenGroups = useCallback((token: Token) => {
-    if (typeof token.group === 'string') {
+    if (!token.group) {
+      return [];
+    } else if (typeof token.group === 'string') {
       return [token.group];
     }
     return token.group;
@@ -109,7 +111,7 @@ export const TokenListPanel: React.FC<Props> = ({ tenantId }) => {
                   <div className="min-w-0 flex-1">
                     <ScrollArea orientation="horizontal">
                       <div className="flex w-max gap-1">
-                        {getTokenGroups(token).map((groupId) => {
+                        {getTokenGroups(token)!.map((groupId) => {
                           const groupInfo = tokenGroups?.[groupId];
                           if (!groupInfo) {
                             return (
