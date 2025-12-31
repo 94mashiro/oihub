@@ -5,7 +5,7 @@ import { DEFAULT_PLATFORM_TYPE } from '@/lib/constants/tenants';
 import { Form } from '@/components/ui/form';
 import { Field, FieldControl, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { PresetButton, PresetVariant } from '@/components/biz/preset-button';
 import {
   Select,
   SelectTrigger,
@@ -40,6 +40,7 @@ const PROVIDER_PRESETS = [
     url: 'https://www.packyapi.com',
     icon: packyLogo,
     platformType: 'newapi' as PlatformType,
+    variant: 'premium',
   },
   {
     id: 'cubence',
@@ -47,6 +48,7 @@ const PROVIDER_PRESETS = [
     url: 'https://cubence.com',
     icon: cubenceLogo,
     platformType: 'cubence' as PlatformType,
+    variant: 'default',
   },
   {
     id: 'packycode_codex',
@@ -54,6 +56,7 @@ const PROVIDER_PRESETS = [
     url: 'https://codex.packycode.com',
     icon: packyLogo,
     platformType: 'packycode_codex' as PlatformType,
+    variant: 'default',
   },
   {
     id: 'i7relay',
@@ -61,6 +64,7 @@ const PROVIDER_PRESETS = [
     url: 'https://i7dc.com',
     icon: i7RelayLogo,
     platformType: 'i7relay' as PlatformType,
+    variant: 'default',
   },
 ];
 
@@ -123,18 +127,18 @@ export const TenantForm = ({
             <span className="text-muted-foreground text-xs">快速选择</span>
             <div className="flex flex-wrap gap-1.5">
               {PROVIDER_PRESETS.map((preset) => (
-                <Button
+                <PresetButton
                   key={preset.id}
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant={preset.variant as PresetVariant}
                   className="h-7 px-2.5 text-xs"
                   onClick={() => applyPreset(preset)}
                   disabled={isSubmitting}
                 >
                   {preset.icon && <img src={preset.icon} alt="" className="size-3.5" />}
                   {preset.name}
-                </Button>
+                </PresetButton>
               ))}
             </div>
           </div>
