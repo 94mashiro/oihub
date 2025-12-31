@@ -49,10 +49,11 @@ export class TokenOrchestrator implements DomainOrchestrator<TokensResult> {
       }
       case 'i7relay': {
         const service = new I7RelayRawService(this.tenant);
-        const data = await service.fetchTokens();
+        const tokenData = await service.fetchTokens();
+        const groupData = await service.fetchTokenGroups();
         return {
-          tokens: i7relayAdapter.normalizeTokens(data),
-          groups: i7relayAdapter.normalizeTokenGroups(data),
+          tokens: i7relayAdapter.normalizeTokens(tokenData),
+          groups: i7relayAdapter.normalizeTokenGroups(groupData),
         };
       }
       case 'newapi': {

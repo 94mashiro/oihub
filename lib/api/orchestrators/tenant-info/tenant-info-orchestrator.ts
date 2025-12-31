@@ -38,20 +38,7 @@ export class TenantInfoOrchestrator implements DomainOrchestrator<TenantInfo> {
         return cubenceAdapter.normalizeTenantInfo(announcementsData);
       }
       case 'i7relay': {
-        return {
-          creditUnit: 1,
-          exchangeRate: 1,
-          displayFormat: 'USD',
-          endpoints: [
-            {
-              id: 1,
-              route: 'i7Relay API',
-              description: '',
-              url: 'https://i7dc.com',
-            },
-          ],
-          notices: [],
-        };
+        return i7relayAdapter.normalizeTenantInfo();
       }
       case 'newapi': {
         const data = await new NewAPIRawService(this.tenant).fetchTenantInfo();

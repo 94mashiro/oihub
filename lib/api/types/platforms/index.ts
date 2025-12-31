@@ -60,15 +60,16 @@ export type {
 
 export type {
   I7RelayWalletResponse,
+  I7RelaySummaryResponse,
   I7RelayCostData,
   I7RelayCostsResponse,
   I7RelayToken,
   I7RelayTokensResponse,
   I7RelayTokenGroup,
-  I7RelayTokenGroupsResponse,
   I7RelayAnnouncementsResponse,
   I7RelayOverviewResponse,
   I7RelayModelTokenUsageResponse,
+  I7RelayTokenGroupsResponse,
 } from './i7relay-response-types';
 
 // ============================================================================

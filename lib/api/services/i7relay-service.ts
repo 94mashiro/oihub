@@ -4,6 +4,8 @@ import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
 import type {
   I7RelayCostsResponse,
   I7RelayModelTokenUsageResponse,
+  I7RelaySummaryResponse,
+  I7RelayTokenGroupsResponse,
   I7RelayTokensResponse,
   I7RelayWalletResponse,
 } from '@/lib/api/types/platforms';
@@ -50,6 +52,10 @@ export class I7RelayRawService {
     return this.client.get<I7RelayWalletResponse>('/api/user/stats/wallet');
   }
 
+  async fetchSummary(): Promise<I7RelaySummaryResponse> {
+    return this.client.get<I7RelaySummaryResponse>('/api/user/stats/summary');
+  }
+
   async fetchCosts(period: CostPeriod): Promise<I7RelayCostsResponse> {
     const [start, end] = getDateRange(period);
     return this.client.get<I7RelayCostsResponse>(
@@ -71,6 +77,10 @@ export class I7RelayRawService {
   }
 
   async fetchTokens(): Promise<I7RelayTokensResponse> {
-    return this.client.get<I7RelayTokensResponse>('/api/v1/user/apikeys');
+    return this.client.get<I7RelayTokensResponse>('/api/iam/api-keys');
+  }
+
+  async fetchTokenGroups(): Promise<I7RelayTokenGroupsResponse> {
+    return this.client.get<I7RelayTokenGroupsResponse>('/api/user/provider-groups');
   }
 }

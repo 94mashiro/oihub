@@ -10,9 +10,9 @@ import type {
   I7RelayCostsResponse,
   I7RelayTokensResponse,
   I7RelayCostData,
-  I7RelayAnnouncementsResponse,
-  I7RelayOverviewResponse,
   I7RelayWalletResponse,
+  I7RelayTokenGroupsResponse,
+  I7RelaySummaryResponse,
 } from '@/lib/api/types/platforms';
 import { I7RelayModelTokenUsageResponse } from '../types/platforms/i7relay-response-types';
 
@@ -23,10 +23,13 @@ import { I7RelayModelTokenUsageResponse } from '../types/platforms/i7relay-respo
 export const i7relayAdapter = {
   platformType: 'i7relay',
 
-  normalizeBalance(response: I7RelayWalletResponse): Balance {
+  normalizeBalance(
+    walletData: I7RelayWalletResponse,
+    summaryData: I7RelaySummaryResponse,
+  ): Balance {
     return {
-      remainingCredit: response.wallet.balanceUsd ?? 0,
-      consumedCredit: 0,
+      remainingCredit: walletData.wallet.balanceUsd ?? 0,
+      consumedCredit: summaryData.totalCost ?? 0,
     };
   },
 
@@ -74,31 +77,28 @@ export const i7relayAdapter = {
     return response.map((item) => ({
       secretKey: item.key ?? '',
       label: item.name ?? 'Unnamed Token',
-      lastUsedAt: new Date(item.last_used_at).getTime() / 1000,
-      creditConsumed: item.quota_used ?? 0,
-      group: item.service_groups.map((it) => it.group.id.toString()),
+      lastUsedAt: new Date(item.lastUsedAt).getTime() / 1000,
+      // TODO: 接口暂不支持这个数据
+      creditConsumed: null,
+      group: item.groups.map((it) => it.code),
     }));
   },
 
-  normalizeTokenGroups(response: I7RelayTokensResponse): Record<string, TokenGroup> {
-    const groups = response.flatMap((it) => it.service_groups.map((it) => it.group));
-    console.log(groups);
-    return groups.reduce(
-      (acc, group) => {
-        acc[group.id] = {
-          name: group.name ?? '',
-          description: group.description ?? '',
-          multiplier: group.multiplier ?? 1.0,
-        };
-        return acc;
-      },
-      {} as Record<string, TokenGroup>,
-    );
+  normalizeTokenGroups(response: I7RelayTokenGroupsResponse): Record<string, TokenGroup> {
+    const output: Record<string, TokenGroup> = {};
+    response.forEach((it) => {
+      output[it.code] = {
+        name: it.name,
+        description: it.description,
+        multiplier: it.multiplier,
+      };
+    });
+    return output;
   },
 
-  normalizeTenantInfo(announcements: I7RelayAnnouncementsResponse): TenantInfo {
+  normalizeTenantInfo(): TenantInfo {
     return {
-      creditUnit: 1000000,
+      creditUnit: 1,
       exchangeRate: 1,
       displayFormat: 'USD',
       endpoints: [
@@ -106,16 +106,10 @@ export const i7relayAdapter = {
           id: 1,
           route: 'i7Relay API',
           description: '',
-          url: 'https://i7dc.com',
+          url: 'https://i7dc.com/api',
         },
       ],
-      notices: announcements?.announcements?.map((it) => ({
-        id: it.id,
-        content: it.content,
-        extra: it.title,
-        publishDate: it.published_at,
-        type: it.priority ?? '',
-      })),
+      notices: [],
     };
   },
 };

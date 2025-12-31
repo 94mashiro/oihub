@@ -36,7 +36,7 @@ export interface Token {
   /** Unix timestamp of last access */
   lastUsedAt: number;
   /** Total credit consumed by this token */
-  creditConsumed: number;
+  creditConsumed: number | null;
   /** Token group identifier */
   group: string | string[];
 }

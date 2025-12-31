@@ -15,6 +15,44 @@ export interface I7RelayWalletResponse {
   };
 }
 
+export interface I7RelaySummaryResponse {
+  requestCount: {
+    percentChange: number;
+    today: number;
+    total: number;
+    yesterday: number;
+  };
+  todayTokens: {
+    cacheCreation: number;
+    cacheRead: number;
+    input: number;
+    output: number;
+    total: number;
+  };
+  tokenPercentChange: {
+    cacheCreation: number;
+    cacheRead: number;
+    input: number;
+    output: number;
+    total: number;
+  };
+  totalCost: number;
+  totalTokens: {
+    cacheCreation: number;
+    cacheRead: number;
+    input: number;
+    output: number;
+    total: number;
+  };
+  yesterdayTokens: {
+    cacheCreation: number;
+    cacheRead: number;
+    input: number;
+    output: number;
+    total: number;
+  };
+}
+
 export interface I7RelayProviderCostData {
   cacheCreationTokens: number;
   cacheReadTokens: number;
@@ -63,51 +101,26 @@ export interface I7RelayModelTokenUsageResponse {
 
 /** Returned by `/api/token/?p=1&size=100` endpoint */
 export interface I7RelayToken {
-  id: number;
-  user_id: number;
-  name: string;
-  key: string;
-  status: string;
-  share_type: string;
-  quota_limit: number;
-  quota_used: number;
-  usage_count: number;
-  last_used_at: string;
-  created_at: string;
-  updated_at: string;
-  service_groups: {
-    id: number;
-    apikey_id: number;
-    service_type: string;
-    group_id: number;
-    created_at: string;
-    updated_at: string;
-    group: {
-      id: number;
-      name: string;
-      service_type: string;
-      description: string;
-      is_active: boolean;
-      priority: number;
-      multiplier: number;
-      created_at: string;
-      updated_at: string;
-    };
+  // 2025-12-30T15:33:35.95Z ISO Date String
+  createdAt: string;
+  description: string;
+  groups: {
+    code: string;
+    id: string;
+    isPrimary: boolean;
+    multiplier: number;
+    name: string;
+    provider: string;
   }[];
+  id: string;
+  isActive: boolean;
+  key: string;
+  lastUsedAt: string;
+  name: string;
+  prefix: string;
 }
 
 export type I7RelayTokensResponse = I7RelayToken[];
-
-/** Returned by `/api/user/self/groups` endpoint - maps group name to group metadata */
-export interface I7RelayTokenGroup {
-  /** Human-readable group description - maps to `description` in normalized TokenGroup type, defaults to '' if missing */
-  description?: string;
-
-  /** Credit cost rate/multiplier for tokens in this group - maps to `multiplier` in normalized TokenGroup type, defaults to 1.0 if missing. Example: 2.0 means 2x credit cost */
-  rate?: number;
-}
-
-export type I7RelayTokenGroupsResponse = Record<string, I7RelayTokenGroup>;
 
 /** Returned by `/api/v1/dashboard/overview` endpoint */
 export interface I7RelayOverviewResponse {
@@ -211,3 +224,18 @@ export interface I7RelayAnnouncementsResponse {
   page: number;
   page_size: number;
 }
+
+export interface I7RelayTokenGroup {
+  code: string;
+  description: string;
+  features: string[];
+  id: string;
+  isDefault: boolean;
+  multiplier: number;
+  name: string;
+  poolTypeList: string[];
+  provider: string;
+  visibleUserIds: string[];
+}
+
+export type I7RelayTokenGroupsResponse = I7RelayTokenGroup[];

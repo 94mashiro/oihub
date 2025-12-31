@@ -37,8 +37,9 @@ export class BalanceOrchestrator implements DomainOrchestrator<Balance> {
         return cubenceAdapter.normalizeBalance(data);
       }
       case 'i7relay': {
-        const data = await new I7RelayRawService(this.tenant).fetchWallet();
-        return i7relayAdapter.normalizeBalance(data);
+        const walletData = await new I7RelayRawService(this.tenant).fetchWallet();
+        const summaryData = await new I7RelayRawService(this.tenant).fetchSummary();
+        return i7relayAdapter.normalizeBalance(walletData, summaryData);
       }
       case 'newapi': {
         const data = await new NewAPIRawService(this.tenant).fetchBalance();
