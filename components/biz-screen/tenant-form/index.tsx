@@ -70,9 +70,9 @@ const PROVIDER_PRESETS = [
 
 const PLATFORM_TYPE_OPTIONS = [
   { value: PlatformType.NewAPI, label: 'NewAPI' },
-  { value: PlatformType.PackyCodeCodex, label: 'PackyCode(Codex)' },
   { value: PlatformType.Cubence, label: 'Cubence' },
   { value: PlatformType.I7Relay, label: 'i7Relay' },
+  { value: PlatformType.PackyCodeCodex, label: 'PackyCode(Codex)' },
 ] as const;
 
 export const TenantForm = ({
@@ -217,7 +217,7 @@ export const TenantForm = ({
 
         <Field>
           <FieldLabel htmlFor="tenant-token" className="text-xs">
-            访问令牌
+            {formData.platformType === PlatformType.NewAPI ? '系统访问令牌' : 'Cookie'}
           </FieldLabel>
           <FieldControl
             render={() => (
@@ -231,10 +231,17 @@ export const TenantForm = ({
                 disabled={isSubmitting}
                 size="sm"
                 className="text-sm"
+                placeholder={
+                  formData.platformType === PlatformType.NewAPI
+                    ? 'NewAPI 生成的系统访问令牌'
+                    : '找到 Cookie 中与 Session 相关的那个'
+                }
               />
             )}
           />
-          <FieldError match="valueMissing">请输入访问令牌</FieldError>
+          <FieldError match="valueMissing">
+            请输入{formData.platformType === PlatformType.NewAPI ? '系统访问令牌' : ' Cookie'}
+          </FieldError>
         </Field>
 
         {formData.platformType === PlatformType.NewAPI && (
@@ -253,6 +260,7 @@ export const TenantForm = ({
                   disabled={isSubmitting}
                   size="sm"
                   className="text-sm"
+                  placeholder="NewAPI 账号的用户 ID"
                 />
               )}
             />

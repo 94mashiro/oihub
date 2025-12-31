@@ -42,7 +42,7 @@ export const ApiEndpointsPanel: React.FC<Props> = ({ tenantId }) => {
               )}
             </Button>
           </div>
-          <p className="text-muted-foreground truncate text-[10px] font-medium">{endpoint.url}</p>
+          <p className="text-muted-foreground truncate text-[12px]">{endpoint.url}</p>
           {endpoint.description && (
             <p className="text-muted-foreground/80 rounded-md border bg-zinc-200/40 p-1.5 font-mono text-[10px] leading-tight whitespace-pre-line">
               {endpoint.description}

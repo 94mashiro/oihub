@@ -58,6 +58,8 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
         return `${baseUrl.origin}/console/token`;
       } else if (tenantInfo.platformType === PlatformType.Cubence) {
         return `https://cubence.com/dashboard/keys`;
+      } else if (tenantInfo.platformType === PlatformType.I7Relay) {
+        return `https://i7dc.com/en/api-keys`;
       }
       return null;
     } catch {

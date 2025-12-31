@@ -187,7 +187,7 @@ const TenantAlertConfig = ({ tenant, config, onConfigChange }: TenantAlertConfig
             <p className="text-muted-foreground text-[10px]">请先刷新账号信息以配置阈值</p>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-[10px]">阈值</span>
+              <span className="text-muted-foreground text-[12px]">阈值</span>
               <Input
                 type="number"
                 size="sm"
@@ -200,7 +200,7 @@ const TenantAlertConfig = ({ tenant, config, onConfigChange }: TenantAlertConfig
                 min={0}
                 step={0.01}
               />
-              <span className="text-muted-foreground text-[10px]">{displayType}</span>
+              <span className="text-muted-foreground text-[12px]">{displayType}</span>
             </div>
           )}
           {error && <p className="text-destructive mt-1 text-[10px]">{error}</p>}
