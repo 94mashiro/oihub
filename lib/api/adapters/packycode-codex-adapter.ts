@@ -58,6 +58,7 @@ export const packyCodeCodexAdapter = {
       Object.entries(data).map(([key, value]: [string, PackyCodeCodexTokenGroup]) => [
         key,
         {
+          name: '',
           description: value.group_desc ?? '',
           multiplier: value.credit_ratio ?? 1.0,
         },

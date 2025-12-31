@@ -28,7 +28,6 @@ export type {
 // ============================================================================
 
 export type {
-  CubenceBalanceResponse,
   CubenceCostData,
   CubenceCostsResponse,
   CubenceToken,
@@ -85,7 +84,6 @@ import type {
 } from './newapi-response-types';
 
 import type {
-  CubenceBalanceResponse,
   CubenceCostsResponse,
   CubenceTokensResponse,
   CubenceTokenGroupsResponse,
@@ -101,7 +99,7 @@ import type {
 } from './packycode-codex-response-types';
 
 import type {
-  I7RelayBalanceResponse,
+  I7RelayWalletResponse,
   I7RelayCostsResponse,
   I7RelayTokensResponse,
   I7RelayTokenGroupsResponse,
@@ -123,7 +121,7 @@ export interface PlatformResponseTypeMap {
     tenantInfo: NewAPITenantInfoResponse;
   };
   cubence: {
-    balance: CubenceBalanceResponse;
+    balance: CubenceOverviewResponse;
     costs: CubenceCostsResponse;
     tokens: CubenceTokensResponse;
     tokenGroups: CubenceTokenGroupsResponse;
@@ -137,7 +135,7 @@ export interface PlatformResponseTypeMap {
     tenantInfo: PackyCodeCodexTenantInfoResponse;
   };
   i7relay: {
-    balance: I7RelayBalanceResponse;
+    balance: I7RelayWalletResponse;
     costs: I7RelayCostsResponse;
     tokens: I7RelayTokensResponse;
     tokenGroups: I7RelayTokenGroupsResponse;

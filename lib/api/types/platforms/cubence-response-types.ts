@@ -6,19 +6,7 @@
  * adapter normalization.
  */
 
-/** Returned by `/api/user/self` endpoint */
-export interface CubenceBalanceResponse {
-  /** Available credits (PREFERRED over total_credit for `remainingCredit` field) - represents the actual spendable balance */
-  available_credit?: number;
-
-  /** Total credits (FALLBACK for `remainingCredit` if available_credit missing) - may include reserved or locked credits */
-  total_credit?: number;
-
-  /** Credits consumed - maps to `consumedCredit` in normalized Balance type, defaults to 0 if missing */
-  used_credit?: number;
-}
-
-/** Returned by `/api/v1/analytics/apikeys/logs` endpoint (paginated) */
+/** Single cost log entry from `/api/v1/analytics/apikeys/logs` */
 export interface CubenceCostData {
   id: number;
   user_api_key_id: number;
@@ -41,6 +29,7 @@ export interface CubenceCostData {
   created_at: string;
 }
 
+/** Paginated response wrapper for cost logs */
 export interface CubenceCostsResponse {
   logs?: CubenceCostData[];
   total?: number;
@@ -49,7 +38,7 @@ export interface CubenceCostsResponse {
   page_size?: number;
 }
 
-/** Returned by `/api/token/?p=1&size=100` endpoint */
+/** Returned by `/api/v1/user/apikeys` endpoint */
 export interface CubenceToken {
   id: number;
   user_id: number;
@@ -86,7 +75,7 @@ export interface CubenceToken {
 
 export type CubenceTokensResponse = CubenceToken[];
 
-/** Returned by `/api/user/self/groups` endpoint - maps group name to group metadata */
+/** Derived from CubenceToken.service_groups - maps group name to group metadata */
 export interface CubenceTokenGroup {
   /** Human-readable group description - maps to `description` in normalized TokenGroup type, defaults to '' if missing */
   description?: string;
@@ -178,6 +167,7 @@ export interface CubenceOverviewResponse {
   };
 }
 
+/** Single announcement item in CubenceAnnouncementsResponse */
 export interface CubenceAnnouncement {
   id: number;
   title: string;
@@ -193,6 +183,7 @@ export interface CubenceAnnouncement {
   updated_at: string;
 }
 
+/** Returned by `/api/v1/announcements` endpoint (paginated) */
 export interface CubenceAnnouncementsResponse {
   announcements: CubenceAnnouncement[];
   total: number;

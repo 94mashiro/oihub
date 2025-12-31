@@ -3,7 +3,6 @@ import { fetchAllCubenceCostsPages } from './cubence-service-utils';
 import type { Tenant } from '@/types/tenant';
 import { CostPeriod, COST_PERIOD_DAYS } from '@/types/api';
 import type {
-  CubenceBalanceResponse,
   CubenceCostsResponse,
   CubenceTokensResponse,
   CubenceOverviewResponse,
@@ -47,10 +46,6 @@ export class CubenceRawService {
 
   constructor(tenant: Tenant) {
     this.client = createCubenceClient(tenant);
-  }
-
-  async fetchBalance(): Promise<CubenceBalanceResponse> {
-    return this.client.get<CubenceBalanceResponse>('/api/user/self');
   }
 
   async fetchCosts(period: CostPeriod): Promise<CubenceCostsResponse> {
