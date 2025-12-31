@@ -16,7 +16,9 @@ function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-// TODO: Cubence 似乎当天的查询会出现问题，logs接口不会返回内容
+// TODO: Cubence API 不支持当天查询,logs 接口不会返回当天内容
+// 这是平台限制,预算提醒功能对 Cubence 平台不可用
+// 如需启用,可考虑使用昨日数据或寻找其他 API 端点
 function getDateRange(period: CostPeriod): [string, string] {
   const now = new Date();
   const end = formatLocalDate(now);
