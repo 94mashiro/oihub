@@ -103,14 +103,14 @@ const PopupSettingsScreen = () => {
                 setTenantSortConfig({ field, direction });
               }}
             >
-              <SelectTrigger className="w-36 text-xs">
+              <SelectTrigger size="sm" className="w-40 text-sm">
                 <SelectValue>
                   {(value: string) => SORT_OPTIONS_MAP[value]}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {SORT_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value} size="sm">
+                  <SelectItem key={opt.value} value={opt.value} className="text-sm">
                     {opt.label}
                   </SelectItem>
                 ))}

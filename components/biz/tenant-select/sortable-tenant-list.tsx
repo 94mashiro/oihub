@@ -62,7 +62,7 @@ function SortableTenantCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group/drag relative w-full rounded-md p-2 hover:bg-zinc-50',
+        'group/drag relative w-full select-none rounded-md p-2 hover:bg-zinc-50',
         isSelected && 'bg-zinc-100!',
         isDragging && 'opacity-50 shadow-lg z-50',
       )}
