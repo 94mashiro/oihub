@@ -62,19 +62,33 @@ function triggerUsageAlertCheck(
 }
 
 /**
- * Full refresh for a single tenant (TenantInfo + Balance + Token)
+ * Full refresh for a single tenant (TenantInfo + Balance + Token + Cost)
  * Used when user clicks refresh button
  */
 async function refreshTenantDataFull(tenant: Tenant) {
   const infoOrchestrator = createTenantInfoOrchestrator(tenant);
   const balanceOrchestrator = createBalanceOrchestrator(tenant);
   const tokenOrchestrator = createTokenOrchestrator(tenant);
+  const costOrchestrator = createCostOrchestrator(tenant, CostPeriod.DAY_1);
 
-  await Promise.allSettled([
+  const [infoResult, _balanceResult, _tokenResult, costResult] = await Promise.allSettled([
     infoOrchestrator.refresh(),
     balanceOrchestrator.refresh(),
     tokenOrchestrator.refresh(),
+    costOrchestrator.refresh(),
   ]);
+
+  // Trigger usage alert check if cost data was fetched
+  if (costResult.status === 'fulfilled') {
+    const tenantInfo =
+      infoResult.status === 'fulfilled'
+        ? infoResult.value
+        : tenantInfoStore.getState().getTenantInfo(tenant.id);
+    if (tenantInfo) {
+      const todayUsage = calculateTodayUsage(costResult.value);
+      triggerUsageAlertCheck(tenant.id, tenant.name, tenantInfo, todayUsage);
+    }
+  }
 }
 
 export function useTenantDataRefresh() {

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Frame,
@@ -43,6 +43,7 @@ const SORT_OPTIONS_MAP = Object.fromEntries(
 const PopupSettingsScreen = () => {
   const navigate = useNavigate();
   const tenantList = useTenantStore((state) => state.tenantList);
+  const setTenantList = useTenantStore((state) => state.setTenantList);
   const tenantReady = useTenantStore((state) => state.ready);
   const dailyUsageAlert = useSettingStore((state) => state.dailyUsageAlert);
   const setDailyUsageAlert = useSettingStore((state) => state.setDailyUsageAlert);
@@ -51,6 +52,40 @@ const PopupSettingsScreen = () => {
   const tenantSortConfig = useSettingStore((state) => state.tenantSortConfig);
   const setTenantSortConfig = useSettingStore((state) => state.setTenantSortConfig);
   const settingReady = useSettingStore((state) => state.ready);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState('');
+
+  const handleExport = () => {
+    const json = JSON.stringify(tenantList);
+    const base64 = btoa(unescape(encodeURIComponent(json)));
+    const blob = new Blob([base64], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `oihub-tenants-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError('');
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const base64 = event.target?.result as string;
+        const json = decodeURIComponent(escape(atob(base64.trim())));
+        const data = JSON.parse(json);
+        if (!Array.isArray(data)) throw new Error('格式错误');
+        await setTenantList(data);
+      } catch {
+        setImportError('导入失败，请检查文件格式');
+      }
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   if (!tenantReady || !settingReady) {
     return (
@@ -165,6 +200,34 @@ const PopupSettingsScreen = () => {
               </div>
             </div>
           </div>
+        </div>
+      </FramePanel>
+      <FramePanel className="rounded-md p-2">
+        <div>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium">配置导入导出</span>
+          </div>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            导出或导入账号配置数据
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" variant="outline" onClick={handleExport} disabled={tenantList.length === 0}>
+              <Download className="mr-1 h-3.5 w-3.5" />
+              导出
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="mr-1 h-3.5 w-3.5" />
+              导入
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt"
+              className="hidden"
+              onChange={handleImport}
+            />
+          </div>
+          {importError && <p className="text-destructive mt-2 text-xs">{importError}</p>}
         </div>
       </FramePanel>
     </Frame>
