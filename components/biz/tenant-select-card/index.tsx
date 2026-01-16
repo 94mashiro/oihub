@@ -6,7 +6,7 @@ import { useBalanceStore } from '@/lib/state/balance-store';
 import { useCostStore } from '@/lib/state/cost-store';
 import { CostPeriod } from '@/types/api';
 import { Button } from '@/components/ui/button';
-import { EditIcon, ExternalLinkIcon, Trash } from 'lucide-react';
+import { EditIcon, ExternalLinkIcon, GripVertical, Trash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GroupSeparator, Group } from '@/components/ui/group';
 import { Collapsible, CollapsiblePanel } from '@/components/ui/collapsible';
@@ -31,13 +31,29 @@ import { ModelUsagePanel } from './model-usage-panel';
 import { ApiEndpointsPanel } from './api-endpoints-panel';
 import { TokenListPanel } from './token-list-panel';
 import { AnnouncementPanel } from './announcement-panel';
+import { cn } from '@/lib/utils';
+import type { DraggableAttributes } from '@dnd-kit/core';
+import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
+
+interface DragHandleProps {
+  attributes: DraggableAttributes;
+  listeners: SyntheticListenerMap | undefined;
+  isDragging: boolean;
+}
 
 interface Props {
   tenantId: string;
   isSelected?: boolean;
+  isDragEnabled?: boolean;
+  dragHandleProps?: DragHandleProps;
 }
 
-const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => {
+const TenantSelectCard: React.FC<Props> = ({
+  tenantId,
+  isSelected = false,
+  isDragEnabled = false,
+  dragHandleProps,
+}) => {
   const navigate = useNavigate();
   const removeTenant = useTenantStore((state) => state.removeTenant);
   const tenantInfo = useTenantStore((state) =>
@@ -124,7 +140,24 @@ const TenantSelectCard: React.FC<Props> = ({ tenantId, isSelected = false }) => 
         </AlertDialog>
       </Group>
       <div className="flex flex-col gap-2">
-        <p className="truncate text-sm font-medium">{tenantInfo.name}</p>
+        <div className="flex items-center">
+          {isDragEnabled && dragHandleProps && (
+            <button
+              className={cn(
+                'mr-1 cursor-grab touch-none',
+                'text-muted-foreground hover:text-foreground active:cursor-grabbing',
+                'w-0 opacity-0 transition-all duration-200 group-hover/drag:w-4 group-hover/drag:opacity-100',
+                dragHandleProps.isDragging && 'w-4 opacity-100',
+              )}
+              {...dragHandleProps.attributes}
+              {...dragHandleProps.listeners}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="size-4" />
+            </button>
+          )}
+          <p className="truncate text-sm font-medium">{tenantInfo.name}</p>
+        </div>
         <div>
           <p className="text-muted-foreground text-xs">余额</p>
           <p className="text-foreground text-2xl font-semibold tracking-tight">

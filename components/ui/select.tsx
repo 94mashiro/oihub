@@ -96,11 +96,19 @@ function SelectPopup({
   );
 }
 
-function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Props) {
+function SelectItem({
+  className,
+  children,
+  size = 'default',
+  ...props
+}: SelectPrimitive.Item.Props & {
+  size?: 'sm' | 'default' | 'lg';
+}) {
   return (
     <SelectPrimitive.Item
       className={cn(
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground grid cursor-default grid-cols-[1rem_1fr] items-center gap-2 rounded-sm py-1 ps-2 pe-4 text-base outline-none in-data-[side=none]:min-w-[calc(var(--anchor-width)+1.25rem)] data-disabled:pointer-events-none data-disabled:opacity-64 sm:text-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        size === 'sm' && 'py-0.5 text-xs gap-1.5 grid-cols-[0.75rem_1fr] [&_svg:not([class*="size-"])]:size-3',
         className,
       )}
       data-slot="select-item"

@@ -11,11 +11,34 @@ import {
 } from '@/components/ui/frame';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useTenantInfoStore } from '@/lib/state/tenant-info-store';
 import { useSettingStore } from '@/lib/state/setting-store';
 import { quotaToCurrency, currencyToQuota } from '@/lib/utils/quota-converter';
+import { SortField, SortDirection } from '@/types/sort';
 import type { Tenant } from '@/types/tenant';
+
+/** 排序选项：手动排序 + 其他字段的升降序笛卡尔积 */
+const SORT_OPTIONS = [
+  { value: `${SortField.MANUAL}:${SortDirection.ASC}`, label: '手动排序' },
+  { value: `${SortField.NAME}:${SortDirection.DESC}`, label: '按名称降序' },
+  { value: `${SortField.NAME}:${SortDirection.ASC}`, label: '按名称升序' },
+  { value: `${SortField.BALANCE}:${SortDirection.DESC}`, label: '按余额降序' },
+  { value: `${SortField.BALANCE}:${SortDirection.ASC}`, label: '按余额升序' },
+  { value: `${SortField.TODAY_COST}:${SortDirection.DESC}`, label: '按今日消耗降序' },
+  { value: `${SortField.TODAY_COST}:${SortDirection.ASC}`, label: '按今日消耗升序' },
+] as const;
+
+const SORT_OPTIONS_MAP = Object.fromEntries(
+  SORT_OPTIONS.map((opt) => [opt.value, opt.label])
+) as Record<string, string>;
 
 const PopupSettingsScreen = () => {
   const navigate = useNavigate();
@@ -25,6 +48,8 @@ const PopupSettingsScreen = () => {
   const setDailyUsageAlert = useSettingStore((state) => state.setDailyUsageAlert);
   const experimentalFeatures = useSettingStore((state) => state.experimentalFeatures);
   const setExperimentalFeature = useSettingStore((state) => state.setExperimentalFeature);
+  const tenantSortConfig = useSettingStore((state) => state.tenantSortConfig);
+  const setTenantSortConfig = useSettingStore((state) => state.setTenantSortConfig);
   const settingReady = useSettingStore((state) => state.ready);
 
   if (!tenantReady || !settingReady) {
@@ -61,6 +86,39 @@ const PopupSettingsScreen = () => {
           <FrameDescription className="mt-0.5 text-xs">配置扩展选项</FrameDescription>
         </div>
       </FrameHeader>
+      <FramePanel className="rounded-md p-2">
+        <div>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium">账号排序</span>
+          </div>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            设置账号列表的排序方式，手动排序时可拖拽调整顺序
+          </p>
+          <div className="mt-3">
+            <Select
+              value={`${tenantSortConfig.field}:${tenantSortConfig.direction}`}
+              onValueChange={(value) => {
+                if (!value) return;
+                const [field, direction] = value.split(':') as [SortField, SortDirection];
+                setTenantSortConfig({ field, direction });
+              }}
+            >
+              <SelectTrigger className="w-36 text-xs">
+                <SelectValue>
+                  {(value: string) => SORT_OPTIONS_MAP[value]}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} size="sm">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </FramePanel>
       <FramePanel className="rounded-md p-2">
         <div>
           <div className="flex items-center gap-1">

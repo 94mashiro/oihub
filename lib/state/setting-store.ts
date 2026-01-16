@@ -3,6 +3,7 @@ import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { createStore } from './create-store';
 
 import type { TenantId } from '@/types/tenant';
+import { SortField, SortDirection, type SortConfig } from '@/types/sort';
 
 // Daily usage alert configuration for a single tenant
 export interface DailyUsageAlertConfig {
@@ -20,6 +21,7 @@ type SettingPersistedState = {
   dailyUsageAlert: Record<TenantId, DailyUsageAlertConfig>;
   alertedToday: Record<TenantId, string>; // value is date string like "2025-12-12"
   experimentalFeatures: ExperimentalFeaturesConfig;
+  tenantSortConfig: SortConfig;
 };
 
 // Define complete store state
@@ -28,6 +30,7 @@ export type SettingStoreState = {
   dailyUsageAlert: Record<TenantId, DailyUsageAlertConfig>;
   alertedToday: Record<TenantId, string>;
   experimentalFeatures: ExperimentalFeaturesConfig;
+  tenantSortConfig: SortConfig;
 
   // Runtime fields
   ready: boolean;
@@ -42,6 +45,7 @@ export type SettingStoreState = {
     key: K,
     value: ExperimentalFeaturesConfig[K],
   ) => Promise<void>;
+  setTenantSortConfig: (config: SortConfig) => Promise<void>;
 
   // Internal methods
   hydrate: () => Promise<void>;
@@ -59,6 +63,7 @@ const settingStorageItem = storage.defineItem<SettingPersistedState>('local:sett
     dailyUsageAlert: {},
     alertedToday: {},
     experimentalFeatures: { tokenExport: false },
+    tenantSortConfig: { field: SortField.MANUAL, direction: SortDirection.ASC },
   },
 });
 
@@ -66,12 +71,12 @@ const settingStorageItem = storage.defineItem<SettingPersistedState>('local:sett
 export const settingStore = createStore<
   SettingStoreState,
   SettingPersistedState,
-  'dailyUsageAlert' | 'alertedToday' | 'experimentalFeatures'
+  'dailyUsageAlert' | 'alertedToday' | 'experimentalFeatures' | 'tenantSortConfig'
 >({
   storageItem: settingStorageItem,
 
   persistConfig: {
-    keys: ['dailyUsageAlert', 'alertedToday', 'experimentalFeatures'],
+    keys: ['dailyUsageAlert', 'alertedToday', 'experimentalFeatures', 'tenantSortConfig'],
   },
 
   createState: (set, get, persist) => ({
@@ -80,6 +85,7 @@ export const settingStore = createStore<
     dailyUsageAlert: {},
     alertedToday: {},
     experimentalFeatures: { tokenExport: false },
+    tenantSortConfig: { field: SortField.MANUAL, direction: SortDirection.ASC },
 
     setDailyUsageAlert: async (tenantId, config) => {
       set((state) => {
@@ -118,6 +124,13 @@ export const settingStore = createStore<
     setExperimentalFeature: async (key, value) => {
       set((state) => {
         state.experimentalFeatures[key] = value;
+      });
+      await persist({});
+    },
+
+    setTenantSortConfig: async (config) => {
+      set((state) => {
+        state.tenantSortConfig = config;
       });
       await persist({});
     },

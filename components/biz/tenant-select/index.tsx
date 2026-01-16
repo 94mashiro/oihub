@@ -8,8 +8,8 @@ import {
   FrameTitle,
 } from '@/components/ui/frame';
 import { getSelectedTenant, useTenantStore } from '@/lib/state/tenant-store';
+import { useSettingStore } from '@/lib/state/setting-store';
 import { cn } from '@/lib/utils';
-import TenantSelectCard from '../tenant-select-card';
 import { Button } from '@/components/ui/button';
 import { Plus, RefreshCw, RouteIcon, Settings } from 'lucide-react';
 import {
@@ -23,14 +23,18 @@ import {
 import { Group, GroupSeparator } from '@/components/ui/group';
 import { useNavigate } from 'react-router-dom';
 import { useTenantDataRefresh } from '@/hooks/use-tenant-data-refresh';
+import { useSortedTenants } from '@/hooks/use-sorted-tenants';
+import { SortableTenantList } from './sortable-tenant-list';
 
 const TenantSelector = () => {
   const ready = useTenantStore((state) => state.ready);
   const tenantList = useTenantStore((state) => state.tenantList);
   const selectedTenant = useTenantStore(getSelectedTenant);
   const setSelectedTenantId = useTenantStore((state) => state.setSelectedTenantId);
+  const settingReady = useSettingStore((state) => state.ready);
   const navigate = useNavigate();
   const { refreshAll, refreshAllFull, isRefreshing } = useTenantDataRefresh();
+  const sortedTenants = useSortedTenants();
 
   useEffect(() => {
     if (ready) {
@@ -39,7 +43,7 @@ const TenantSelector = () => {
   }, [ready, refreshAll]);
 
   // Guard: don't render persisted data until store is ready
-  if (!ready) {
+  if (!ready || !settingReady) {
     return (
       <Frame>
         <FramePanel className="flex items-center justify-center p-8">
@@ -97,20 +101,11 @@ const TenantSelector = () => {
         </FramePanel>
       ) : (
         <>
-          {tenantList.map((tenant) => (
-            <FramePanel
-              key={tenant.id}
-              className={cn('w-full rounded-md p-2 transition-all hover:bg-zinc-50', {
-                'bg-zinc-100!': selectedTenant?.id === tenant.id,
-              })}
-              onClick={() => setSelectedTenantId(tenant.id)}
-            >
-              <TenantSelectCard
-                tenantId={tenant.id}
-                isSelected={selectedTenant?.id === tenant.id}
-              />
-            </FramePanel>
-          ))}
+          <SortableTenantList
+            tenants={sortedTenants}
+            selectedTenantId={selectedTenant?.id ?? null}
+            onSelectTenant={setSelectedTenantId}
+          />
           <FrameFooter className="p-2">
             <p className="text-muted-foreground text-xs">共 {tenantList.length} 个账号</p>
           </FrameFooter>
