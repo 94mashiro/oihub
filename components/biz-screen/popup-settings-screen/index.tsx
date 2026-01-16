@@ -51,6 +51,8 @@ const PopupSettingsScreen = () => {
   const setExperimentalFeature = useSettingStore((state) => state.setExperimentalFeature);
   const tenantSortConfig = useSettingStore((state) => state.tenantSortConfig);
   const setTenantSortConfig = useSettingStore((state) => state.setTenantSortConfig);
+  const badgeConfig = useSettingStore((state) => state.badgeConfig);
+  const setBadgeConfig = useSettingStore((state) => state.setBadgeConfig);
   const settingReady = useSettingStore((state) => state.ready);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState('');
@@ -151,6 +153,69 @@ const PopupSettingsScreen = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        </div>
+      </FramePanel>
+      <FramePanel className="rounded-md p-2">
+        <div>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium">图标余额徽章</span>
+          </div>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            在扩展图标上显示所选账号的余额
+          </p>
+          <div className="mt-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <span className="text-foreground text-xs font-medium">启用徽章</span>
+              </div>
+              <Switch
+                checked={badgeConfig.enabled}
+                onCheckedChange={(checked) => {
+                  setBadgeConfig({
+                    ...badgeConfig,
+                    enabled: checked,
+                  });
+                }}
+              />
+            </div>
+            {badgeConfig.enabled && (
+              <div className="mt-3">
+                {tenantList.length === 0 ? (
+                  <p className="text-muted-foreground text-xs">暂无账号，请先添加账号</p>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-xs">选择账号</span>
+                    <Select
+                      value={badgeConfig.tenantId || ''}
+                      onValueChange={(value) => {
+                        setBadgeConfig({
+                          ...badgeConfig,
+                          tenantId: value || null,
+                        });
+                      }}
+                    >
+                      <SelectTrigger size="sm" className="w-40 text-sm">
+                        <SelectValue>
+                          {(value: string) => {
+                            if (!value) return '选择账号';
+                            const tenant = tenantList.find((t) => t.id === value);
+                            return tenant?.name || '选择账号';
+                          }}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tenantList.map((tenant) => (
+                          <SelectItem key={tenant.id} value={tenant.id} className="text-sm">
+                            {tenant.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </FramePanel>

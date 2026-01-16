@@ -16,12 +16,19 @@ export interface ExperimentalFeaturesConfig {
   tokenExport: boolean;
 }
 
+// Badge configuration
+export interface BadgeConfig {
+  enabled: boolean;
+  tenantId: TenantId | null;
+}
+
 // Define persisted data structure
 type SettingPersistedState = {
   dailyUsageAlert: Record<TenantId, DailyUsageAlertConfig>;
   alertedToday: Record<TenantId, string>; // value is date string like "2025-12-12"
   experimentalFeatures: ExperimentalFeaturesConfig;
   tenantSortConfig: SortConfig;
+  badgeConfig: BadgeConfig;
 };
 
 // Define complete store state
@@ -31,6 +38,7 @@ export type SettingStoreState = {
   alertedToday: Record<TenantId, string>;
   experimentalFeatures: ExperimentalFeaturesConfig;
   tenantSortConfig: SortConfig;
+  badgeConfig: BadgeConfig;
 
   // Runtime fields
   ready: boolean;
@@ -46,6 +54,7 @@ export type SettingStoreState = {
     value: ExperimentalFeaturesConfig[K],
   ) => Promise<void>;
   setTenantSortConfig: (config: SortConfig) => Promise<void>;
+  setBadgeConfig: (config: BadgeConfig) => Promise<void>;
 
   // Internal methods
   hydrate: () => Promise<void>;
@@ -64,6 +73,7 @@ const settingStorageItem = storage.defineItem<SettingPersistedState>('local:sett
     alertedToday: {},
     experimentalFeatures: { tokenExport: false },
     tenantSortConfig: { field: SortField.MANUAL, direction: SortDirection.ASC },
+    badgeConfig: { enabled: false, tenantId: null },
   },
 });
 
@@ -71,12 +81,12 @@ const settingStorageItem = storage.defineItem<SettingPersistedState>('local:sett
 export const settingStore = createStore<
   SettingStoreState,
   SettingPersistedState,
-  'dailyUsageAlert' | 'alertedToday' | 'experimentalFeatures' | 'tenantSortConfig'
+  'dailyUsageAlert' | 'alertedToday' | 'experimentalFeatures' | 'tenantSortConfig' | 'badgeConfig'
 >({
   storageItem: settingStorageItem,
 
   persistConfig: {
-    keys: ['dailyUsageAlert', 'alertedToday', 'experimentalFeatures', 'tenantSortConfig'],
+    keys: ['dailyUsageAlert', 'alertedToday', 'experimentalFeatures', 'tenantSortConfig', 'badgeConfig'],
   },
 
   createState: (set, get, persist) => ({
@@ -86,6 +96,7 @@ export const settingStore = createStore<
     alertedToday: {},
     experimentalFeatures: { tokenExport: false },
     tenantSortConfig: { field: SortField.MANUAL, direction: SortDirection.ASC },
+    badgeConfig: { enabled: false, tenantId: null },
 
     setDailyUsageAlert: async (tenantId, config) => {
       set((state) => {
@@ -131,6 +142,13 @@ export const settingStore = createStore<
     setTenantSortConfig: async (config) => {
       set((state) => {
         state.tenantSortConfig = config;
+      });
+      await persist({});
+    },
+
+    setBadgeConfig: async (config) => {
+      set((state) => {
+        state.badgeConfig = config;
       });
       await persist({});
     },
