@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useTenantInfoStore } from '@/lib/state/tenant-info-store';
-import { useSettingStore } from '@/lib/state/setting-store';
+import { useSettingStore, type BadgeDisplayType } from '@/lib/state/setting-store';
 import { quotaToCurrency, currencyToQuota } from '@/lib/utils/quota-converter';
 import { SortField, SortDirection } from '@/types/sort';
 import type { Tenant } from '@/types/tenant';
@@ -37,8 +37,18 @@ const SORT_OPTIONS = [
 ] as const;
 
 const SORT_OPTIONS_MAP = Object.fromEntries(
-  SORT_OPTIONS.map((opt) => [opt.value, opt.label])
+  SORT_OPTIONS.map((opt) => [opt.value, opt.label]),
 ) as Record<string, string>;
+
+const BADGE_DISPLAY_OPTIONS: { value: BadgeDisplayType; label: string }[] = [
+  { value: 'balance', label: '余额' },
+  { value: 'daily', label: '今日消耗' },
+  { value: 'historical', label: '历史消耗' },
+];
+
+const BADGE_DISPLAY_MAP = Object.fromEntries(
+  BADGE_DISPLAY_OPTIONS.map((opt) => [opt.value, opt.label]),
+) as Record<BadgeDisplayType, string>;
 
 const PopupSettingsScreen = () => {
   const navigate = useNavigate();
@@ -141,9 +151,7 @@ const PopupSettingsScreen = () => {
               }}
             >
               <SelectTrigger size="sm" className="w-40 text-sm">
-                <SelectValue>
-                  {(value: string) => SORT_OPTIONS_MAP[value]}
-                </SelectValue>
+                <SelectValue>{(value: string) => SORT_OPTIONS_MAP[value]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {SORT_OPTIONS.map((opt) => (
@@ -161,9 +169,7 @@ const PopupSettingsScreen = () => {
           <div className="flex items-center gap-1">
             <span className="text-sm font-medium">图标余额徽章</span>
           </div>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            在扩展图标上显示所选账号的余额
-          </p>
+          <p className="text-muted-foreground mt-0.5 text-xs">在扩展图标上显示账号数据</p>
           <div className="mt-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -180,7 +186,32 @@ const PopupSettingsScreen = () => {
               />
             </div>
             {badgeConfig.enabled && (
-              <div className="mt-3">
+              <div className="mt-3 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground text-xs">显示内容</span>
+                  <Select
+                    value={badgeConfig.displayType}
+                    onValueChange={(value) => {
+                      setBadgeConfig({
+                        ...badgeConfig,
+                        displayType: value as BadgeDisplayType,
+                      });
+                    }}
+                  >
+                    <SelectTrigger size="sm" className="w-32 text-sm">
+                      <SelectValue>
+                        {(value: string) => BADGE_DISPLAY_MAP[value as BadgeDisplayType]}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BADGE_DISPLAY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 {tenantList.length === 0 ? (
                   <p className="text-muted-foreground text-xs">暂无账号，请先添加账号</p>
                 ) : (
@@ -199,12 +230,16 @@ const PopupSettingsScreen = () => {
                         <SelectValue>
                           {(value: string) => {
                             if (!value) return '选择账号';
+                            if (value === 'all') return '所有账号总和';
                             const tenant = tenantList.find((t) => t.id === value);
                             return tenant?.name || '选择账号';
                           }}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="all" className="text-sm">
+                          所有账号总和
+                        </SelectItem>
                         {tenantList.map((tenant) => (
                           <SelectItem key={tenant.id} value={tenant.id} className="text-sm">
                             {tenant.name}
@@ -230,7 +265,7 @@ const PopupSettingsScreen = () => {
           {tenantList.length === 0 ? (
             <p className="text-muted-foreground mt-3 text-xs">暂无账号，请先添加账号</p>
           ) : (
-            <div className="divide-border/50 mt-3 divide-y">
+            <div className="mt-3 flex flex-col gap-2">
               {tenantList.map((tenant) => (
                 <TenantAlertConfig
                   key={tenant.id}
@@ -249,8 +284,8 @@ const PopupSettingsScreen = () => {
             <span className="text-sm font-medium">实验性功能</span>
           </div>
           <p className="text-muted-foreground mt-0.5 text-xs">这些功能仍在开发中，可能不稳定</p>
-          <div className="divide-border/50 mt-3 divide-y">
-            <div className="py-2.5 first:pt-0 last:pb-0">
+          <div className="mt-3 flex flex-col gap-2">
+            <div>
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <span className="text-foreground text-xs font-medium">一键导出</span>
@@ -264,6 +299,22 @@ const PopupSettingsScreen = () => {
                 />
               </div>
             </div>
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <span className="text-foreground text-xs font-medium">更多平台</span>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    启用更多平台类型，稳定性和功能完整性无保证
+                  </p>
+                </div>
+                <Switch
+                  checked={experimentalFeatures.experimentalPlatforms}
+                  onCheckedChange={(checked) =>
+                    setExperimentalFeature('experimentalPlatforms', checked)
+                  }
+                />
+              </div>
+            </div>
           </div>
         </div>
       </FramePanel>
@@ -272,11 +323,14 @@ const PopupSettingsScreen = () => {
           <div className="flex items-center gap-1">
             <span className="text-sm font-medium">配置导入导出</span>
           </div>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            导出或导入账号配置数据
-          </p>
+          <p className="text-muted-foreground mt-0.5 text-xs">导出或导入账号配置数据</p>
           <div className="mt-3 flex gap-2">
-            <Button size="sm" variant="outline" onClick={handleExport} disabled={tenantList.length === 0}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleExport}
+              disabled={tenantList.length === 0}
+            >
               <Download className="mr-1 h-3.5 w-3.5" />
               导出
             </Button>
@@ -358,7 +412,7 @@ const TenantAlertConfig = ({ tenant, config, onConfigChange }: TenantAlertConfig
   const displayType = tenantInfo?.displayFormat || 'CNY';
 
   return (
-    <div className="py-2.5 first:pt-0 last:pb-0">
+    <div>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <span className="text-foreground truncate text-xs font-medium">{tenant.name}</span>

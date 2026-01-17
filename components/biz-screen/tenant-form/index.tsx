@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { PlatformType } from '@/lib/api/adapters';
 import { DEFAULT_PLATFORM_TYPE } from '@/lib/constants/tenants';
+import { useSettingStore } from '@/lib/state/setting-store';
 import { Form } from '@/components/ui/form';
 import { Field, FieldControl, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -90,6 +91,16 @@ export const TenantForm = ({
     platformType: initialData?.platformType ?? DEFAULT_PLATFORM_TYPE,
   });
 
+  const experimentalPlatforms = useSettingStore((state) => state.experimentalFeatures.experimentalPlatforms);
+
+  const visiblePresets = experimentalPlatforms
+    ? PROVIDER_PRESETS
+    : PROVIDER_PRESETS.filter(p => p.platformType === PlatformType.NewAPI);
+
+  const visiblePlatformOptions = experimentalPlatforms
+    ? PLATFORM_TYPE_OPTIONS
+    : PLATFORM_TYPE_OPTIONS.filter(o => o.value === PlatformType.NewAPI);
+
   const applyPreset = (preset: (typeof PROVIDER_PRESETS)[number]) => {
     setFormData((prev) => ({
       ...prev,
@@ -126,7 +137,7 @@ export const TenantForm = ({
           <div className="flex flex-col gap-1.5">
             <span className="text-muted-foreground text-xs">快速选择</span>
             <div className="flex flex-wrap gap-1.5">
-              {PROVIDER_PRESETS.map((preset) => (
+              {visiblePresets.map((preset) => (
                 <PresetButton
                   key={preset.id}
                   type="button"
@@ -176,13 +187,13 @@ export const TenantForm = ({
               setFormData((prev) => ({ ...prev, platformType: value as PlatformType }))
             }
             disabled={isSubmitting}
-            items={PLATFORM_TYPE_OPTIONS}
+            items={visiblePlatformOptions}
           >
             <SelectTrigger id="tenant-platformType" size="sm" className="w-full text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectPopup>
-              {PLATFORM_TYPE_OPTIONS.map((option) => (
+              {visiblePlatformOptions.map((option) => (
                 <SelectItem className="text-sm" key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

@@ -1,9 +1,11 @@
 import { tenantStore } from '@/lib/state/tenant-store';
 import { tenantInfoStore } from '@/lib/state/tenant-info-store';
 import { balanceStore } from '@/lib/state/balance-store';
+import { costStore } from '@/lib/state/cost-store';
 import { settingStore } from '@/lib/state/setting-store';
-import { createBalanceOrchestrator, createTenantInfoOrchestrator } from '@/lib/api/orchestrators';
+import { createBalanceOrchestrator, createTenantInfoOrchestrator, createCostOrchestrator } from '@/lib/api/orchestrators';
 import { messageRouter, type BackgroundModule } from '@/lib/background';
+import { CostPeriod } from '@/types/api';
 import type { TenantInfo } from '@/types/tenant';
 
 const ALARM_NAME = 'poll-badge-balance';
@@ -16,7 +18,8 @@ async function waitForStoresReady(timeoutMs = 5000): Promise<boolean> {
     if (
       tenantStore.getState().ready &&
       settingStore.getState().ready &&
-      balanceStore.getState().ready
+      balanceStore.getState().ready &&
+      costStore.getState().ready
     ) {
       console.log('[badge] Stores ready after', Date.now() - start, 'ms');
       return true;
@@ -73,52 +76,90 @@ async function updateBadge(): Promise<void> {
   }
 
   const tenantId = badgeConfig.tenantId;
-  const tenant = tenantStore.getState().tenantList.find((t) => t.id === tenantId);
+  const displayType = badgeConfig.displayType;
+  const allTenants = tenantStore.getState().tenantList;
 
-  if (!tenant) {
-    console.log('[badge] Tenant not found, clearing badge');
+  // Determine which tenants to process
+  const targetTenants = tenantId === 'all' ? allTenants : allTenants.filter((t) => t.id === tenantId);
+
+  if (targetTenants.length === 0) {
+    console.log('[badge] No tenants found, clearing badge');
     await clearBadge();
     return;
   }
 
-  // Try to get cached balance first
-  let balance = balanceStore.getState().getBalance(tenantId);
-  let tenantInfo = tenantInfoStore.getState().getTenantInfo(tenantId);
+  let totalValue = 0;
+  let hasData = false;
 
-  // If no cached data, fetch from API
-  if (!balance || !tenantInfo) {
-    try {
-      const balanceOrchestrator = createBalanceOrchestrator(tenant);
-      const infoOrchestrator = createTenantInfoOrchestrator(tenant);
+  for (const tenant of targetTenants) {
+    let balance = balanceStore.getState().getBalance(tenant.id);
+    let tenantInfo = tenantInfoStore.getState().getTenantInfo(tenant.id);
+    let costs = costStore.getState().getCost(tenant.id, CostPeriod.DAY_1);
 
-      const [balanceResult, infoResult] = await Promise.allSettled([
-        balanceOrchestrator.refresh(),
-        infoOrchestrator.refresh(),
-      ]);
+    // If no cached data, fetch from API
+    if (!balance || !tenantInfo || (displayType === 'daily' && !costs)) {
+      try {
+        const balanceOrchestrator = createBalanceOrchestrator(tenant);
+        const infoOrchestrator = createTenantInfoOrchestrator(tenant);
 
-      if (balanceResult.status === 'fulfilled') {
-        balance = balanceResult.value;
+        const promises: Promise<any>[] = [
+          balanceOrchestrator.refresh(),
+          infoOrchestrator.refresh(),
+        ];
+
+        if (displayType === 'daily') {
+          const costOrchestrator = createCostOrchestrator(tenant, CostPeriod.DAY_1);
+          promises.push(costOrchestrator.refresh());
+        }
+
+        const results = await Promise.allSettled(promises);
+
+        if (results[0].status === 'fulfilled') {
+          balance = results[0].value;
+        }
+        if (results[1].status === 'fulfilled') {
+          tenantInfo = results[1].value;
+        }
+        if (displayType === 'daily' && results[2]?.status === 'fulfilled') {
+          costs = results[2].value;
+        }
+      } catch (error) {
+        console.error('[badge] Failed to fetch data for tenant', tenant.name, error);
+        continue;
       }
-      if (infoResult.status === 'fulfilled') {
-        tenantInfo = infoResult.value;
-      }
-    } catch (error) {
-      console.error('[badge] Failed to fetch balance:', error);
     }
+
+    if (!balance || !tenantInfo) {
+      console.log('[badge] No balance or tenant info for tenant', tenant.name);
+      continue;
+    }
+
+    // Calculate value based on display type
+    let value = 0;
+    if (displayType === 'balance') {
+      value = quotaToDisplayValue(balance.remainingCredit, tenantInfo);
+    } else if (displayType === 'historical') {
+      value = quotaToDisplayValue(balance.consumedCredit, tenantInfo);
+    } else if (displayType === 'daily') {
+      if (costs && costs.length > 0) {
+        const totalCost = costs.reduce((sum, cost) => sum + cost.creditCost, 0);
+        value = quotaToDisplayValue(totalCost, tenantInfo);
+      }
+    }
+
+    totalValue += value;
+    hasData = true;
   }
 
-  if (!balance || !tenantInfo) {
-    console.log('[badge] No balance or tenant info available');
+  if (!hasData) {
+    console.log('[badge] No data available');
     await clearBadge();
     return;
   }
 
-  // Convert balance to display value using the same logic as tenant card
-  // This uses: quota / creditUnit (same as quotaToPrice in usage-display)
-  const displayBalance = quotaToDisplayValue(balance.remainingCredit, tenantInfo);
-  const badgeText = formatBadgeText(displayBalance);
+  const badgeText = formatBadgeText(totalValue);
 
-  console.log('[badge] Setting badge:', badgeText, 'for tenant', tenant.name);
+  console.log('[badge] Setting badge:', badgeText, 'type:', displayType, 'tenants:', targetTenants.length);
 
   try {
     await browser.action.setBadgeText({ text: badgeText });
@@ -185,10 +226,22 @@ export const badgeModule: BackgroundModule = {
       },
     );
 
+    const unwatchCost = costStore.subscribe(
+      (state) => state.costMap,
+      () => {
+        const { badgeConfig } = settingStore.getState();
+        if (badgeConfig.enabled && badgeConfig.tenantId && badgeConfig.displayType === 'daily') {
+          console.log('[badge] Cost changed, updating badge');
+          void updateBadge();
+        }
+      },
+    );
+
     return () => {
       browser.alarms.onAlarm.removeListener(onAlarm);
       unwatch();
       unwatchBalance();
+      unwatchCost();
     };
   },
 };

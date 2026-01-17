@@ -14,12 +14,17 @@ export interface DailyUsageAlertConfig {
 // Experimental features configuration
 export interface ExperimentalFeaturesConfig {
   tokenExport: boolean;
+  experimentalPlatforms: boolean;
 }
+
+// Badge display type
+export type BadgeDisplayType = 'balance' | 'daily' | 'historical';
 
 // Badge configuration
 export interface BadgeConfig {
   enabled: boolean;
-  tenantId: TenantId | null;
+  tenantId: TenantId | 'all' | null;
+  displayType: BadgeDisplayType;
 }
 
 // Define persisted data structure
@@ -71,9 +76,9 @@ const settingStorageItem = storage.defineItem<SettingPersistedState>('local:sett
   fallback: {
     dailyUsageAlert: {},
     alertedToday: {},
-    experimentalFeatures: { tokenExport: false },
+    experimentalFeatures: { tokenExport: false, experimentalPlatforms: false },
     tenantSortConfig: { field: SortField.MANUAL, direction: SortDirection.ASC },
-    badgeConfig: { enabled: false, tenantId: null },
+    badgeConfig: { enabled: false, tenantId: 'all', displayType: 'balance' },
   },
 });
 
@@ -94,9 +99,9 @@ export const settingStore = createStore<
     ready: false,
     dailyUsageAlert: {},
     alertedToday: {},
-    experimentalFeatures: { tokenExport: false },
+    experimentalFeatures: { tokenExport: false, experimentalPlatforms: false },
     tenantSortConfig: { field: SortField.MANUAL, direction: SortDirection.ASC },
-    badgeConfig: { enabled: false, tenantId: null },
+    badgeConfig: { enabled: false, tenantId: 'all', displayType: 'balance' },
 
     setDailyUsageAlert: async (tenantId, config) => {
       set((state) => {
