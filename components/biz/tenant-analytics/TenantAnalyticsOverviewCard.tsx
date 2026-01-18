@@ -10,7 +10,15 @@ import type { NewAPIUsagePoint, NewAPIUsageSummary } from '@/types/tenant-analyt
 import { ChartContainer } from './ChartContainer';
 import { ChartTooltip } from './ChartTooltip';
 import { formatChartTimestamp, formatCompactNumber } from '@/lib/utils/tenant-analytics-utils';
-import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from 'recharts';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  Tooltip,
+  CartesianGrid,
+  ReferenceLine,
+} from 'recharts';
 
 export interface TenantAnalyticsOverviewCardProps {
   /** Time-series data points */
@@ -44,6 +52,14 @@ export const TenantAnalyticsOverviewCard = memo(
         })),
       [series],
     );
+
+    // Calculate average request count for reference line (excluding zero values)
+    const averageRequests = useMemo(() => {
+      const nonZeroData = chartData.filter((point) => point.requests > 0);
+      if (nonZeroData.length === 0) return 0;
+      const sum = nonZeroData.reduce((acc, point) => acc + point.requests, 0);
+      return Math.round(sum / nonZeroData.length);
+    }, [chartData]);
 
     // Format tooltip label (timestamp) - memoized callback
     const formatTooltipLabel = useCallback(
@@ -96,6 +112,20 @@ export const TenantAnalyticsOverviewCard = memo(
 
             {/* Tooltip with memoized content */}
             <Tooltip content={tooltipContent} />
+
+            {/* Average reference line */}
+            <ReferenceLine
+              y={averageRequests}
+              stroke={CHART_COLORS.muted}
+              strokeWidth={1.5}
+              strokeDasharray="8 4"
+              label={{
+                value: `Avg: ${formatCompactNumber(averageRequests)}`,
+                position: 'insideTopRight',
+                fontSize: 10,
+                fill: CHART_COLORS.muted,
+              }}
+            />
 
             {/* Area - request count with gradient fill */}
             <Area

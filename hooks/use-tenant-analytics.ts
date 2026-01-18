@@ -82,6 +82,14 @@ export function useTenantAnalytics(tenant: Tenant, initialPeriod?: CostPeriod) {
     // Get current store state for comparison (avoid stale closure)
     const currentState = tenantAnalyticsStore.getState();
 
+    // Initialize period if not set (tenant change or first visit)
+    if (tenantChanged || !currentState.period) {
+      const periodToUse = currentState.period || preferences.defaultPeriod;
+      void currentState.setPeriod(periodToUse);
+      // Early return to let next render cycle handle the fetch with updated period
+      return;
+    }
+
     // Skip if already fetched for this exact tenant+period combination
     const needsRefresh =
       !hasFetchedRef.current ||
@@ -101,7 +109,7 @@ export function useTenantAnalytics(tenant: Tenant, initialPeriod?: CostPeriod) {
       void orchestratorRef.current.refresh(currentPeriod);
     }
     hasFetchedRef.current = true;
-  }, [tenant.id, currentPeriod]);
+  }, [tenant.id, currentPeriod, preferences.defaultPeriod]);
 
   // Expose refresh function for manual refresh - memoized
   const refresh = useCallback(async () => {
