@@ -42,3 +42,12 @@ Before introducing, upgrading, or otherwise working with any third-party depende
 
 ## Security & Configuration Tips
 Store secrets in local `.env` files loaded by WXT; never hard-code API keys inside `entrypoints`. Review `public/manifest.json` before release to ensure permissions are minimal, and double-check external URLs referenced from `content.ts`.
+
+## Active Technologies
+- TypeScript 5.9.2, React 19.1.1 + WXT 0.20.6, React Router 7.10.1, Zustand 5.0.9, coss UI components, Tailwind CSS v4, Recharts (planned) (001-tenant-analytics)
+- WXT storage (`wxt/utils/storage`) via `createStore` with local/session scopes (001-tenant-analytics)
+- TypeScript 5.9.2, React 19.1.1 + WXT 0.20.6, React Router 7.10.1, Zustand 5.0.9, coss UI components, Tailwind CSS v4, Recharts, date-fns (001-tenant-analytics)
+- WXT storage via `createStore` for existing global stores; analytics data kept in view-local state (no new persistent store) (001-tenant-analytics)
+
+## Recent Changes
+- 001-tenant-analytics: Added TypeScript 5.9.2, React 19.1.1 + WXT 0.20.6, React Router 7.10.1, Zustand 5.0.9, coss UI components, Tailwind CSS v4, Recharts (planned)

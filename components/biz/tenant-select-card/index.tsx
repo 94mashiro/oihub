@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMemo } from 'react';
 import { UsageDisplay } from '@/components/ui/usage-display';
 import { useTenantStore } from '@/lib/state/tenant-store';
 import { useTenantInfoStore } from '@/lib/state/tenant-info-store';
@@ -6,7 +7,7 @@ import { useBalanceStore } from '@/lib/state/balance-store';
 import { useCostStore } from '@/lib/state/cost-store';
 import { CostPeriod } from '@/types/api';
 import { Button } from '@/components/ui/button';
-import { EditIcon, ExternalLinkIcon, GripVertical, Trash } from 'lucide-react';
+import { EditIcon, ExternalLinkIcon, GripVertical, Trash, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GroupSeparator, Group } from '@/components/ui/group';
 import { Collapsible, CollapsiblePanel } from '@/components/ui/collapsible';
@@ -109,6 +110,15 @@ const TenantSelectCard: React.FC<Props> = ({
           onClick={() => navigate(`/tenant/edit/${tenantId}`)}
         >
           <EditIcon className="size-3" />
+        </Button>
+        <GroupSeparator />
+        <Button
+          size="icon"
+          variant="outline"
+          className="size-6"
+          onClick={() => navigate(`/analytics/${tenantId}`)}
+        >
+          <BarChart3 className="size-3" />
         </Button>
         <GroupSeparator />
         <AlertDialog>

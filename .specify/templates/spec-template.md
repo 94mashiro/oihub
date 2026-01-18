@@ -95,6 +95,17 @@
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
+### Non-Functional Requirements *(mandatory)*
+
+- **NFR-001**: System MUST provide equivalent behavior and UI in Chrome and Firefox;
+  any divergence MUST be documented.
+- **NFR-002**: UI MUST follow coss components and `docs/ui-design-rules.md`
+  (semantic tokens, spacing, accessibility).
+- **NFR-003**: Define performance budgets (latency, memory, bundle size) and how
+  they will be measured.
+- **NFR-004**: Provide a testing strategy including automated coverage and
+  cross-browser validation; if automation is not feasible, include a manual plan.
+
 ### Key Entities *(include if feature involves data)*
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]

@@ -31,7 +31,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] Cross-browser parity plan (Chrome and Firefox) with any documented gaps
+- [ ] UX consistency plan references coss components and `docs/ui-design-rules.md`
+- [ ] Architecture discipline confirmed (createStore, TenantAPIService, naming rules)
+- [ ] Testing strategy includes automated tests and cross-browser validation
+- [ ] Performance budgets and measurement plan defined
 
 ## Project Structure
 

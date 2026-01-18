@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: NewAPI Tenant Analytics Endpoints
+  version: 1.0.0
+  description: >
+    NewAPI endpoints consumed by the extension to render the tenant analytics
+    dashboard. Base URL is the tenant API host.
+servers:
+  - url: "{tenantBaseUrl}"
+    variables:
+      tenantBaseUrl:
+        default: "https://api.example.com"
+tags:
+  - name: NewAPI
+
+paths:
+  /api/user/self:
+    get:
+      tags: [NewAPI]
+      summary: Fetch NewAPI account summary (balance + request count)
+      responses:
+        "200":
+          description: Account summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewAPIBalanceResponse"
+      security:
+        - bearerAuth: []
+          newApiUserHeader: []
+
+  /api/data/self:
+    get:
+      tags: [NewAPI]
+      summary: Fetch NewAPI usage records for a time range
+      parameters:
+        - in: query
+          name: start_timestamp
+          required: true
+          schema:
+            type: integer
+            description: Unix seconds
+        - in: query
+          name: end_timestamp
+          required: true
+          schema:
+            type: integer
+            description: Unix seconds
+        - in: query
+          name: default_time
+          required: false
+          schema:
+            type: string
+            enum: [hour]
+      responses:
+        "200":
+          description: Array of usage records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewAPICostData"
+      security:
+        - bearerAuth: []
+          newApiUserHeader: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    newApiUserHeader:
+      type: apiKey
+      in: header
+      name: New-Api-User
+
+  schemas:
+    NewAPIBalanceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        display_name:
+          type: string
+        group:
+          type: string
+        quota:
+          type: number
+        used_quota:
+          type: number
+        request_count:
+          type: integer
+      required:
+        - id
+        - username
+        - quota
+        - used_quota
+        - request_count
+
+    NewAPICostData:
+      type: object
+      properties:
+        count:
+          type: integer
+        created_at:
+          type: integer
+          description: Unix seconds
+        id:
+          type: integer
+        model_name:
+          type: string
+        quota:
+          type: number
+        token_used:
+          type: integer
+        user_id:
+          type: integer
+        username:
+          type: string
+      required:
+        - count
+        - created_at
+        - id
+        - model_name
+        - quota
+        - token_used
