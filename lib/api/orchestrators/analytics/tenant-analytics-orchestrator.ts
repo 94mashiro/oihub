@@ -63,7 +63,7 @@ export class TenantAnalyticsOrchestrator {
 
       // Normalize into view models
       const summary = normalizeSummary(this.tenant.id, period, balance, costs, tenantInfo);
-      const series = normalizeSeries(costs);
+      const series = normalizeSeries(costs, period);
       const models = normalizeModelBreakdown(costs);
       const endpoints = normalizeEndpointBreakdown(costs);
 

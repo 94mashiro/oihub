@@ -10,7 +10,6 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Frame,
-  FrameDescription,
   FrameHeader,
   FramePanel,
   FrameTitle,
@@ -82,7 +81,6 @@ export function PopupTenantAnalyticsScreen() {
             </Button>
             <FrameTitle>{tenant.name} - Analytics</FrameTitle>
           </div>
-          <FrameDescription>Usage analytics for {tenant.name}</FrameDescription>
         </FrameHeader>
         <FramePanel className="flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
@@ -99,21 +97,19 @@ export function PopupTenantAnalyticsScreen() {
     return (
       <Frame>
         <FrameHeader>
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={handleBack} aria-label="Back">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <FrameTitle>{tenant.name} - Analytics</FrameTitle>
-            </div>
-            <TenantAnalyticsPeriodSelect
-              period={analytics.period}
-              onPeriodChange={analytics.changePeriod}
-            />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleBack} aria-label="Back">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <FrameTitle>{tenant.name} - Analytics</FrameTitle>
           </div>
-          <FrameDescription>Usage analytics for {tenant.name}</FrameDescription>
         </FrameHeader>
-        <FramePanel className="flex items-center justify-center">
+        <FramePanel className="flex flex-col gap-3 p-3">
+          <TenantAnalyticsPeriodSelect
+            period={analytics.period}
+            onPeriodChange={analytics.changePeriod}
+          />
+          <div className="flex-1 flex items-center justify-center">
           <Empty>
             <EmptyHeader>
               <EmptyTitle>Failed to load analytics</EmptyTitle>
@@ -125,6 +121,7 @@ export function PopupTenantAnalyticsScreen() {
               Retry
             </Button>
           </Empty>
+          </div>
         </FramePanel>
       </Frame>
     );
@@ -135,21 +132,19 @@ export function PopupTenantAnalyticsScreen() {
     return (
       <Frame>
         <FrameHeader>
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={handleBack} aria-label="Back">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <FrameTitle>{tenant.name} - Analytics</FrameTitle>
-            </div>
-            <TenantAnalyticsPeriodSelect
-              period={analytics.period}
-              onPeriodChange={analytics.changePeriod}
-            />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleBack} aria-label="Back">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <FrameTitle>{tenant.name} - Analytics</FrameTitle>
           </div>
-          <FrameDescription>Usage analytics for {tenant.name}</FrameDescription>
         </FrameHeader>
-        <FramePanel className="flex items-center justify-center">
+        <FramePanel className="flex flex-col gap-3 p-3">
+          <TenantAnalyticsPeriodSelect
+            period={analytics.period}
+            onPeriodChange={analytics.changePeriod}
+          />
+          <div className="flex-1 flex items-center justify-center">
           <Empty>
             <EmptyHeader>
               <EmptyTitle>No analytics data</EmptyTitle>
@@ -161,6 +156,7 @@ export function PopupTenantAnalyticsScreen() {
               Refresh
             </Button>
           </Empty>
+          </div>
         </FramePanel>
       </Frame>
     );
@@ -169,22 +165,21 @@ export function PopupTenantAnalyticsScreen() {
   // Ready state - show analytics dashboard
   return (
     <Frame>
-      <FrameHeader>
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={handleBack} aria-label="Back">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <FrameTitle>{tenant.name} - Analytics</FrameTitle>
-          </div>
-          <TenantAnalyticsPeriodSelect
-            period={analytics.period}
-            onPeriodChange={analytics.changePeriod}
-          />
+      <FrameHeader className="p-2">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={handleBack} aria-label="Back">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <FrameTitle>{tenant.name} - Analytics</FrameTitle>
         </div>
-        <FrameDescription>Usage analytics for {tenant.name}</FrameDescription>
       </FrameHeader>
-      <FramePanel className="flex flex-col gap-4 overflow-y-auto relative">
+      <FramePanel className="flex flex-col gap-3 p-3 overflow-y-auto relative">
+        {/* Period selector */}
+        <TenantAnalyticsPeriodSelect
+          period={analytics.period}
+          onPeriodChange={analytics.changePeriod}
+        />
+
         {/* Summary metrics cards */}
         <TenantAnalyticsSummaryCards summary={analytics.summary} />
 

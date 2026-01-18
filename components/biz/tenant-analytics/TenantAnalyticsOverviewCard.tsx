@@ -2,15 +2,15 @@
  * Tenant Analytics Overview Card
  *
  * Display overview area chart showing usage trends over time.
- * Uses Recharts with semantic colors and no animations.
+ * Uses Recharts with semantic colors and optimized animations.
  */
 
-import { useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import type { NewAPIUsagePoint, NewAPIUsageSummary } from '@/types/tenant-analytics';
 import { ChartContainer } from './ChartContainer';
 import { ChartTooltip } from './ChartTooltip';
 import { formatChartTimestamp, formatCompactNumber } from '@/lib/utils/tenant-analytics-utils';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from 'recharts';
 
 export interface TenantAnalyticsOverviewCardProps {
   /** Time-series data points */
@@ -20,107 +20,103 @@ export interface TenantAnalyticsOverviewCardProps {
   summary: NewAPIUsageSummary;
 }
 
+// Chart colors - defined outside component to avoid recreating on each render
+const CHART_COLORS = {
+  primary: '#a1a1aa', // zinc-400 (fill and stroke same color)
+  muted: '#71717a', // zinc-500
+} as const;
+
 /**
  * Overview chart card component.
  * Displays usage trends as an area chart with semantic styling.
- * No animations for performance on large datasets.
+ * Optimized animations for smooth data transitions.
  */
-export function TenantAnalyticsOverviewCard({
-  series,
-  summary,
-}: TenantAnalyticsOverviewCardProps) {
-  // Get chart colors from CSS variables
-  const chartColors = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return {
-        primary: 'hsl(var(--primary))',
-        primaryForeground: 'hsl(var(--primary-foreground))',
-        muted: 'hsl(var(--muted-foreground))',
-      };
-    }
+export const TenantAnalyticsOverviewCard = memo(
+  function TenantAnalyticsOverviewCard({ series, summary }: TenantAnalyticsOverviewCardProps) {
+    // Format chart data for Recharts
+    const chartData = useMemo(
+      () =>
+        series.map((point) => ({
+          timestamp: point.timestamp,
+          requests: point.requestCount,
+          cost: point.cost,
+          tokens: point.tokens,
+        })),
+      [series],
+    );
 
-    const styles = getComputedStyle(document.documentElement);
-    return {
-      primary: `hsl(${styles.getPropertyValue('--primary')})`,
-      primaryForeground: `hsl(${styles.getPropertyValue('--primary-foreground')})`,
-      muted: `hsl(${styles.getPropertyValue('--muted-foreground')})`,
-    };
-  }, []);
+    // Format tooltip label (timestamp) - memoized callback
+    const formatTooltipLabel = useCallback(
+      (label: string | number) => {
+        const timestamp = typeof label === 'number' ? label : Number(label);
+        return formatChartTimestamp(timestamp, summary.period);
+      },
+      [summary.period],
+    );
 
-  // Format chart data for Recharts
-  const chartData = useMemo(
-    () =>
-      series.map((point) => ({
-        timestamp: point.timestamp,
-        requests: point.requestCount,
-        cost: point.cost,
-        tokens: point.tokens,
-      })),
-    [series],
-  );
+    // Format tooltip values - memoized callback
+    const formatTooltipValue = useCallback((value: number, name?: string) => {
+      if (name === 'requests') return `${formatCompactNumber(value)} requests`;
+      if (name === 'cost') return `${value.toFixed(2)} credits`;
+      if (name === 'tokens') return `${formatCompactNumber(value)} tokens`;
+      return formatCompactNumber(value);
+    }, []);
 
-  // Format tooltip label (timestamp)
-  const formatTooltipLabel = (label: string | number) => {
-    const timestamp = typeof label === 'number' ? label : Number(label);
-    return formatChartTimestamp(timestamp, summary.period);
-  };
+    // Memoize tooltip content to prevent recreation
+    const tooltipContent = useMemo(
+      () => (
+        <ChartTooltip labelFormatter={formatTooltipLabel} valueFormatter={formatTooltipValue} />
+      ),
+      [formatTooltipLabel, formatTooltipValue],
+    );
 
-  // Format Y-axis labels with compact numbers
-  const formatYAxis = (value: number) => {
-    return formatCompactNumber(value);
-  };
+    return (
+      <ChartContainer title="Usage Overview" description="Request volume over time">
+        <ResponsiveContainer width="100%" height={140}>
+          <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+            {/* Gradient definitions for area fill - large opacity span */}
+            <defs>
+              <linearGradient id="overviewGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.5} />
+                <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
 
-  // Format tooltip values
-  const formatTooltipValue = (value: number, name?: string) => {
-    if (name === 'requests') return `${formatCompactNumber(value)} requests`;
-    if (name === 'cost') return `${value.toFixed(2)} credits`;
-    if (name === 'tokens') return `${formatCompactNumber(value)} tokens`;
-    return formatCompactNumber(value);
-  };
+            {/* Grid with semantic border color */}
+            <CartesianGrid strokeDasharray="2 2" stroke={CHART_COLORS.muted} opacity={0.2} />
 
-  return (
-    <ChartContainer title="Usage Overview" description="Request volume over time">
-      <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          {/* Grid with semantic border color */}
-          <CartesianGrid strokeDasharray="3 3" stroke={chartColors.muted} opacity={0.3} />
+            {/* X Axis - timestamp */}
+            <XAxis
+              dataKey="timestamp"
+              tickFormatter={(value) => formatChartTimestamp(value, summary.period)}
+              stroke={CHART_COLORS.muted}
+              tick={{ fontSize: 10 }}
+              tickLine={false}
+            />
 
-          {/* X Axis - timestamp */}
-          <XAxis
-            dataKey="timestamp"
-            tickFormatter={(value) => formatChartTimestamp(value, summary.period)}
-            stroke={chartColors.muted}
-            tick={{ fontSize: 12 }}
-            tickLine={false}
-          />
+            {/* Tooltip with memoized content */}
+            <Tooltip content={tooltipContent} />
 
-          {/* Y Axis - request count */}
-          <YAxis
-            tickFormatter={formatYAxis}
-            stroke={chartColors.muted}
-            tick={{ fontSize: 12 }}
-            tickLine={false}
-            width={60}
-          />
-
-          {/* Tooltip with custom content */}
-          <Tooltip
-            content={<ChartTooltip labelFormatter={formatTooltipLabel} valueFormatter={formatTooltipValue} />}
-          />
-
-          {/* Area - request count (primary metric) */}
-          <Area
-            type="monotone"
-            dataKey="requests"
-            name="Requests"
-            stroke={chartColors.primary}
-            fill={chartColors.primary}
-            fillOpacity={0.2}
-            strokeWidth={2}
-            isAnimationActive={false} // Disable animation for performance
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </ChartContainer>
-  );
-}
+            {/* Area - request count with gradient fill */}
+            <Area
+              type="monotone"
+              dataKey="requests"
+              name="Requests"
+              stroke={CHART_COLORS.primary}
+              fill="url(#overviewGradient)"
+              fillOpacity={1}
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              isAnimationActive={true}
+              animationDuration={250}
+              animationBegin={0}
+              animationEasing="ease-out"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+    );
+  },
+  (prev, next) => prev.series === next.series && prev.summary === next.summary,
+);

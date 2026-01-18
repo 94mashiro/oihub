@@ -18,7 +18,11 @@ import type {
   NewAPICostData,
   NewAPITenantInfoResponse,
 } from '@/lib/api/types/platforms/newapi-response-types';
-import { getPeriodRange, capDataPoints } from '@/lib/utils/tenant-analytics-utils';
+import {
+  getPeriodRange,
+  capDataPoints,
+  getIntervalSeconds,
+} from '@/lib/utils/tenant-analytics-utils';
 
 /**
  * Normalize raw balance and costs into summary metrics
@@ -57,14 +61,23 @@ export function normalizeSummary(
 
 /**
  * Normalize raw costs into time-series points
- * Groups by timestamp and aggregates metrics
+ * Groups by timestamp and fills gaps with zero-value points
+ * Only fills gaps between the first and last data point (not the entire period)
  */
-export function normalizeSeries(costs: NewAPICostData[]): NewAPIUsagePoint[] {
+export function normalizeSeries(costs: NewAPICostData[], period: CostPeriod): NewAPIUsagePoint[] {
+  if (costs.length === 0) {
+    return [];
+  }
+
+  const interval = getIntervalSeconds(period);
+
   // Group costs by timestamp
   const grouped = new Map<number, NewAPIUsagePoint>();
 
   for (const cost of costs) {
-    const timestamp = cost.created_at;
+    // Round timestamp to interval boundary for consistent grouping
+    const rawTimestamp = cost.created_at;
+    const timestamp = Math.floor(rawTimestamp / interval) * interval;
     const existing = grouped.get(timestamp);
 
     if (existing) {
@@ -83,8 +96,28 @@ export function normalizeSeries(costs: NewAPICostData[]): NewAPIUsagePoint[] {
     }
   }
 
-  // Convert to array and sort by timestamp ascending
-  const series = Array.from(grouped.values()).sort((a, b) => a.timestamp - b.timestamp);
+  // Find the actual data range (first to last data point)
+  const timestamps = Array.from(grouped.keys()).sort((a, b) => a - b);
+  const dataStart = timestamps[0];
+  const dataEnd = timestamps[timestamps.length - 1];
+
+  // Generate continuous timeline only between first and last data point
+  const series: NewAPIUsagePoint[] = [];
+
+  for (let ts = dataStart; ts <= dataEnd; ts += interval) {
+    const existing = grouped.get(ts);
+    if (existing) {
+      series.push(existing);
+    } else {
+      // Fill gap with zero-value point
+      series.push({
+        timestamp: ts,
+        requestCount: 0,
+        cost: 0,
+        tokens: 0,
+      });
+    }
+  }
 
   // Cap to max chart points for performance
   return capDataPoints(series);

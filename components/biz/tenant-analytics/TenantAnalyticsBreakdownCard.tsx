@@ -5,7 +5,7 @@
  * Displays cost ranking with share percentages and tooltips.
  */
 
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState, useCallback } from 'react';
 import type {
   NewAPIModelUsage,
   NewAPIEndpointUsage,
@@ -20,7 +20,7 @@ import {
   formatCompactNumber,
   formatPercentage,
 } from '@/lib/utils/tenant-analytics-utils';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, YAxis, Tooltip, Cell } from 'recharts';
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 export interface TenantAnalyticsBreakdownCardProps {
@@ -42,66 +42,70 @@ export interface TenantAnalyticsBreakdownCardProps {
  * Displays horizontal bar chart with model or endpoint ranking.
  * Includes toggle for switching breakdown types.
  */
-export function TenantAnalyticsBreakdownCard({
-  models,
-  endpoints,
-  summary,
-  defaultType = 'model',
-}: TenantAnalyticsBreakdownCardProps) {
-  const [breakdownType, setBreakdownType] = useState<BreakdownType>(defaultType);
+export const TenantAnalyticsBreakdownCard = memo(
+  function TenantAnalyticsBreakdownCard({
+    models,
+    endpoints,
+    summary,
+    defaultType = 'model',
+  }: TenantAnalyticsBreakdownCardProps) {
+    const [breakdownType, setBreakdownType] = useState<BreakdownType>(defaultType);
 
-  // Get chart colors from CSS variables
-  const chartColors = useMemo(() => {
-    if (typeof window === 'undefined') {
+    // Get chart colors from CSS variables
+    const chartColors = useMemo(() => {
+      if (typeof window === 'undefined') {
+        return {
+          primary: 'hsl(var(--primary))',
+          info: 'hsl(var(--info))',
+          muted: 'hsl(var(--muted-foreground))',
+        };
+      }
+
+      const styles = getComputedStyle(document.documentElement);
       return {
-        primary: 'hsl(var(--primary))',
-        info: 'hsl(var(--info))',
-        muted: 'hsl(var(--muted-foreground))',
+        primary: `hsl(${styles.getPropertyValue('--primary')})`,
+        info: `hsl(${styles.getPropertyValue('--info')})`,
+        muted: `hsl(${styles.getPropertyValue('--muted-foreground')})`,
       };
-    }
+    }, []);
 
-    const styles = getComputedStyle(document.documentElement);
-    return {
-      primary: `hsl(${styles.getPropertyValue('--primary')})`,
-      info: `hsl(${styles.getPropertyValue('--info')})`,
-      muted: `hsl(${styles.getPropertyValue('--muted-foreground')})`,
-    };
-  }, []);
+    // Select data based on breakdown type (memoized)
+    const chartData = useMemo(() => {
+      const data = breakdownType === 'model' ? models : endpoints;
 
-  // Select data based on breakdown type (memoized)
-  const chartData = useMemo(() => {
-    const data = breakdownType === 'model' ? models : endpoints;
+      // Take top 10 items only
+      return data.slice(0, 10).map((item) => ({
+        name: 'modelName' in item ? item.modelName : item.endpoint,
+        cost: item.cost,
+        requests: item.requestCount,
+        tokens: item.tokens,
+        share: item.share,
+      }));
+    }, [breakdownType, models, endpoints]);
 
-    // Take top 10 items only
-    return data.slice(0, 10).map((item) => ({
-      name: 'modelName' in item ? item.modelName : item.endpoint,
-      cost: item.cost,
-      requests: item.requestCount,
-      tokens: item.tokens,
-      share: item.share,
-    }));
-  }, [breakdownType, models, endpoints]);
+    // Format Y-axis labels (names) - memoized callback
+    const formatYAxis = useCallback((value: string) => {
+      return value.length > 20 ? `${value.substring(0, 20)}...` : value;
+    }, []);
 
-  // Format Y-axis labels (names)
-  const formatYAxis = (value: string) => {
-    // Truncate long names
-    return value.length > 20 ? `${value.substring(0, 20)}...` : value;
-  };
+    // Format tooltip values - memoized callback
+    const formatTooltipValue = useCallback(
+      (value: number, name?: string) => {
+        if (name === 'cost')
+          return formatCreditCost(value, summary.quotaPerUnit, summary.displayType);
+        if (name === 'requests') return `${formatCompactNumber(value)} requests`;
+        if (name === 'tokens') return `${formatCompactNumber(value)} tokens`;
+        if (name === 'share') return formatPercentage(value);
+        return formatCompactNumber(value);
+      },
+      [summary.quotaPerUnit, summary.displayType],
+    );
 
-  // Format X-axis labels (cost values)
-  const formatXAxis = (value: number) => {
-    return formatCompactNumber(value);
-  };
-
-  // Format tooltip values
-  const formatTooltipValue = (value: number, name?: string) => {
-    if (name === 'cost')
-      return formatCreditCost(value, summary.quotaPerUnit, summary.displayType);
-    if (name === 'requests') return `${formatCompactNumber(value)} requests`;
-    if (name === 'tokens') return `${formatCompactNumber(value)} tokens`;
-    if (name === 'share') return formatPercentage(value);
-    return formatCompactNumber(value);
-  };
+    // Memoize tooltip content
+    const tooltipContent = useMemo(
+      () => <ChartTooltip valueFormatter={formatTooltipValue} />,
+      [formatTooltipValue],
+    );
 
   return (
     <ChartContainer
@@ -126,11 +130,12 @@ export function TenantAnalyticsBreakdownCard({
           </div>
         ) : (
           /* Bar chart */
-          <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 40)}>
+          <div className="select-none cursor-default [&_.recharts-bar-rectangle]:cursor-default">
+          <ResponsiveContainer width="100%" height={Math.max(120, chartData.length * 24)}>
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 10, right: 10, left: 100, bottom: 10 }}
+            margin={{ top: 5, right: 5, left: 80, bottom: 5 }}
           >
             {/* Y Axis - names (model/endpoint) */}
             <YAxis
@@ -138,22 +143,13 @@ export function TenantAnalyticsBreakdownCard({
               dataKey="name"
               tickFormatter={formatYAxis}
               stroke={chartColors.muted}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 10 }}
               tickLine={false}
-              width={90}
+              width={70}
             />
 
-            {/* X Axis - cost values */}
-            <XAxis
-              type="number"
-              tickFormatter={formatXAxis}
-              stroke={chartColors.muted}
-              tick={{ fontSize: 12 }}
-              tickLine={false}
-            />
-
-            {/* Tooltip with custom content */}
-            <Tooltip content={<ChartTooltip valueFormatter={formatTooltipValue} />} />
+            {/* Tooltip with memoized content */}
+            <Tooltip content={tooltipContent} />
 
             {/* Bar - cost */}
             <Bar dataKey="cost" name="Cost" isAnimationActive={false}>
@@ -161,13 +157,16 @@ export function TenantAnalyticsBreakdownCard({
                 <Cell
                   key={`cell-${index}`}
                   fill={index % 2 === 0 ? chartColors.primary : chartColors.info}
+                  style={{ cursor: 'default' }}
                 />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+          </div>
         )}
       </div>
     </ChartContainer>
   );
-}
+  },
+);

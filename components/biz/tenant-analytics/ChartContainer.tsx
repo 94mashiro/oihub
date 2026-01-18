@@ -25,15 +25,18 @@ export interface ChartContainerProps {
 /**
  * Chart container with shadcn-style card layout.
  * Provides consistent spacing and elevation for all charts.
+ * Non-interactive: charts are read-only visualizations.
  */
 export function ChartContainer({ title, description, children, className }: ChartContainerProps) {
   return (
-    <Card className={cn('flex flex-col', className)}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card className={cn('flex flex-col py-2 gap-2 rounded-xl', className)}>
+      <CardHeader className="px-3 pb-1">
+        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
         {description && <p className="text-xs text-muted-foreground">{description}</p>}
       </CardHeader>
-      <CardPanel className="flex-1">{children}</CardPanel>
+      <CardPanel className="flex-1 px-2 py-1 select-none outline-none focus:outline-none [&_svg]:outline-none [&_*]:outline-none">
+        {children}
+      </CardPanel>
     </Card>
   );
 }

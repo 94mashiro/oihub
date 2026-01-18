@@ -156,3 +156,15 @@ export function formatCompactNumber(value: number): string {
 export function formatPercentage(share: number): string {
   return `${(share * 100).toFixed(1)}%`;
 }
+
+/**
+ * Get the interval in seconds for a cost period's time series
+ * DAY_1: 1 hour intervals
+ * Longer periods: 1 day intervals
+ */
+export function getIntervalSeconds(period: CostPeriod): number {
+  if (period === CostPeriod.DAY_1) {
+    return 60 * 60; // 1 hour
+  }
+  return 60 * 60 * 24; // 1 day
+}
