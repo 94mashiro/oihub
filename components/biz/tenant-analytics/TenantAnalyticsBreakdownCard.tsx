@@ -103,38 +103,30 @@ export function TenantAnalyticsBreakdownCard({
     return formatCompactNumber(value);
   };
 
-  // Empty state - no breakdown data available
-  if (chartData.length === 0) {
-    return (
-      <ChartContainer
-        title="Usage Breakdown"
-        description="Cost ranking by model or endpoint"
-      >
-        <div className="flex items-center justify-center py-12">
-          <Empty>
-            <EmptyHeader>
-              <EmptyTitle>No breakdown data</EmptyTitle>
-              <EmptyDescription>
-                No {breakdownType} data available for this period.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </div>
-      </ChartContainer>
-    );
-  }
-
   return (
     <ChartContainer
       title="Usage Breakdown"
       description="Cost ranking by model or endpoint"
     >
       <div className="flex flex-col gap-4">
-        {/* Breakdown type toggle */}
+        {/* Breakdown type toggle - always visible for fallback switching */}
         <TenantAnalyticsBreakdownToggle value={breakdownType} onValueChange={setBreakdownType} />
 
-        {/* Bar chart */}
-        <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 40)}>
+        {/* Empty state - no breakdown data available */}
+        {chartData.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>No breakdown data</EmptyTitle>
+                <EmptyDescription>
+                  No {breakdownType} data available for this period.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          </div>
+        ) : (
+          /* Bar chart */
+          <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 40)}>
           <BarChart
             data={chartData}
             layout="vertical"
@@ -174,6 +166,7 @@ export function TenantAnalyticsBreakdownCard({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
       </div>
     </ChartContainer>
   );

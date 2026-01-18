@@ -55,20 +55,27 @@ export function useTenantAnalytics(tenant: Tenant, initialPeriod?: CostPeriod) {
   // Track if initial fetch has completed
   const hasFetchedRef = useRef(false);
 
-  // Create orchestrator instance (memoized)
+  // Create orchestrator instance (memoized by tenant only - period passed to refresh)
   const orchestrator = useMemo(
-    () => createTenantAnalyticsOrchestrator(tenant, currentPeriod),
-    [tenant, currentPeriod],
+    () => createTenantAnalyticsOrchestrator(tenant),
+    [tenant],
   );
+
+  // Track tenant changes for cleanup
+  const prevTenantIdRef = useRef<string | null>(null);
 
   // Auto-fetch on mount or when tenant/period changes
   useEffect(() => {
-    // Clear cache when tenant changes
-    if (analyticsState.tenantId && analyticsState.tenantId !== tenant.id) {
+    const tenantChanged = prevTenantIdRef.current !== null && prevTenantIdRef.current !== tenant.id;
+    prevTenantIdRef.current = tenant.id;
+
+    // Clear cache only when tenant changes (not period changes)
+    if (tenantChanged) {
       tenantAnalyticsStore.getState().clearCache();
+      hasFetchedRef.current = false;
     }
 
-    // Skip if already fetching/fetched for this tenant+period
+    // Skip if already fetched for this exact tenant+period combination
     const needsRefresh =
       !hasFetchedRef.current ||
       analyticsState.tenantId !== tenant.id ||
@@ -78,26 +85,26 @@ export function useTenantAnalytics(tenant: Tenant, initialPeriod?: CostPeriod) {
       return;
     }
 
-    // Fetch analytics data
-    void orchestrator.refresh();
-    hasFetchedRef.current = true;
+    // Update store context before fetching
+    const store = tenantAnalyticsStore.getState();
+    void store.setTenantId(tenant.id);
+    void store.setPeriod(currentPeriod);
 
-    // Cleanup: clear analytics data when unmounting
-    return () => {
-      orchestrator.clear();
-    };
-  }, [tenant.id, currentPeriod, orchestrator]);
+    // Fetch analytics data (pass period to orchestrator)
+    void orchestrator.refresh(currentPeriod);
+    hasFetchedRef.current = true;
+  }, [tenant.id, currentPeriod, orchestrator, analyticsState.tenantId, analyticsState.period]);
 
   // Expose refresh function for manual refresh
   const refresh = async () => {
-    await orchestrator.refresh();
+    await orchestrator.refresh(currentPeriod);
   };
 
   // Expose period change function
   const changePeriod = async (newPeriod: CostPeriod) => {
-    await analyticsState.setPeriod(newPeriod);
-    // Reset ref to ensure useEffect triggers on next render
+    // Reset ref BEFORE updating state to ensure useEffect triggers on next render
     hasFetchedRef.current = false;
+    await analyticsState.setPeriod(newPeriod);
   };
 
   return {

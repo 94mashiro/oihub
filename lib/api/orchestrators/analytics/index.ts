@@ -5,7 +5,6 @@
  */
 
 import type { Tenant } from '@/types/tenant';
-import type { CostPeriod } from '@/types/api';
 import { TenantAnalyticsOrchestrator } from './tenant-analytics-orchestrator';
 
 /**
@@ -13,21 +12,19 @@ import { TenantAnalyticsOrchestrator } from './tenant-analytics-orchestrator';
  * Provides fetch-normalize-store flow for analytics data.
  *
  * @param tenant - Tenant to fetch analytics for
- * @param period - Analytics time period
  * @returns TenantAnalyticsOrchestrator instance
  *
  * @example
  * ```typescript
- * const orchestrator = createTenantAnalyticsOrchestrator(tenant, CostPeriod.DAY_7);
- * await orchestrator.refresh(); // Fetch and update store
+ * const orchestrator = createTenantAnalyticsOrchestrator(tenant);
+ * await orchestrator.refresh(CostPeriod.DAY_7); // Fetch and update store
  * orchestrator.clear(); // Clear analytics data
  * ```
  */
 export function createTenantAnalyticsOrchestrator(
   tenant: Tenant,
-  period: CostPeriod,
 ): TenantAnalyticsOrchestrator {
-  return new TenantAnalyticsOrchestrator(tenant, period);
+  return new TenantAnalyticsOrchestrator(tenant);
 }
 
 // Re-export orchestrator class
