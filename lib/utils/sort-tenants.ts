@@ -63,10 +63,16 @@ export function sortTenants(
 
     case SortField.TODAY_COST:
       return tenants.sort((a, b) => {
-        const aCosts = costMap[a.id]?.[CostPeriod.DAY_1] ?? [];
-        const bCosts = costMap[b.id]?.[CostPeriod.DAY_1] ?? [];
-        const aRaw = aCosts.reduce((sum, c) => sum + c.creditCost, 0);
-        const bRaw = bCosts.reduce((sum, c) => sum + c.creditCost, 0);
+        const aCosts = costMap[a.id]?.[CostPeriod.DAY_1];
+        const bCosts = costMap[b.id]?.[CostPeriod.DAY_1];
+
+        // Undefined means "not loaded", keep it last; empty array means "loaded but zero cost".
+        const aRaw = Array.isArray(aCosts)
+          ? aCosts.reduce((sum, c) => sum + c.creditCost, 0)
+          : null;
+        const bRaw = Array.isArray(bCosts)
+          ? bCosts.reduce((sum, c) => sum + c.creditCost, 0)
+          : null;
 
         const aValue = isFiniteNumber(aRaw) ? aRaw / getCreditUnit(tenantInfoMap[a.id]) : null;
         const bValue = isFiniteNumber(bRaw) ? bRaw / getCreditUnit(tenantInfoMap[b.id]) : null;
